@@ -1,5 +1,5 @@
 /*
- * This is the disk emulator to emulate the disk structure and operation, serves as layer 0
+ * This is the struct of superblock
  * by Weilong
 */
 
@@ -8,19 +8,28 @@
 struct SuperBlock
 {
   //# of total blocks in this file system
-  unsigned int _fs_size;        
+  UINT _fs_nBlks;        
 
   //# of free blocks in this file system
-  unsigned int _fs_nFreeBlks;
+  UINT _fs_nFreeBlks;
 
   //Logical id of head of free list
-  unsigned int _fs_headFreeBlk;
+  UINT _fs_headFreeBlk;
  
   //# of inodes of this file system
-  unsigned int _fs_iSize;
+  UINT _fs_nINodes;
 
   //list of free inodes
-  unsigned int _fs_freeINodeList[NUM_INODES];  
+  UINT _fs_freeINodes[NUM_INODES];  
 
-  //
+  //pointer to the next free inode in the free inode list
+  UINT _fs_pNextFreeINode;
+
+  //pointer to the next free space in free inode list
+  UINT _fs_pNextFreeINodeSpace;
+
+  //Modified bit
+  BOOL _fs_modified;
+
+  //Padding
 };
