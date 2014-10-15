@@ -15,5 +15,17 @@ typedef struct
   BYTE* _dsk_dskArray;
 } DiskArray;
 
+//initialize a disk array in memory
 void initDisk(DiskArray *);
+
+//destroy the in-memory disk array
 void destroyDisk(DiskArray *);
+
+//convert block id to disk array offset
+UINT bid2Offset
+
+//read a block from logical id i
+UINT readBlk(UINT);
+
+//write to a block of logical id i
+UINT writeBLK(UINT);
