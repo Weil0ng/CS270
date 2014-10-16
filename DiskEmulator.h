@@ -4,10 +4,13 @@
  * by Weilong
  */
 
-#include "GlobalParams.h"
+#include "Globals.h"
 
 typedef struct
 {
+  //# of total disk space in bytes
+  UINT _dsk_size;
+
   //# of total blocks on this disk
   UINT _dsk_numBlk;
   
@@ -16,16 +19,23 @@ typedef struct
 } DiskArray;
 
 //initialize a disk array in memory
-void initDisk(DiskArray *);
+//args: device,
+//      size
+void initDisk(DiskArray *, UINT);
 
 //destroy the in-memory disk array
 void destroyDisk(DiskArray *);
 
 //convert block id to disk array offset
-UINT bid2Offset
+UINT bid2Offset(UINT);
 
 //read a block from logical id i
-UINT readBlk(UINT);
+//args: device, 
+//      block id
+UINT readBlk(DiskArray *, UINT);
 
 //write to a block of logical id i
-UINT writeBLK(UINT);
+//args: device, 
+//      block id, 
+//      content buf
+UINT writeBLK(DiskArray *, UINT, BYTE *);

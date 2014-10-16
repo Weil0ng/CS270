@@ -11,10 +11,7 @@
 
 FILE *mapFile;
 
-//Disk size in bytes
-UINT diskSize = 0;
-
-void initDisk(DiskArray *disk)
+void initDisk(DiskArray *disk, UINT diskSize)
 {
   mapFile = fopen("diskFile", "w+r");
   if (mapFile == NULL)
@@ -37,20 +34,28 @@ void initDisk(DiskArray *disk)
 	exit(1);
   }
 
-  memset(disk->_dsk_dskArray, 0x1f, diskSize);
+  memset(disk->_dsk_dskArray, 0, diskSize);
+  disk->_dsk_size = diskSize;
   disk->_dsk_numBlk = diskSize / BLK_SIZE;
 }
 
 void destroyDisk(DiskArray *disk)
 {
-  //Sync write operation force consistancy of the mapped file
-  msync(disk->_dsk_dskArray, diskSize, MS_SYNC);
-  munmap(disk->_dsk_dskArray, diskSize);
+  //Sync operation force consistancy of the mapped file
+  msync(disk->_dsk_dskArray, disk->_dsk_size, MS_SYNC);
+  munmap(disk->_dsk_dskArray, disk->_dsk_size);
 }
 
-UINT readBlk(UINT bid)
+UINT bid2Offset(UINT bid)
 {
-  
+  return bid * BLK_SIZE;
+}
+
+UINT readBlk(DiskArray *disk, UINT bid)
+{
+  if (bid > disk->_dsk_numBlk - 1)
+	return -1;
+  UINT offset = bid2Offset(bid);
 }
 
 int main(int args, char* argv[])
@@ -61,7 +66,7 @@ int main(int args, char* argv[])
 	exit(1);
   }
   
-  diskSize = atoi(argv[1]);
+  UINT diskSize = atoi(argv[1]);
   if (diskSize < 512)
   {
 	printf("Not enough space for a fs!\n");
@@ -71,7 +76,7 @@ int main(int args, char* argv[])
   //Declare a disk
   DiskArray disk;
   
-  initDisk(&disk);
+  initDisk(&disk, diskSize);
   
   printf("Disk created with size: %d, %d block(s)\n", diskSize, disk._dsk_numBlk);
 
