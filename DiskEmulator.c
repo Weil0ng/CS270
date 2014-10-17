@@ -10,10 +10,9 @@
 #include <string.h>
 #include <sys/mman.h>
 
-FILE *mapFile;
-
 void initDisk(DiskArray *disk, UINT diskSize)
 {
+  FILE *mapFile;
   mapFile = fopen("diskFile", "w+r");
   if (mapFile == NULL)
   {
@@ -58,9 +57,6 @@ UINT readBlk(DiskArray *disk, UINT bid)
 	_err_last = _dsk_readOutOfBoundry;
 	THROW();
 	return -1;
-<<<<<<< HEAD
   }
-=======
->>>>>>> 90bc1498e264def910a8ac9396d424fa1853e4f0
   UINT offset = bid2Offset(bid);
 }
