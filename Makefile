@@ -4,13 +4,13 @@ LD=gcc
 
 CFLAGS=-Wall -O2 -std=c99
 DEPS=GlobalParams.h DiskEmulator.h
-OBJS=DiskEmulator.o
-
-DiskEmulator: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+OBJS=DiskEmulator.o DragonFS.o
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+DragonFS: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	rm -fr DiskEmulator *.o
+	rm -fr DragonFS *.o
