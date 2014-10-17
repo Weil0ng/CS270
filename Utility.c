@@ -3,16 +3,22 @@
  */
 
 #include "Utility.h"
+#include <stdio.h>
 
-void interpErr(ERROR error)
+ERROR _err_last;
+
+void THROW()
 {
-  switch(error) {
-  case ERROR._dsk_full: {
-    printf("Disk is full");
+  switch(_err_last) {
+  case _dsk_full: {
+    printf("Disk is full!\n");
     break;
   }
-  
-  default:
+  case _dsk_readOutOfBoundry: {
+    printf("Disk read out of boundry!\n");
+    break;
+  }
+  default: break;
   }
   return;
 }

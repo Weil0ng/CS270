@@ -2,15 +2,14 @@
 CC=gcc
 LD=gcc
 
-CFLAGS=-Wall -O2 -std=c99
-DEPS=GlobalParams.h DiskEmulator.h
-OBJS=DiskEmulator.o
+CFLAGS=-O2 -std=c99
+OBJS=TestMain.o DiskEmulator.o Utility.o
 
-DiskEmulator: $(OBJS)
+TestMain: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c $(DEPS)
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr DiskEmulator *.o
+	rm -fr TestMain *.o
