@@ -2,15 +2,14 @@
 CC=gcc
 LD=gcc
 
-CFLAGS=-Wall -O2 -std=c99
-DEPS=GlobalParams.h DiskEmulator.h
-OBJS=DiskEmulator.o DragonFS.o
+CFLAGS=-O2 -std=c99
+OBJS=TestMain.o DiskEmulator.o Utility.o
 
-%.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-DragonFS: $(OBJS)
+TestMain: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 clean:
-	rm -fr DragonFS *.o
+	rm -fr TestMain *.o

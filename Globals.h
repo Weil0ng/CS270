@@ -3,11 +3,6 @@
  * */
 #include <stdint.h>
 
-//Debugging
-typedef enum {
-  _dsk_full
-} ERROR;
-
 //Architecture specific
 #define UINT uint32_t
 #define BOOL bool
