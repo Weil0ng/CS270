@@ -4,15 +4,15 @@
  */
 
 #include "DiskEmulator.h"
+#include "Utility.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 
-FILE *mapFile;
-
 void initDisk(DiskArray *disk, UINT diskSize)
 {
+  FILE *mapFile;
   mapFile = fopen("diskFile", "w+r");
   if (mapFile == NULL)
   {
@@ -53,7 +53,10 @@ UINT bid2Offset(UINT bid)
 
 UINT readBlk(DiskArray *disk, UINT bid)
 {
-  if (bid > disk->_dsk_numBlk - 1)
+  if (bid > disk->_dsk_numBlk - 1) {
+	_err_last = _dsk_readOutOfBoundry;
+	THROW();
 	return -1;
+  }
   UINT offset = bid2Offset(bid);
 }
