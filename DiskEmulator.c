@@ -51,12 +51,28 @@ UINT bid2Offset(UINT bid)
   return bid * BLK_SIZE;
 }
 
-UINT readBlk(DiskArray *disk, UINT bid)
+UINT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
-	_err_last = _dsk_readOutOfBoundry;
-	THROW();
-	return -1;
+    _err_last = _dsk_readOutOfBoundry;
+    THROW();
+    return -1;
   }
   UINT offset = bid2Offset(bid);
+  for (UINT i=0; i<BLK_SIZE; i++)
+    *(buf + i) = *(disk->_dsk_dskArray + offset + i);
+  return 0;
+}
+
+UINT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
+{
+  if (bid > disk->_dsk_numBlk - 1) {
+    _err_last = _dsk_writeOutOfBoundry;
+    THROW();
+    return -1;
+  }
+  UINT offset = bid2Offset(bid);
+  for (UINT i=0; i<BLK_SIZE; i++)
+    *(disk->_dsk_dskArray + offset + i) = *(buf + i);
+  return 0;
 }

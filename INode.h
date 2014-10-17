@@ -2,6 +2,6 @@
  * This is the inode structure
  */
 
-#include "GlobalParams.h"
+#include "Globals.h"
 
 

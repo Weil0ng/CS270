@@ -2,6 +2,15 @@
 #include<stdlib.h>
 #include"DiskEmulator.h"
 
+void PrintBlock(BYTE *buf)
+{
+  for (UINT i=0; i<BLK_SIZE; i++) {
+    printf("%x ", *(buf + i));
+  }
+  printf("\n");
+  return;
+}
+
 int main(int args, char* argv[])
 {
   if (args < 2)
@@ -23,9 +32,24 @@ int main(int args, char* argv[])
   initDisk(&disk, diskSize);
   
   printf("Disk created with size: %d, %d block(s)\n", diskSize, disk._dsk_numBlk);
-  
-  readBlk(&disk, 1);
-  
+
+  BYTE writeBuf[1024];
+  BYTE readBuf[BLK_SIZE];
+
+  memset(writeBuf, 0xff, 1024);
+
+  writeBlk(&disk, 1, writeBuf); 
+  writeBlk(&disk, 2, writeBuf + BLK_SIZE);  
+
+  if (readBlk(&disk, 0, readBuf) == 0)
+    PrintBlock(readBuf);
+
+  if (readBlk(&disk, 1, readBuf) == 0)
+    PrintBlock(readBuf);
+
+  if (readBlk(&disk, 2, readBuf) == 0)
+    PrintBlock(readBuf);
+
   destroyDisk(&disk);
   
   return 0;

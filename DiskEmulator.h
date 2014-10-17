@@ -32,10 +32,10 @@ UINT bid2Offset(UINT);
 //read a block from logical id i
 //args: device, 
 //      block id
-UINT readBlk(DiskArray *, UINT);
+UINT readBlk(DiskArray *, UINT, BYTE *);
 
 //write to a block of logical id i
 //args: device, 
 //      block id, 
 //      content buf
-UINT writeBLK(DiskArray *, UINT, BYTE *);
+UINT writeBlk(DiskArray *, UINT, BYTE *);

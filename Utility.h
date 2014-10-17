@@ -7,7 +7,8 @@
 //Debugging
 typedef enum{
   _dsk_full,
-    _dsk_readOutOfBoundry
+  _dsk_readOutOfBoundry,
+  _dsk_writeOutOfBoundry
 } ERROR;
 
 extern ERROR _err_last;    

@@ -18,6 +18,10 @@ void THROW()
     printf("Disk read out of boundry!\n");
     break;
   }
+  case _dsk_writeOutOfBoundry: {
+    printf("Disk write out of boundry!\n");
+    break;
+  }
   default: break;
   }
   return;
