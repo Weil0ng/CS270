@@ -3,7 +3,7 @@
  * by Weilong
 */
 
-#incldue "GlobalParams.h"
+#incldue "Globals.h"
 
 struct SuperBlock
 {

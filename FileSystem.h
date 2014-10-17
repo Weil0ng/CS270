@@ -4,7 +4,7 @@
  * by Jon
  */
 
-#include "GlobalParams.h"
+#include "Globals.h"
 
 // creates the file system
 void makefs();

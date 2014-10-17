@@ -4,7 +4,7 @@
  * by Jon
  */
 
-#include "GlobalParams.h"
+#include "Globals.h"
 
 // makes a new directory
 void mkdir(char* path);
