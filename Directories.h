@@ -7,25 +7,28 @@
 #include "Globals.h"
 
 // makes a new directory
-void mkdir(char* path);
+UINT mkdir(char* path);
 
 // makes a new file
-void mknod(char* path);
+UINT mknod(char* path);
 
 // reads directory contents
-Dir* readdir(char* path);
+UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
-void unlink(char* path);
+UINT unlink(char* path);
 
 // opens a file. returning the descriptor
 UINT open(char* path);
 
 // closes a file
-void close(UINT);
+// params: file descriptor
+UINT close(UINT);
 
 // reads a file
+// params: file descriptor, buffer, number of bytes
 UINT read(UINT, byte*, UINT);
 
 // writes to a file
+// params: file descriptor, buffer, number of bytes
 void write(UINT, byte*, UINT);

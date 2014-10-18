@@ -8,31 +8,31 @@ typedef struct INode {
 
 	//disk fields
 
-	UINT owner;
+	UINT _in_owner;
 
-	UINT type;
+	UINT _in_type;
 
-	UINT permissions;
+	UINT _in_permissions;
 
-	UINT modtime;
+	LONG _in_modtime;
 
-	UINT accesstime;
+	LONG _in_accesstime;
 
-	UINT filesize;
+	UINT _in_filesize;
 
-	UINT* dblocks;
+	UINT _in_dblocks[INODE_NUM_DBLOCKS];
 
-	UINT* siblocks;
+	//UINT* _in_siblocks[INODE_NUM_SIBLOCKS];
 
-	UINT* diblocks;
+	//UINT* _in_diblocks[INODE_NUM_DIBLOCKS];
 
 	//memory fields
 
-	UINT id;
+	UINT _in_id;
 
-	Lock* lock;
+	//Lock* _in_lock;
 
-	UINT refcount;
+	UINT _in_refcount;
 
 } INode;
 

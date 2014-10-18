@@ -5,6 +5,7 @@
 
 //Architecture specific
 #define UINT uint32_t
+#define LONG uint64_t
 #define BOOL bool
 #define BYTE uint8_t
 

@@ -7,7 +7,7 @@
 #include "Globals.h"
 
 // creates the file system
-void makefs();
+UINT makefs();
 
 // allocate a free inode
 UINT allocInode();
@@ -16,19 +16,19 @@ UINT allocInode();
 UINT freeInode(UINT);
 
 // reads an inode
-INode* readInode(UINT);
+UINT readInode(UINT, INode*);
 
 // writes to an inode
-void writeInode(UINT, INode*);
+UINT writeInode(UINT, INode*);
 
-// allocate a free block
-UINT allocBlock();
+// allocate a free data block
+UINT allocDataBlk();
 
-// free an allocated block
-UINT freeBlock(UINT);
+// free an allocated data block
+UINT freeDataBlk(UINT);
 
-// reads a block
-Block readBlock(UINT);
+// reads a data block
+UINT readDataBlk(UINT, byte*);
 
-// writes a block
-void writeBlock(UINT, byte*); 
+// writes a data block
+UINT writeDataBlk(UINT, byte*); 
