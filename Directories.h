@@ -31,4 +31,4 @@ UINT read(UINT, byte*, UINT);
 
 // writes to a file
 // params: file descriptor, buffer, number of bytes
-void write(UINT, byte*, UINT);
+UINT write(UINT, byte*, UINT);

@@ -7,29 +7,31 @@
 
 struct SuperBlock
 {
-  //# of total blocks in this file system
-  UINT _fs_nBlks;        
+  //# of total data blocks in this file system
+  UINT _fs_nDBlks;        
 
-  //# of free blocks in this file system
-  UINT _fs_nFreeBlks;
+  //# of free data blocks in this file system
+  UINT _fs_nFreeDBlks;
 
-  //Logical id of head of free list
-  UINT _fs_headFreeBlk;
+  //SuperBlock cache of free data block list
+  UINT _fs_freeDBlks[NUM_DBLKS];
+
+  //index of the next free data block in the free data block list
+  UINT _fs_pNextFreeDBlk;
  
-  //# of inodes of this file system
+  //# of total inodes in this file system
   UINT _fs_nINodes;
 
   //list of free inodes
   UINT _fs_freeINodes[NUM_INODES];  
 
-  //pointer to the next free inode in the free inode list
+  //index of the next free inode in the free inode list
   UINT _fs_pNextFreeINode;
-
-  //pointer to the next free space in free inode list
-  UINT _fs_pNextFreeINodeSpace;
 
   //Modified bit
   BOOL _fs_modified;
+
+  //Lock for synchronization
 
   //Padding
 };

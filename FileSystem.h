@@ -10,25 +10,25 @@
 UINT makefs();
 
 // allocate a free inode
-UINT allocInode();
+UINT allocINode();
 
 // free an allocated inode
-UINT freeInode(UINT);
+UINT freeINode(UINT);
 
 // reads an inode
-UINT readInode(UINT, INode*);
+UINT readINode(UINT, INode*);
 
 // writes to an inode
-UINT writeInode(UINT, INode*);
+UINT writeINode(UINT, INode*);
 
 // allocate a free data block
-UINT allocDataBlk();
+UINT allocDBlk();
 
 // free an allocated data block
-UINT freeDataBlk(UINT);
+UINT freeDBlk(UINT);
 
 // reads a data block
-UINT readDataBlk(UINT, byte*);
+UINT readDBlk(UINT, BYTE*);
 
 // writes a data block
-UINT writeDataBlk(UINT, byte*); 
+UINT writeDBlk(UINT, BYTE*); 
