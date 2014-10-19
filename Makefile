@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=c99
-OBJS=TestMain.o DiskEmulator.o Utility.o
+OBJS=Layer0Test.o DiskEmulator.o Utility.o
 
 TestMain: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -12,4 +12,4 @@ TestMain: $(OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr TestMain *.o
+	rm -fr Layer0Test *.o
