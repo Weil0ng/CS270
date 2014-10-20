@@ -3,35 +3,35 @@
  * by Weilong
 */
 
-#incldue "Globals.h"
+#include "Globals.h"
 
-struct SuperBlock
+typedef struct SuperBlock
 {
   //# of total data blocks in this file system
-  UINT _fs_nDBlks;        
+  UINT nDBlks;        
 
   //# of free data blocks in this file system
-  UINT _fs_nFreeDBlks;
-
+  UINT nFreeDBlks;
+    
   //SuperBlock cache of free data block list
-  UINT _fs_freeDBlks[NUM_DBLKS];
+  UINT freeDBlks[NUM_FREE_DBLKS];
 
   //index of the next free data block in the free data block list
-  UINT _fs_pNextFreeDBlk;
+  UINT pNextFreeDBlk;
  
   //# of total inodes in this file system
-  UINT _fs_nINodes;
+  UINT nINodes;
 
   //list of free inodes
-  UINT _fs_freeINodes[NUM_INODES];  
+  UINT freeINodes[NUM_INODES];  
 
   //index of the next free inode in the free inode list
-  UINT _fs_pNextFreeINode;
+  UINT pNextFreeINode;
 
   //Modified bit
-  BOOL _fs_modified;
+  BOOL modified;
 
   //Lock for synchronization
 
   //Padding
-};
+} SuperBlock;

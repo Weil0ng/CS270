@@ -6,8 +6,15 @@
 
 #include "Globals.h"
 
+typedef struct FileSystem {
+    
+    // the superblock of the filesystem
+    SuperBlock* superblock;
+    
+} FileSystem;
+
 // creates the file system
-UINT makefs();
+UINT makefs(UINT, UINT, FileSystem*);
 
 // allocate a free inode
 UINT allocINode();
