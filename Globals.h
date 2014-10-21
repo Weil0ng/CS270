@@ -1,6 +1,7 @@
 /*
  * * This is the file where all global params of the file system are defined.
  * */
+#include <stdbool.h>
 #include <stdint.h>
 
 //Architecture specific
@@ -10,9 +11,16 @@
 #define BYTE uint8_t
 
 //File system specific
+#define DISK_ARRAY_SIZE (65536) //Disk emulator size (65536 = 2^16 bytes)
+
 #define BLK_SIZE (512) //Block size in bytes
 #define INODE_SIZE (256) //INode size in bytes, 256 = 
-#define NUM_INODES (128) // total numbe of inodes in the file system
+
+#define SUPERBLOCK_OFFSET (0) //superblock id, default 0
+
+#define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(UINT)) //In-memory free block cache size, 1 block of ints
+#define FREE_INODE_CACHE_SIZE (100) //In-memory inode cache size, 100 = 400 bytes of superblock
+
 #define INODE_NUM_DIRECT_BLKS (10) // number of direct blocks per inode 
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 
 #define INODE_NUM_D_INDIRECT_BLKS (1) // number of double direct blocks per inode 
