@@ -9,41 +9,60 @@
 UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 	
     //validate number of blocks and inodes
+    //num inodes divisible by inodes per block
+    //fs size < max size
+    //num blocks >= num inodes
+    //num inodes >= inode cache size
+    //num blocks >= block cache size 
 
     //allocate memory for filesystem struct
     fs = malloc(sizeof(FileSystem));
-    fs->superblock = malloc(sizeof(SuperBlock));
-    //fs->superblock->freeDBlks = malloc(NUM_FREE_DBLKS * sizeof(UINT));
     
     //initialize in-memory superblock
-    fs->superblock->nDBlks = nDBlks;
-    fs->superblock->nFreeDBlks = nDBlks;
-    fs->superblock->pFreeDBlksHead = 0;
-    fs->superblock->pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
+    fs->superblock.nDBlks = nDBlks;
+    fs->superblock.nFreeDBlks = nDBlks;
+    fs->superblock.pFreeDBlksHead = 0;
+    fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
     
-    fs->superblock->nINodes = nINodes;
-    fs->superblock->nFreeINodes = nINodes;
-    fs->superblock->pNextFreeINode = FREE_INODE_CACHE_SIZE - 1;
+    fs->superblock.nINodes = nINodes;
+    fs->superblock.nFreeINodes = nINodes;
+    fs->superblock.pNextFreeINode = FREE_INODE_CACHE_SIZE - 1;
 
-    fs->superblock->modified = true;
+    fs->superblock.modified = true;
 
-    //compute offset for inode/data blocks
-    //superblock
+    //initialize superblock free inode cache
+    for(UINT i = 0; i < FREE_INODE_CACHE_SIZE; i++) {
+        fs->superblock.freeINodeCache[i] = i;
+    }
+
+    //compute file system size and offset for inode/data blocks
+    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
     fs->diskINodeBlkOffset = 1;
-    //superblock + inode blocks
-    fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes * INODE_SIZE / BLK_SIZE;
+    fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
 
-    //initialize the in-memory disk and write superblock
-    initDisk(fs->disk, DISK_ARRAY_SIZE);
-    BYTE superblockBuf[BLK_SIZE];
-    blockify(fs->superblock, superblockBuf);
-    writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
+    //initialize the in-memory disk
+    initDisk(fs->disk, fs->nBytes);
+
+    //create inode list on disk
+    UINT nextINodeId = 0;
+    UINT nextINodeBlk = fs->diskINodeBlkOffset;
+    INode nextINodeBlkBuf[INODES_PER_BLK];
+
+    while(nextINodeBlk < fs->diskDBlkOffset) {
+        //fill inode blocks one at a time
+        for(UINT i = 0; i < INODES_PER_BLK; i++) {
+            nextINodeBlkBuf[i]._in_type = 0; //TODO CHANGE THIS TO ENUM TYPE "FREE"
+        }
+
+        writeBlk(fs->disk, nextINodeBlk, (BYTE*) nextINodeBlkBuf);
+        nextINodeBlk++;
+    }
 
     //create free block list on disk
     UINT nextListBlk = 0;
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
 
-    while(nextListBlk < fs->superblock->nDBlks) {
+    while(nextListBlk < fs->superblock.nDBlks) {
         //special case: next head pointer goes in first entry
         freeDBlkList[0] = nextListBlk + FREE_DBLK_CACHE_SIZE;
 
@@ -56,12 +75,17 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         writeDBlk(fs, nextListBlk, (BYTE*) freeDBlkList);
         nextListBlk += FREE_DBLK_CACHE_SIZE;
     }
+
+    //write superblock to disk
+    BYTE superblockBuf[BLK_SIZE];
+    blockify(&fs->superblock, superblockBuf);
+    writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
+    fs->superblock.modified = false;
 }
 
 UINT destroyfs(FileSystem* fs) {
 
     destroyDisk(fs->disk);
-    free(fs->superblock);
     free(fs);
 }
 

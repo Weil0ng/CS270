@@ -11,10 +11,11 @@
 #define BYTE uint8_t
 
 //File system specific
-#define DISK_ARRAY_SIZE (65536) //Disk emulator size (65536 = 2^16 bytes)
+#define MAX_FS_SIZE (4294967296) //Maximum supported filesystem size (2^32 bytes)
 
 #define BLK_SIZE (512) //Block size in bytes
-#define INODE_SIZE (256) //INode size in bytes, 256 = 
+#define INODE_SIZE (256) //INode size in bytes
+#define INODES_PER_BLK (BLK_SIZE / INODE_SIZE) //INodes per block (computed)
 
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
 
