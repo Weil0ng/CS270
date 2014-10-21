@@ -5,7 +5,7 @@ LD=gcc
 CFLAGS=-O2 -std=c99
 OBJS=Layer0Test.o DiskEmulator.o FileSystem.o SuperBlock.o Utility.o 
 
-TestMain: $(OBJS)
+Layer0Test: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c %.h
