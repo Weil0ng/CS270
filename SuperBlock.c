@@ -6,5 +6,7 @@
 #include "SuperBlock.h"
 
 UINT blockify(SuperBlock* superblock, BYTE* buf) {
+
     //to do
+    return 0;
 }

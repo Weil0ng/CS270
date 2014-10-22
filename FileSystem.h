@@ -58,3 +58,16 @@ UINT readDBlk(FileSystem*, UINT, BYTE*);
 
 // writes a data block
 UINT writeDBlk(FileSystem*, UINT, BYTE*); 
+
+struct INode_out{
+
+    UINT _blk_num;     // coverted block #
+
+    UINT _byte_offset; // byte offset in the block
+
+    UINT _num_bytes;   // num of bytes to read in the block
+};
+
+// converts file byte offset in inode to logical block ID
+struct INode_out bmap(FileSystem* fs, INode* inode, UINT offset);
+

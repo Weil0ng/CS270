@@ -29,9 +29,9 @@ typedef struct INode {
 
 	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
-	UINT* _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
+	UINT _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
 
-	UINT* _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
+	UINT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
 
 	//memory fields
         
@@ -44,19 +44,4 @@ typedef struct INode {
 	UINT _in_refcount;
 
 } INode;
-
-
-struct FileSystem; // forward declaration
-
-struct INode_out{
-
-    UINT _blk_num;     // coverted block #
-
-    UINT _byte_offset; // byte offset in the block
-
-    UINT _num_bytes;   // num of bytes to read in the block
-};
-
-// converts file byte offset in inode to logical block ID
-struct INode_out bmap(struct FileSystem* fs, INode* inode, UINT offset);
 
