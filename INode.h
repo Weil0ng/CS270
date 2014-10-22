@@ -3,6 +3,13 @@
  */
 
 #include "Globals.h"
+//#include "FileSystem.h"
+
+enum FILE_TYPE {
+        FREE,
+        REGULAR,
+        DIRECTORY
+};
 
 typedef struct INode {
 
@@ -10,7 +17,7 @@ typedef struct INode {
 
 	UINT _in_owner;
 
-	UINT _in_type;
+	enum FILE_TYPE _in_type;
 
 	UINT _in_permissions;
 
@@ -22,11 +29,13 @@ typedef struct INode {
 
 	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
-	//UINT* _in_sIndirectBlocks[INODE_NUM_SINDIRECT_BLKS];
+	UINT* _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
 
-	//UINT* _in_dIndirectBlocks[INODE_NUM_DINDIRECT_BLKS];
+	UINT* _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
 
 	//memory fields
+        
+        //UINT _in_status; // locked/modified/mount_point/
 
 	UINT _in_id;
 
@@ -36,5 +45,18 @@ typedef struct INode {
 
 } INode;
 
+
+struct FileSystem; // forward declaration
+
+struct INode_out{
+
+    UINT _blk_num;     // coverted block #
+
+    UINT _byte_offset; // byte offset in the block
+
+    UINT _num_bytes;   // num of bytes to read in the block
+};
+
 // converts file byte offset in inode to logical block ID
-UINT bmap(INode* inode, UINT offset);
+struct INode_out bmap(struct FileSystem* fs, INode* inode, UINT offset);
+

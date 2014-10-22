@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include <stdlib.h>
+#include <string.h>
 
 UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 	
@@ -51,7 +52,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     while(nextINodeBlk < fs->diskDBlkOffset) {
         //fill inode blocks one at a time
         for(UINT i = 0; i < INODES_PER_BLK; i++) {
-            nextINodeBlkBuf[i]._in_type = 0; //TODO CHANGE THIS TO ENUM TYPE "FREE"
+            nextINodeBlkBuf[i]._in_type = FREE; //TODO CHANGE THIS TO ENUM TYPE "FREE"
         }
 
         writeBlk(fs->disk, nextINodeBlk, (BYTE*) nextINodeBlkBuf);
