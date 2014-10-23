@@ -28,10 +28,10 @@ typedef struct SuperBlock
   UINT nFreeINodes;
 
   //free inode list cache
-  UINT freeINodeCache[FREE_INODE_CACHE_SIZE];  
+  INT freeINodeCache[FREE_INODE_CACHE_SIZE];  
 
   //index of the next free inode in the free inode list
-  UINT pNextFreeINode;
+  INT pNextFreeINode;
 
   /* in-memory fields */
 
