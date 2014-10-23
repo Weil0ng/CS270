@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-
+#include <unistd.h>
 void initDisk(DiskArray *disk, UINT diskSize)
 {
   FILE *mapFile;
