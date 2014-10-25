@@ -64,7 +64,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     //create free block list on disk
     UINT nextListBlk = 0;
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
-
+    
     while(nextListBlk < fs->superblock.nDBlks) {
         //special case: next head pointer goes in first entry
         freeDBlkList[0] = nextListBlk + FREE_DBLK_CACHE_SIZE;
@@ -299,27 +299,94 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
+//Try to alloc a free data block from disk:
+//1. check if there are free DBlk at all
+//2. check the pNextFreeDBlk
+//	if DBlk cache has free entry 
+//		alloc that entry
+//	else
+//		alloc current free list blk
+//		move pFreeDBlksHead to next list blk
+//3. # free blocks --
+//4. return the logical id of allocaed DBlk
 UINT allocDBlk(FileSystem* fs) {
-    return 0;
+    //1. check full
+    if (fs->superblock.nFreeDBlks == 0) {
+        _err_last = _fs_DBlkOutOfNumber;
+	THROW();
+	return -1;
+    }
+    
+    UINT returnID = -1;
+
+    //2. check pNextFreeDBlk
+    if (fs->superblock.pNextFreeDBlk != 0) {
+        returnID = (fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk];
+        // mark it as allocated
+        (fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk] = -1;
+    }
+    else {
+        //alloc this very block
+        returnID = fs->superblock.pFreeDBlksHead;
+	//move head
+	fs->superblock.pFreeDBlksHead = (fs->superblock.freeDBlks)[0];
+	//load cache
+	readDBlk(fs, fs->superblock.pFreeDBlksHead, fs->superblock.freeDBlks);
+	//move pNextFreeDBlk
+	fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
+    }
+
+    fs->superblock.nFreeDBlks --;
+    return returnID;
+    //return 0;
 
 }
 
+// Try to insert a free DBlk back to free list
+// 1. check pNextFreeDBlk
+// 2.	if current cache full
+// 		wrtie cache back
+// 		use newly free block NFB as head free block list
+// 	else
+// 		insert to current cache
+// 3. # Free DBlks ++
 UINT freeDBlk(FileSystem* fs, UINT id) {
+    // if current cache is full
+    if (fs->superblock.pNextFreeDBlk == FREE_DBLK_CACHE_SIZE - 1) {
+	//write cache back
+	writeDBlk(fs, fs->superblock.pFreeDBlksHead, &(fs->superblock.freeDBlks));
+	//init cache
+	(fs->superblock.freeDBlks)[0] = fs->superblock.pFreeDBlksHead;
+	for (UINT i=1; i<FREE_DBLK_CACHE_SIZE - 1; i++)
+	    (fs->superblock.freeDBlks)[i] = -1;
+	//move pNextFreeDBlk
+	fs->superblock.pNextFreeDBlk = 0;
+	//move head
+	fs->superblock.pFreeDBlksHead = id;
+    }
+    else {
+	fs->superblock.pNextFreeDBlk ++;
+	(fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk] = id;
+    }
+    fs->superblock.nFreeDBlks ++;
     return 0;
-
 }
 
+// Try to read out a block from disk
+// 1. convert logical id of DBlk to logical id of disk block
+// 2. read data
 UINT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
-    return 0;
+    UINT bid = id + fs->diskDBlkOffset;
+    return readBlk(fs->disk, bid, buf);
 
 }
 
 // writes a data block to the disk
 // dBlkId: the data block logical id (not raw logical id!)
 // buf: the buffer to write (must be exactly block-sized)
-UINT writeDBlk(FileSystem* fs, UINT dBlkId, BYTE* buf) {
-    writeBlk(fs->disk, fs->diskDBlkOffset + dBlkId, buf);
-    return 0;
+UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    UINT bid = id + fs->diskDBlkOffset;
+    return writeBlk(fs->disk, bid, buf);
 }
 
 // input: inode, logic file byte offset

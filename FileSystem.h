@@ -5,6 +5,7 @@
  */
 
 #include "Globals.h"
+#include "Utility.h"
 #include "DiskEmulator.h"
 #include "INode.h"
 #include "SuperBlock.h"
