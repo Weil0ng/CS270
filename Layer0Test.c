@@ -1,3 +1,6 @@
+// Layer 0 test
+// by weil0ng
+
 #include<stdio.h>
 #include<stdlib.h>
 #include <string.h>
@@ -38,6 +41,8 @@ int main(int args, char* argv[])
   BYTE readBuf[BLK_SIZE];
 
   memset(writeBuf, 0xff, 1024);
+  
+  readBlk(&disk, 0, readBuf);
 
   writeBlk(&disk, 1, writeBuf); 
   writeBlk(&disk, 2, writeBuf + BLK_SIZE);  
@@ -50,8 +55,11 @@ int main(int args, char* argv[])
 
   if (readBlk(&disk, 2, readBuf) == 0)
     PrintBlock(readBuf);
-
-  destroyDisk(&disk);
   
+  #ifdef DEBUG
+  dumpDisk(&disk);
+  #endif
+  destroyDisk(&disk);
+
   return 0;
 }            

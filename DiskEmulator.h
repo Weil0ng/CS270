@@ -23,6 +23,11 @@ typedef struct
 //      size
 void initDisk(DiskArray *, UINT);
 
+#ifdef DEBUG
+//dump the disk to a per block file
+void dumpDisk();
+#endif
+
 //destroy the in-memory disk array
 void destroyDisk(DiskArray *);
 

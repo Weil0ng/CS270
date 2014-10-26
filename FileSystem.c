@@ -48,6 +48,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     
     //initialize the in-memory disk
     if(DEBUG) printf("Initializing in-memory disk emulator...\n");
+    fs->disk = malloc(sizeof(DiskArray));
     initDisk(fs->disk, fs->nBytes);
 
     //create inode list on disk
