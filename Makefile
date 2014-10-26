@@ -3,13 +3,16 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=c99
-OBJS=Layer0Test.o DiskEmulator.o FileSystem.o SuperBlock.o Utility.o
+OBJS=DiskEmulator.o FileSystem.o SuperBlock.o Utility.o
 
-Layer0Test: $(OBJS)
+Layer0Test: $(OBJS) Layer0Test.o
 	$(CC) $(CFLAGS) -o $@ $^
 
+Layer1Test: $(OBJS) Layer1INodeTest.o
+	$(CC) $(CFLAGS) -o $@ $^
+    
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr Layer0Test *.o
+	rm -fr Layer0Test Layer1INodeTest *.o
