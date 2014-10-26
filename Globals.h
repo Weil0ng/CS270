@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
 //Architecture specific
 #define UINT uint32_t
 #define INT  int32_t

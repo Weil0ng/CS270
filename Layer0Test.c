@@ -50,7 +50,10 @@ int main(int args, char* argv[])
 
   if (readBlk(&disk, 2, readBuf) == 0)
     PrintBlock(readBuf);
-
+  
+  #ifdef DEBUG
+  dumpDisk(&disk);
+  #endif
   destroyDisk(&disk);
   
   return 0;

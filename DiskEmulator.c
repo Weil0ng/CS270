@@ -76,3 +76,23 @@ UINT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
     *(disk->_dsk_dskArray + offset + i) = *(buf + i);
   return 0;
 }
+
+#ifdef DEBUG
+void dumpDisk(DiskArray *disk)
+{
+  FILE *dumpFile = fopen("diskDump", "w+r");
+  if (dumpFile == NULL)
+  {
+        printf("Disk dump file open failed!\n");
+	return;
+  }
+  BYTE buf[BLK_SIZE];
+  for (UINT i=0; i<disk->_dsk_numBlk; i++) {
+	readBlk(disk, i, buf);
+	for (UINT j=0; j<BLK_SIZE; j+=4)
+	    fprintf(dumpFile, "%d ", *(buf+j));
+	fprintf(dumpFile, "\n");
+  }
+  return;
+}
+#endif
