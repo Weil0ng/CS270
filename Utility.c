@@ -22,6 +22,10 @@ void THROW()
     printf("Disk write out of boundry!\n");
     break;
   }
+  case _fs_DBlkOutOfNumber: {
+    printf("No more free data block on disk!\n");
+    break;
+  }
   default: break;
   }
   return;

@@ -8,7 +8,8 @@
 typedef enum{
   _dsk_full,
   _dsk_readOutOfBoundry,
-  _dsk_writeOutOfBoundry
+  _dsk_writeOutOfBoundry,
+  _fs_DBlkOutOfNumber,
 } ERROR;
 
 extern ERROR _err_last;    
