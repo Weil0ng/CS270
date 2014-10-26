@@ -44,6 +44,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
 
     //initialize the in-memory disk
+    fs->disk = malloc(sizeof(DiskArray));
     initDisk(fs->disk, fs->nBytes);
 
     //create inode list on disk
