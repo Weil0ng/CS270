@@ -23,7 +23,7 @@
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
 
 #define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(UINT)) //In-memory free block cache size, 1 block of ints
-#define FREE_INODE_CACHE_SIZE (100) //In-memory inode cache size, 100 = 400 bytes of superblock
+#define FREE_INODE_CACHE_SIZE (10) //In-memory inode cache size, 100 = 400 bytes of superblock
 
 #define INODE_NUM_DIRECT_BLKS (10) // number of direct blocks per inode 
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 

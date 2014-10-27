@@ -10,8 +10,20 @@
 
 #include "FileSystem.h"
 
-#define NUM_TEST_INODES (2)
+#define NUM_TEST_INODES (1)
 #define TEST_OWNER (999)
+
+void printSuperblock(FileSystem* fs) {
+
+}
+
+void printINodes(FileSystem* fs) {
+
+}
+
+void printDBlks(FileSystem* fs) {
+
+}
 
 int main(int args, char* argv[])
 {
@@ -23,37 +35,31 @@ int main(int args, char* argv[])
     UINT nDBlks = atoi(argv[1]);
     UINT nINodes = atoi(argv[2]);
     
-    if(nDBlks <= 0 || nINodes <= 0) {
-        printf("Must have positive number of blocks/inodes!\n");
-        exit(1);
-    }
-    else if(nINodes < NUM_TEST_INODES) {
-        printf("Must have at least %d inodes!\n", NUM_TEST_INODES);
-        exit(1);
-    }
-    
     //test makefs
     printf("Testing makefs...\n");
     FileSystem fs;
-    makefs(nDBlks, nINodes, &fs);
-    assert(fs.nBytes > 0);
-    printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
+    UINT succ = makefs(nDBlks, nINodes, &fs);
+    if(succ == 0) {
+        printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
+    }
     assert(fs.diskINodeBlkOffset == 1);
     assert(fs.diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
-    /*
+
     //test allocINode until no free inodes are left
     printf("Testing allocINode...\n");
     for(UINT i = 0; i < nINodes; i++) {
         INode testINode;
         UINT id = allocINode(&fs, &testINode);
+        printf("allocINode call %d returned ID %d\n", i, id);
         assert(id >= 0);
     }
     
     assert(fs.superblock.nFreeINodes == 0);
-    
+    /*
     //allocINode should fail gracefully when no free inodes are left
     INode testINode;
     UINT id = allocINode(&fs, &testINode);
+    printf("Invalid allocINode call returned ID %d\n", 
     assert(id == -1);
     
     //test freeINode, note that this free order is different than alloc order
@@ -63,6 +69,10 @@ int main(int args, char* argv[])
     }
     
     //temporary variables for read/write test
+    if(nINodes < NUM_TEST_INODES) {
+        printf("Must have at least %d inodes to do read/write test!\n", NUM_TEST_INODES);
+        exit(1);
+    }
     INode inodes[NUM_TEST_INODES];
     UINT inodeIds[NUM_TEST_INODES];
     for(UINT i = 0; i < NUM_TEST_INODES; i++) {

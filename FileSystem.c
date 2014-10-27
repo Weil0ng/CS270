@@ -13,12 +13,35 @@
 UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     if(DEBUG) printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs);
 	
-    //validate number of blocks and inodes
-    //num inodes divisible by inodes per block
-    //fs size < max size
-    //num blocks >= num inodes
-    //num inodes >= inode cache size
-    //num blocks >= block cache size 
+    //validate file system parameters
+    if(nDBlks <= 0 || nINodes <= 0) {
+        printf("Error: must have a positive number of data blocks/inodes!\n");
+        return 1;
+    }
+    else if(nDBlks < FREE_DBLK_CACHE_SIZE) {
+        printf("Error: must have at least %d data blocks!\n", FREE_DBLK_CACHE_SIZE);
+        return 1;
+    }
+    else if(nINodes < FREE_INODE_CACHE_SIZE) {
+        printf("Error: must have at least %d inodes!\n", FREE_INODE_CACHE_SIZE);
+        return 1;
+    }
+    else if(nINodes % INODES_PER_BLK != 0) {
+        printf("Error: inodes must divide evenly into blocks!\n");
+        return 1;
+    }
+
+    //compute file system size 
+    if(DEBUG) printf("nBytes = %d\n", (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE));
+    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
+    if(fs->nBytes > MAX_FS_SIZE) {
+        printf("Error: file system size %d exceeds max allowed size %d!\n", fs->nBytes, MAX_FS_SIZE);
+        return 1;
+    }
+    
+    //compute offsets for inode/data blocks
+    fs->diskINodeBlkOffset = 1;
+    fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
 
     //initialize in-memory superblock
     if(DEBUG) printf("Initializing in-memory superblock...\n");
@@ -38,13 +61,6 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     for(UINT i = 0; i < FREE_INODE_CACHE_SIZE; i++) {
         fs->superblock.freeINodeCache[i] = i;
     }
-
-    //compute file system size and offset for inode/data blocks
-    if(DEBUG) printf("Computing filesystem size and offsets...\n");
-    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
-    if(DEBUG) printf("nBytes = %d\n", fs->nBytes);
-    fs->diskINodeBlkOffset = 1;
-    fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
     
     //initialize the in-memory disk
     if(DEBUG) printf("Initializing in-memory disk emulator...\n");
@@ -95,6 +111,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     blockify(&fs->superblock, superblockBuf);
     writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
     fs->superblock.modified = false;
+
     return 0;
 }
 
