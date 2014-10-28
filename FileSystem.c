@@ -145,89 +145,76 @@ UINT initializeINode(INode *inode){
 }
 
 //input: none
-//output: an inode
+//output: INode id
 //function: allocate a free inode
 UINT allocINode(FileSystem* fs, INode* inode) {
 
     if(fs->superblock.nFreeINodes == 0) {
         fprintf(stderr, "error: no more free inodes available!\n");
+        return -1;
+    }
+
+    UINT nextFreeINodeID;
+
+    // the inode cache is empty
+    if(fs->superblock.pNextFreeINode < 0) {
+        
+        // scan inode list and fill the inode cache list to capacity
+        UINT nextINodeBlk = fs->diskINodeBlkOffset;
+        BYTE nextINodeBlkBuf[BLK_SIZE];
+        
+        UINT k = 0; // index in inode cache 
+        BOOL FULL = false;
+        while(nextINodeBlk < fs->diskDBlkOffset && !FULL)  {
+            
+            // read the whole block out into a byte array
+            readBlk(fs->disk, nextINodeBlk, nextINodeBlkBuf);
+            
+            // covert the byte array to INode structures
+            INode* inode_s = (INode*) nextINodeBlkBuf; 
+            
+            // check inodes one at a time
+            for(UINT i = 0; i < INODES_PER_BLK && !FULL; i++) {
+                
+                //move to the destination inode
+                INode* inode_d = inode_s + i;
+
+                // found a free inode
+                if(inode_d->_in_type == FREE) {
+                    fs->superblock.freeINodeCache[k] = (nextINodeBlk - fs->diskINodeBlkOffset) * INODES_PER_BLK + i;
+                    k ++;
+
+                    // inode cache full
+                    if(k == FREE_INODE_CACHE_SIZE) {
+                        FULL = true;
+                        fs->superblock.pNextFreeINode = FREE_INODE_CACHE_SIZE - 1;
+                    }
+                }
+            }
+            nextINodeBlk ++;
+        }
+    }
+   
+    // the inode cache not emply, allocate one inode from the cache
+    nextFreeINodeID = fs->superblock.freeINodeCache[fs->superblock.pNextFreeINode]; 
+
+    // initialize the inode
+    initializeINode(inode);
+
+    // write the inode back to disk
+    if(writeINode(fs, nextFreeINodeID, inode) == -1){
+        fprintf(stderr, "error: write inode %d to disk\n", id);
         return 1;
     }
     
-    while (true) { // continue if inode cache empty but there are free inodes in the inode table
+    // update the inode cache list
+    fs->superblock.pNextFreeINode --;
 
-        // the inode cache is empty
-        if(fs->superblock.freeINodeCache[0] < 0) {
-            assert(fs->superblock.pNextFreeINode < 0);
-            
-            // scan inode list and fill the inode cache list to capacity
-            UINT nextINodeBlk = fs->diskINodeBlkOffset;
-            BYTE nextINodeBlkBuf[BLK_SIZE];
-            
-            UINT k = 0; // index in inode cache 
-            BOOL FULL = false;
-            while(nextINodeBlk < fs->diskDBlkOffset && !FULL)  {
-                
-                // read the whole block out into a byte array
-                readBlk(fs->disk, nextINodeBlk, nextINodeBlkBuf);
-                
-                // covert the byte array to INode structures
-                INode* inode_s = (INode*) nextINodeBlkBuf; 
-                
-                // check inodes one at a time
-                for(UINT i = 0; i < INODES_PER_BLK && !FULL; i++) {
-                    
-                    //move to the destination inode
-                    INode* inode_d = inode_s + i;
+    // decrement the free inodes count
+    fs->superblock.nFreeINodes --;
 
-                    // found a free inode
-                    if(inode_d->_in_type == FREE) {
-                        fs->superblock.freeINodeCache[k] = (nextINodeBlk - fs->diskINodeBlkOffset) * INODES_PER_BLK + i;
-                        fs->superblock.pNextFreeINode = fs->superblock.freeINodeCache[k];
-                        k ++;
+    return nextFreeINodeID;
 
-                        // inode cache full
-                        if(k == FREE_INODE_CACHE_SIZE) {
-                            FULL = true;
-                        }
-                    }
-                }
-                nextINodeBlk ++;
-            }
-        }
-        // the inode cache not emply, allocate one inode from the cache
-        else {
-            // read the next free inode from the inode table
-            readINode(fs, fs->superblock.pNextFreeINode, inode);
-
-            if(inode->_in_type != FREE) {
-                fprintf(stderr, "inode not free after all!\n");
-                return 1;
-            }
-
-            // update the inode cache list
-            for (UINT i = 0; i < FREE_INODE_CACHE_SIZE; i ++) {
-                if(fs->superblock.freeINodeCache[i] == fs->superblock.pNextFreeINode) {
-                    fs->superblock.freeINodeCache[i] = -1; 
-                    if(i == 0) {
-                        // the entire inode cache becomes empty
-                        fs->superblock.pNextFreeINode = -1;
-                    }
-                    else {
-                        fs->superblock.pNextFreeINode = fs->superblock.freeINodeCache[i-1];
-                    }
-                }
-            }
-
-            // initialize the inode
-            initializeINode(inode);
-
-            // decrement the free inodes count
-            fs->superblock.nFreeINodes --;
-            return 0;
-
-        }
-    }
 }
 
 // input: inode number
@@ -236,24 +223,18 @@ UINT allocINode(FileSystem* fs, INode* inode) {
 UINT freeINode(FileSystem* fs, UINT id) {
 
     // if inode cache not full, store the inode number in the list
-    BOOL FIND = false;
-    for (UINT i = 0; i < FREE_INODE_CACHE_SIZE && !FIND; i ++) {
-        if(fs->superblock.freeINodeCache[i] == -1) {
-            fs->superblock.freeINodeCache[i] = id;
-            FIND = true;
-        }
+    if (fs->superblock.pNextFreeINode < FREE_INODE_CACHE_SIZE - 1){
+        fs->superblock.freeINodeCache[fs->superblock.pNextFreeINode + 1] = id;
+        fs->superblock.pNextFreeINode ++;
     }
 
     // update the inode table to mark the inode free
-    INode * inode;
-    if(readINode(fs, id, inode) == -1) {
-        fprintf(stderr, "error: read inode %d from disk\n", id);
-        return 1;
-    }
-    inode->_in_type = FREE;
-    if(writeINode(fs, id, inode) == -1){
+    INode inode;
+    inode._in_type = FREE;
+    
+    if(writeINode(fs, id, &inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", id);
-        return 1;
+        return -1;
     }
     
     // increase file system free inode count
@@ -273,11 +254,29 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     BYTE INodeBlkBuf[BLK_SIZE];
     if(readBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
         fprintf(stderr, "error: read blk %d from disk\n", blk_num);
-        return 1;
+        return -1;
     }
                 
     INode* inode_s = (INode*) INodeBlkBuf; 
-    inode = inode_s + blk_offset;
+    // find the inode to read
+    INode* inode_d = inode_s + blk_offset;
+    
+    // asssign struct field from the buffer to the inode
+    inode->_in_type = inode_d->_in_type;
+    inode->_in_owner = inode_d->_in_owner;
+    inode->_in_permissions = inode_d->_in_permissions;
+    inode->_in_modtime =  inode_d->_in_modtime;
+    inode->_in_accesstime = inode_d->_in_accesstime;
+    inode->_in_filesize = inode_d->_in_filesize;
+    for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
+        inode->_in_directBlocks[i] = inode_d->_in_directBlocks[i];
+    }
+    for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
+        inode->_in_sIndirectBlocks[i] = inode_d->_in_sIndirectBlocks[i];
+    }
+    for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
+        inode->_in_dIndirectBlocks[i] = inode_d->_in_dIndirectBlocks[i];
+    }
 
     return 0;
 }
@@ -292,7 +291,7 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     BYTE INodeBlkBuf[BLK_SIZE];
     if(readBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
         fprintf(stderr, "error: read blk %d from disk\n", blk_num);
-        return 1;
+        return -1;
     }
     
     INode* inode_s = (INode*) INodeBlkBuf; 
@@ -305,7 +304,7 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     inode_d->_in_permissions = inode->_in_permissions;
     inode_d->_in_modtime =  inode->_in_modtime;
     inode_d->_in_accesstime = inode->_in_accesstime;
-    inode_d->_in_filesize = inode_d->_in_filesize;
+    inode_d->_in_filesize = inode->_in_filesize;
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
         inode_d->_in_directBlocks[i] = inode->_in_directBlocks[i];
     }
@@ -318,8 +317,8 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 
     // write the entire inode block back to disk
     if(writeBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
-        fprintf(stderr, "error: read blk %d from disk\n", blk_num);
-        return 1;
+        fprintf(stderr, "error: write blk %d from disk\n", blk_num);
+        return -1;
     }
     
     return 0;
