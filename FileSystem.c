@@ -204,7 +204,7 @@ UINT allocINode(FileSystem* fs, INode* inode) {
     // write the inode back to disk
     if(writeINode(fs, nextFreeINodeID, inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", nextFreeINodeID);
-        return 1;
+        return -1;
     }
     
     // update the inode cache list
