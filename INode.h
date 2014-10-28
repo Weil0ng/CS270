@@ -45,3 +45,4 @@ typedef struct INode {
 
 } INode;
 
+void printINode(INode*);

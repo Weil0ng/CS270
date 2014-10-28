@@ -48,3 +48,5 @@ typedef struct SuperBlock
 //writes disk fields of superblock into a block-sized buffer
 //note: exactly BLK_SIZE bytes of memory must be allocated for buf
 UINT blockify(SuperBlock*, BYTE* buf);
+
+void printSuperBlock(SuperBlock*);

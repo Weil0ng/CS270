@@ -13,12 +13,8 @@
 #define NUM_TEST_INODES (1)
 #define TEST_OWNER (999)
 
-void printSuperblock(FileSystem* fs) {
-
-}
-
 void printINodes(FileSystem* fs) {
-
+    
 }
 
 void printDBlks(FileSystem* fs) {
@@ -44,14 +40,15 @@ int main(int args, char* argv[])
     }
     assert(fs.diskINodeBlkOffset == 1);
     assert(fs.diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
+    printSuperBlock(&fs.superblock);
 
     //test allocINode until no free inodes are left
     printf("Testing allocINode...\n");
     for(UINT i = 0; i < nINodes; i++) {
         INode testINode;
-        UINT id = allocINode(&fs, &testINode);
-        printf("allocINode call %d returned ID %d\n", i, id);
-        assert(id >= 0);
+        UINT succ = allocINode(&fs, &testINode);
+        if(succ) printf("allocINode call %d returned ID %d\n", i, testINode._in_id);
+        assert(testINode._in_id >= 0);
     }
     
     assert(fs.superblock.nFreeINodes == 0);
