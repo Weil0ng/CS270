@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define DEBUG (1)
+#ifndef DEBUG
+#define DEBUG
+#endif
 
 //Architecture specific
 #define UINT uint32_t
