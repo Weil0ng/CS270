@@ -3,21 +3,21 @@
  */
 
 #include "Globals.h"
-//#include "FileSystem.h"
 
 enum FILE_TYPE {
-        FREE,
-        REGULAR,
-        DIRECTORY
+        FREE = -1,
+        INIT = 1,
+        REGULAR = 2,
+        DIRECTORY = 3
 };
 
 typedef struct INode {
 
 	//disk fields
 
-	UINT _in_owner;
-
 	enum FILE_TYPE _in_type;
+
+	UINT _in_owner;
 
 	UINT _in_permissions;
 
@@ -45,4 +45,5 @@ typedef struct INode {
 
 } INode;
 
+// prints an inode out for debugging
 void printINode(INode*);

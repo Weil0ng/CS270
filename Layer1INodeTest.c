@@ -13,14 +13,6 @@
 #define NUM_TEST_INODES (1)
 #define TEST_OWNER (999)
 
-void printINodes(FileSystem* fs) {
-    
-}
-
-void printDBlks(FileSystem* fs) {
-
-}
-
 int main(int args, char* argv[])
 {
     if (args < 3) {
@@ -38,11 +30,24 @@ int main(int args, char* argv[])
     if(succ == 0) {
         printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
     }
+    //printDisk(fs.disk);
+    printf("\nSuperblock:\n");
+    printSuperBlock(&fs.superblock);
+    printf("\nINodes:\n");
+    printINodes(&fs);
+    printf("\nData blocks:\n");
+    printDBlks(&fs);
+    printf("\nFree inode cache:\n");
+    printFreeINodeCache(&fs.superblock);
+    printf("\nFree data block cache:\n");
+    printFreeDBlkCache(&fs.superblock);
+    printf("\n");
+
     assert(fs.diskINodeBlkOffset == 1);
     assert(fs.diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
-    printSuperBlock(&fs.superblock);
 
     //test allocINode until no free inodes are left
+    /*
     printf("Testing allocINode...\n");
     for(UINT i = 0; i < nINodes; i++) {
         INode testINode;
@@ -52,7 +57,7 @@ int main(int args, char* argv[])
     }
     
     assert(fs.superblock.nFreeINodes == 0);
-    /*
+    
     //allocINode should fail gracefully when no free inodes are left
     INode testINode;
     UINT id = allocINode(&fs, &testINode);

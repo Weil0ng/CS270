@@ -65,3 +65,12 @@ UINT writeDBlk(FileSystem*, UINT, BYTE*);
 // converts file byte offset in inode to logical block ID
 UINT bmap(FileSystem* fs, INode* inode, UINT offset, UINT* cvt_blk_num);
 
+#ifdef DEBUG
+// prints all the inodes for debugging
+void printINodes(FileSystem*);
+#endif
+
+#ifdef DEBUG
+// prints all the data blocks for debugging
+void printDBlks(FileSystem*);
+#endif

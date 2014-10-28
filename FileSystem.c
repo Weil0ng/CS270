@@ -36,14 +36,15 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
 
     //compute file system size 
+    UINT nBytes = BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE;
     #ifdef DEBUG 
-    printf("nBytes = %d\n", (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE)); 
+    printf("nBytes = %d\n", nBytes); 
     #endif
-    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
-    if(fs->nBytes > MAX_FS_SIZE) {
-        printf("Error: file system size %d exceeds max allowed size %d!\n", fs->nBytes, MAX_FS_SIZE);
+    if(nBytes > MAX_FS_SIZE) {
+        printf("Error: file system size %d exceeds max allowed size %d!\n", nBytes, MAX_FS_SIZE);
         return 1;
     }
+    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
     
     //compute offsets for inode/data blocks
     fs->diskINodeBlkOffset = 1;
@@ -84,18 +85,20 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     printf("Creating disk inode list...\n"); 
     #endif
     UINT nextINodeId = 0;
-    UINT nextINodeBlk = fs->diskINodeBlkOffset;
-    INode nextINodeBlkBuf[INODES_PER_BLK];
+    UINT nextINodeBlkId = fs->diskINodeBlkOffset;
+    BYTE nextINodeBlkBuf[INODES_PER_BLK * INODE_SIZE] = {}; //note that this zeroes out the buffer
 
-    while(nextINodeBlk < fs->diskDBlkOffset) {
+    while(nextINodeBlkId < fs->diskDBlkOffset) {
         //fill inode blocks one at a time
         for(UINT i = 0; i < INODES_PER_BLK; i++) {
-            nextINodeBlkBuf[i]._in_id = 1;
-            nextINodeBlkBuf[i]._in_type = FREE;
+            INode* inode = (INode*) &nextINodeBlkBuf[i * INODE_SIZE];
+            inode->_in_id = nextINodeId++;
+            inode->_in_type = FREE;
         }
 
-        writeBlk(fs->disk, nextINodeBlk, (BYTE*) nextINodeBlkBuf);
-        nextINodeBlk++;
+        writeBlk(fs->disk, nextINodeBlkId, nextINodeBlkBuf);
+
+        nextINodeBlkId++;
     }
 
     //create free block list on disk
@@ -120,7 +123,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     }
     
     //load free block cache into superblock
-    
+    readDBlk(fs, fs->superblock.pFreeDBlksHead, fs->superblock.freeDBlkCache);
 
     //write superblock to disk
     #ifdef DEBUG 
@@ -275,10 +278,9 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
         fprintf(stderr, "error: read blk %d from disk\n", blk_num);
         return -1;
     }
-                
-    INode* inode_s = (INode*) INodeBlkBuf; 
+
     // find the inode to read
-    INode* inode_d = inode_s + blk_offset;
+    INode* inode_d = (INode*) (INodeBlkBuf + blk_offset * INODE_SIZE);
     
     // asssign struct field from the buffer to the inode
     inode->_in_type = inode_d->_in_type;
@@ -296,6 +298,12 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode->_in_dIndirectBlocks[i] = inode_d->_in_dIndirectBlocks[i];
     }
+
+    //TODO: set id to parameter id instead of reading it (just making sure disk read is working properly for now)
+    inode->_in_id = inode_d->_in_id;
+
+    //TODO: reset refcount instead of reading it (just making sure disk read is working properly for now)
+    inode->_in_refcount = inode_d->_in_refcount;
 
     return 0;
 }
@@ -365,17 +373,17 @@ UINT allocDBlk(FileSystem* fs) {
 
     //2. check pNextFreeDBlk
     if (fs->superblock.pNextFreeDBlk != 0) {
-        returnID = (fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk];
+        returnID = (fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk];
         // mark it as allocated
-        (fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk] = -1;
+        (fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk] = -1;
     }
     else {
         //alloc this very block
         returnID = fs->superblock.pFreeDBlksHead;
 	//move head
-	fs->superblock.pFreeDBlksHead = (fs->superblock.freeDBlks)[0];
+	fs->superblock.pFreeDBlksHead = (fs->superblock.freeDBlkCache)[0];
 	//load cache
-	readDBlk(fs, fs->superblock.pFreeDBlksHead, fs->superblock.freeDBlks);
+	readDBlk(fs, fs->superblock.pFreeDBlksHead, fs->superblock.freeDBlkCache);
 	//move pNextFreeDBlk
 	fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
     }
@@ -398,11 +406,11 @@ UINT freeDBlk(FileSystem* fs, UINT id) {
     // if current cache is full
     if (fs->superblock.pNextFreeDBlk == FREE_DBLK_CACHE_SIZE - 1) {
 	//write cache back
-	writeDBlk(fs, fs->superblock.pFreeDBlksHead, &(fs->superblock.freeDBlks));
+	writeDBlk(fs, fs->superblock.pFreeDBlksHead, &(fs->superblock.freeDBlkCache));
 	//init cache
-	(fs->superblock.freeDBlks)[0] = fs->superblock.pFreeDBlksHead;
+	(fs->superblock.freeDBlkCache)[0] = fs->superblock.pFreeDBlksHead;
 	for (UINT i=1; i<FREE_DBLK_CACHE_SIZE - 1; i++)
-	    (fs->superblock.freeDBlks)[i] = -1;
+	    (fs->superblock.freeDBlkCache)[i] = -1;
 	//move pNextFreeDBlk
 	fs->superblock.pNextFreeDBlk = 0;
 	//move head
@@ -410,7 +418,7 @@ UINT freeDBlk(FileSystem* fs, UINT id) {
     }
     else {
 	fs->superblock.pNextFreeDBlk ++;
-	(fs->superblock.freeDBlks)[fs->superblock.pNextFreeDBlk] = id;
+	(fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk] = id;
     }
     fs->superblock.nFreeDBlks ++;
     return 0;
@@ -507,3 +515,27 @@ UINT bmap(FileSystem* fs, INode* inode, UINT offset, UINT* cvt_blk_num){
     }
     return 0;
 }
+
+#ifdef DEBUG
+void printINodes(FileSystem* fs) {
+    for(UINT i = 0; i < fs->superblock.nINodes; i++) {
+        INode inode;
+        readINode(fs, i, &inode);
+        printINode(&inode);
+    }
+}
+#endif
+
+#ifdef DEBUG
+void printDBlks(FileSystem* fs) {
+    for(UINT i = 0; i < fs->superblock.nDBlks; i++) {
+        BYTE buf[BLK_SIZE];
+        readDBlk(fs, i, buf);
+        printf("%d\t| ", i);
+        for(UINT k = 0; k < BLK_SIZE; k+=4) {
+            printf("%d ", buf[k]);
+        }
+        printf("\n");
+    }
+}
+#endif

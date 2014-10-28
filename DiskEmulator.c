@@ -96,3 +96,24 @@ void dumpDisk(DiskArray *disk)
   return;
 }
 #endif
+
+#ifdef DEBUG
+void printDisk(DiskArray *disk)
+{
+  for (UINT i=0; i<disk->_dsk_numBlk; i++) {
+    printf("%d\t| ", i);
+    printBlk(disk, i);
+  }
+}
+#endif
+
+#ifdef DEBUG
+void printBlk(DiskArray *disk, UINT bid)
+{
+  BYTE buf[BLK_SIZE];
+  readBlk(disk, bid, buf);
+  for (UINT i=0; i<BLK_SIZE; i+=4)
+    printf("%d ", buf[i]);
+  printf("\n");
+}
+#endif
