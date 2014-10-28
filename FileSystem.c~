@@ -11,12 +11,9 @@
 #include <time.h>
 
 UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
-    #ifdef DEBUG 
-    printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
-    #endif
+    if(DEBUG) printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs);
 	
     //validate file system parameters
-    #ifndef DEBUG
     if(nDBlks <= 0 || nINodes <= 0) {
         printf("Error: must have a positive number of data blocks/inodes!\n");
         return 1;
@@ -33,12 +30,9 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         printf("Error: inodes must divide evenly into blocks!\n");
         return 1;
     }
-    #endif
 
     //compute file system size 
-    #ifdef DEBUG 
-    printf("nBytes = %d\n", (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE)); 
-    #endif
+    if(DEBUG) printf("nBytes = %d\n", (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE));
     fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
     if(fs->nBytes > MAX_FS_SIZE) {
         printf("Error: file system size %d exceeds max allowed size %d!\n", fs->nBytes, MAX_FS_SIZE);
@@ -50,9 +44,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
 
     //initialize in-memory superblock
-    #ifdef DEBUG 
-    printf("Initializing in-memory superblock...\n"); 
-    #endif
+    if(DEBUG) printf("Initializing in-memory superblock...\n");
     fs->superblock.nDBlks = nDBlks;
     fs->superblock.nFreeDBlks = nDBlks;
     fs->superblock.pFreeDBlksHead = 0;
@@ -65,24 +57,18 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->superblock.modified = true;
 
     //initialize superblock free inode cache
-    #ifdef DEBUG 
-    printf("Initializing superblock free inode cache...\n");
-    #endif
+    if(DEBUG) printf("Initializing superblock free inode cache...\n");
     for(UINT i = 0; i < FREE_INODE_CACHE_SIZE; i++) {
         fs->superblock.freeINodeCache[i] = i;
     }
     
     //initialize the in-memory disk
-    #ifdef DEBUG 
-    printf("Initializing in-memory disk emulator...\n"); 
-    #endif
+    if(DEBUG) printf("Initializing in-memory disk emulator...\n");
     fs->disk = malloc(sizeof(DiskArray));
     initDisk(fs->disk, fs->nBytes);
 
     //create inode list on disk
-    #ifdef DEBUG 
-    printf("Creating disk inode list...\n"); 
-    #endif
+    if(DEBUG) printf("Creating disk inode list...\n");
     UINT nextINodeId = 0;
     UINT nextINodeBlk = fs->diskINodeBlkOffset;
     INode nextINodeBlkBuf[INODES_PER_BLK];
@@ -90,7 +76,6 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     while(nextINodeBlk < fs->diskDBlkOffset) {
         //fill inode blocks one at a time
         for(UINT i = 0; i < INODES_PER_BLK; i++) {
-            nextINodeBlkBuf[i]._in_id = 1;
             nextINodeBlkBuf[i]._in_type = FREE;
         }
 
@@ -99,9 +84,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     }
 
     //create free block list on disk
-    #ifdef DEBUG 
-    printf("Creating disk free block list...\n"); 
-    #endif
+    if(DEBUG) printf("Creating disk free block list...\n");
     UINT nextListBlk = 0;
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
     
@@ -123,9 +106,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     
 
     //write superblock to disk
-    #ifdef DEBUG 
-    printf("Writing superblock to disk...\n"); 
-    #endif
+    if(DEBUG) printf("Writing superblock to disk...\n");
     BYTE superblockBuf[BLK_SIZE];
     blockify(&fs->superblock, superblockBuf);
     writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
@@ -223,7 +204,7 @@ UINT allocINode(FileSystem* fs, INode* inode) {
     // write the inode back to disk
     if(writeINode(fs, nextFreeINodeID, inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", nextFreeINodeID);
-        return -1;
+        return 1;
     }
     
     // update the inode cache list

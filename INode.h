@@ -27,11 +27,11 @@ typedef struct INode {
 
 	UINT _in_filesize;
 
-	INT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
+	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
-	INT _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
+	UINT _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
 
-	INT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
+	UINT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
 
 	//memory fields
         
