@@ -236,14 +236,16 @@ UINT allocINode(FileSystem* fs, INode* inode) {
                 if(inode_d->_in_type == FREE) {
                     fs->superblock.freeINodeCache[k] = (nextINodeBlk - fs->diskINodeBlkOffset) * INODES_PER_BLK + i;
                     k ++;
+                        
+                    fs->superblock.pNextFreeINode ++;
 
                     // inode cache full
                     if(k == FREE_INODE_CACHE_SIZE) {
                         FULL = true;
-                        fs->superblock.pNextFreeINode = FREE_INODE_CACHE_SIZE - 1;
                     }
                 }
             }
+            
             nextINodeBlk ++;
         }
     }
