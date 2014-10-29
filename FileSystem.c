@@ -109,12 +109,26 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
     
     while(nextListBlk < fs->superblock.nDBlks) {
-        //special case: next head pointer goes in first entry
-        freeDBlkList[0] = nextListBlk + FREE_DBLK_CACHE_SIZE;
+        //special case: not enough data blocks to fill another cache block
+        if(fs->superblock.nDBlks <= nextListBlk + FREE_DBLK_CACHE_SIZE) {
+            UINT remaining = fs->superblock.nDBlks - nextListBlk;
+            UINT offset = FREE_DBLK_CACHE_SIZE - remaining;
+            for(int i = 0; i < offset; i++) {
+                freeDBlkList[i] = -1;
+            }
+            for(int i = offset; i < FREE_DBLK_CACHE_SIZE; i++) {
+                freeDBlkList[i] = nextListBlk + i - offset;
+            }
+        }
+        //typical case: fill next cache block
+        else {
+            //next head pointer goes in first entry
+            freeDBlkList[0] = nextListBlk + FREE_DBLK_CACHE_SIZE;
 
-        //rest of free blocks are enumerated in order
-        for(UINT i = 1; i < FREE_DBLK_CACHE_SIZE; i++) {
-            freeDBlkList[i] = nextListBlk + i;
+            //rest of free blocks are enumerated in order
+            for(UINT i = 1; i < FREE_DBLK_CACHE_SIZE; i++) {
+                freeDBlkList[i] = nextListBlk + i;
+            }
         }
 
         //write completed block and advance to next head
@@ -533,7 +547,8 @@ void printDBlks(FileSystem* fs) {
         readDBlk(fs, i, buf);
         printf("%d\t| ", i);
         for(UINT k = 0; k < BLK_SIZE; k+=4) {
-            printf("%d ", buf[k]);
+            UINT* val = buf + k;
+            printf("%d ", *val);
         }
         printf("\n");
     }
