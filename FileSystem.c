@@ -172,7 +172,7 @@ UINT destroyfs(FileSystem* fs) {
     return 0;
 }
 
-UINT initializeINode(INode *inode, UINT id){
+UINT initializeINode(FileSystem *fs, INode *inode, UINT id){
     inode->_in_type = INIT;
     //FIXME: shall we make owner string?
     inode->_in_owner = 0;
@@ -225,15 +225,12 @@ UINT allocINode(FileSystem* fs, INode* inode) {
             
             // read the whole block out into a byte array
             readBlk(fs->disk, nextINodeBlk, nextINodeBlkBuf);
-            
-            // covert the byte array to INode structures
-            INode* inode_s = (INode*) nextINodeBlkBuf; 
-            
+
             // check inodes one at a time
             for(UINT i = 0; i < INODES_PER_BLK && !FULL; i++) {
                 
-                //move to the destination inode
-                INode* inode_d = inode_s + i;
+                // cast the byte array to INode structures
+                INode* inode_d = (INode*) (nextINodeBlkBuf + i*INODE_SIZE);
 
                 // found a free inode
                 if(inode_d->_in_type == FREE) {
@@ -253,10 +250,10 @@ UINT allocINode(FileSystem* fs, INode* inode) {
    
     // the inode cache not emply, allocate one inode from the cache
     nextFreeINodeID = fs->superblock.freeINodeCache[fs->superblock.pNextFreeINode]; 
-
+    
     // initialize the inode
-    initializeINode(inode, nextFreeINodeID);
-
+    initializeINode(fs, inode, nextFreeINodeID);
+    
     // write the inode back to disk
     if(writeINode(fs, nextFreeINodeID, inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", nextFreeINodeID);
@@ -355,9 +352,9 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
         return -1;
     }
     
-    INode* inode_s = (INode*) INodeBlkBuf; 
+    //INode* inode_s = (INode*) INodeBlkBuf; 
     // find the inode to write
-    INode *inode_d = inode_s + blk_offset;
+    INode *inode_d = (INode*) (INodeBlkBuf + blk_offset * INODE_SIZE);
 
     // replace the inode
     inode_d->_in_type = inode->_in_type;
