@@ -15,6 +15,7 @@
 
 int main(int args, char* argv[])
 {
+#ifdef DEBUG
     if (args < 3) {
         printf("Not enough arguments!\n");
         exit(1);
@@ -24,7 +25,7 @@ int main(int args, char* argv[])
     UINT nINodes = atoi(argv[2]);
     
     //test makefs
-    printf("Testing makefs...\n");
+    printf("\nTesting makefs...\n");
     FileSystem fs;
     UINT succ = makefs(nDBlks, nINodes, &fs);
     if(succ == 0) {
@@ -41,35 +42,36 @@ int main(int args, char* argv[])
     printFreeINodeCache(&fs.superblock);
     printf("\nFree data block cache:\n");
     printFreeDBlkCache(&fs.superblock);
-    printf("\n");
 
     assert(fs.diskINodeBlkOffset == 1);
     assert(fs.diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
 
     //test allocINode until no free inodes are left
-    /*
-    printf("Testing allocINode...\n");
+    printf("\nTesting allocINode...\n");
     for(UINT i = 0; i < nINodes; i++) {
         INode testINode;
-        UINT succ = allocINode(&fs, &testINode);
-        if(succ) printf("allocINode call %d returned ID %d\n", i, testINode._in_id);
-        assert(testINode._in_id >= 0);
+        UINT id = allocINode(&fs, &testINode);
+        printf("allocINode call %d returned ID %d\n", i, id);
+        printINode(&testINode);
     }
-    
+
     assert(fs.superblock.nFreeINodes == 0);
-    
+
     //allocINode should fail gracefully when no free inodes are left
     INode testINode;
     UINT id = allocINode(&fs, &testINode);
-    printf("Invalid allocINode call returned ID %d\n", 
+    printf("Invalid allocINode call returned ID %d\n", id);
     assert(id == -1);
-    
+
     //test freeINode, note that this free order is different than alloc order
-    printf("Testing freeINode...\n");
+    printf("\nTesting freeINode...\n");
     for(UINT i = 0; i < nINodes;i++) {
-        freeINode(&fs, i);
+        printf("Freeing inode id: %d\n", i);
+        UINT succ = freeINode(&fs, i);
+        assert(succ == 0);
+        printINodes(&fs);
     }
-    
+    /*
     //temporary variables for read/write test
     if(nINodes < NUM_TEST_INODES) {
         printf("Must have at least %d inodes to do read/write test!\n", NUM_TEST_INODES);
@@ -82,7 +84,7 @@ int main(int args, char* argv[])
     }
     
     //test allocINode
-    printf("Testing allocINode part 2...\n");
+    printf("\nTesting allocINode part 2...\n");
     for(UINT i = 0; i < NUM_TEST_INODES; i++) {
         inodeIds[i] = allocINode(&fs, &inodes[i]);
         assert(inodeIds[i] >= 0);
@@ -94,7 +96,7 @@ int main(int args, char* argv[])
     }
     
     //test writeINode
-    printf("Testing writeINode...\n");
+    printf("\nTesting writeINode...\n");
     for(int i = 0; i < NUM_TEST_INODES; i++) {
         INode testINode;
         testINode._in_owner = TEST_OWNER; 
@@ -104,7 +106,7 @@ int main(int args, char* argv[])
     }
     
     //test readINode
-    printf("Testing readINode...\n");
+    printf("\nTesting readINode...\n");
     for(int i = 0; i < NUM_TEST_INODES; i++) {
         INode testINode;
         
@@ -114,8 +116,10 @@ int main(int args, char* argv[])
     }
     */
     
-    printf("Testing destroyfs...\n");
-    destroyfs(&fs);
+    printf("\nTesting destroyfs...\n");
+    succ = destroyfs(&fs);
+    assert(succ == 0);
 
+#endif
     return 0;
 }            
