@@ -89,8 +89,8 @@ void dumpDisk(DiskArray *disk)
   BYTE buf[BLK_SIZE];
   for (UINT i=0; i<disk->_dsk_numBlk; i++) {
 	readBlk(disk, i, buf);
-	for (UINT j=0; j<BLK_SIZE; j+=4)
-	    fprintf(dumpFile, "%d ", *(buf+j));
+	for (UINT j=0; j<(BLK_SIZE/sizeof(UINT)); j+=4)
+	    fprintf(dumpFile, "%x ", *((UINT *)buf+j));
 	fprintf(dumpFile, "\n");
   }
   return;

@@ -42,8 +42,6 @@ int main(int args, char* argv[])
 
   memset(writeBuf, 0xff, 1024);
   
-  readBlk(&disk, 0, readBuf);
-
   writeBlk(&disk, 1, writeBuf); 
   writeBlk(&disk, 2, writeBuf + BLK_SIZE);  
 
