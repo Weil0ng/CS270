@@ -23,11 +23,6 @@ typedef struct
 //      size
 void initDisk(DiskArray *, UINT);
 
-#ifdef DEBUG
-//dump the disk to a per block file
-void dumpDisk();
-#endif
-
 //destroy the in-memory disk array
 void destroyDisk(DiskArray *);
 
@@ -44,3 +39,18 @@ UINT readBlk(DiskArray *, UINT, BYTE *);
 //      block id, 
 //      content buf
 UINT writeBlk(DiskArray *, UINT, BYTE *);
+
+#ifdef DEBUG
+//dump the disk to a per block file
+void dumpDisk();
+#endif
+
+#ifdef DEBUG
+//prints the disk for debugging
+void printDisk(DiskArray *);
+#endif
+
+#ifdef DEBUG
+//prints a block for debugging
+void printBlk(DiskArray *, UINT);
+#endif

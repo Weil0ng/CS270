@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=c99 -g
-OBJS=DiskEmulator.o FileSystem.o SuperBlock.o Utility.o
+OBJS=DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o
 
 test: $(OBJS) Layer0Test Layer1INodeTest
 

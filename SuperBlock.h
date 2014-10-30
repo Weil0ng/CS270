@@ -36,7 +36,7 @@ typedef struct SuperBlock
   /* in-memory fields */
 
   //SuperBlock cache of free data block list
-  UINT freeDBlks[FREE_DBLK_CACHE_SIZE];
+  UINT freeDBlkCache[FREE_DBLK_CACHE_SIZE];
 
   //Modified bit
   BOOL modified;
@@ -45,6 +45,21 @@ typedef struct SuperBlock
 
 } SuperBlock;
 
-//writes disk fields of superblock into a block-sized buffer
-//note: exactly BLK_SIZE bytes of memory must be allocated for buf
+// writes disk fields of superblock into a block-sized buffer
+// note: exactly BLK_SIZE bytes of memory must be allocated for buf
 UINT blockify(SuperBlock*, BYTE* buf);
+
+#ifdef DEBUG
+// prints out a superblock for debugging
+void printSuperBlock(SuperBlock*);
+#endif
+
+#ifdef DEBUG
+// prints out the free inode cache for debugging
+void printFreeINodeCache(SuperBlock*);
+#endif
+
+#ifdef DEBUG
+// prints out the free data block cache for debugging
+void printFreeDBlkCache(SuperBlock*);
+#endif
