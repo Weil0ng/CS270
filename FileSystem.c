@@ -101,13 +101,13 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
     UINT nextINodeId = 0;
     UINT nextINodeBlkId = fs->diskINodeBlkOffset;
-    BYTE nextINodeBlkBuf[INODES_PER_BLK * INODE_SIZE] = {}; //note that this zeroes out the buffer
+    BYTE nextINodeBlkBuf[INODES_PER_BLK * INODE_SIZE]; //note that this zeroes out the buffer
 
     while(nextINodeBlkId < fs->diskDBlkOffset) {
         //fill inode blocks one at a time
         for(UINT i = 0; i < INODES_PER_BLK; i++) {
             INode* inode = (INode*) &nextINodeBlkBuf[i * INODE_SIZE];
-            inode->_in_id = nextINodeId++;
+            initializeINode(inode, nextINodeId++);
             inode->_in_type = FREE;
         }
 
@@ -172,34 +172,6 @@ UINT destroyfs(FileSystem* fs) {
     return 0;
 }
 
-UINT initializeINode(FileSystem *fs, INode *inode, UINT id){
-    inode->_in_type = INIT;
-    //FIXME: shall we make owner string?
-    inode->_in_owner = 0;
-    inode->_in_permissions = 777;
-    //TODO: get time
-    //inode->_in_modtime = get_time();
-    //inode->_in_accesstime = get_time();
-    inode->_in_filesize = 0;
-
-    //since we are storing logical data blk id, 0 could be a valid blk
-    for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
-        inode->_in_directBlocks[i] = -1;
-    }
-    for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
-        inode->_in_sIndirectBlocks[i] = -1;
-    }
-    for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
-        inode->_in_dIndirectBlocks[i] = -1;
-    }
-    
-    //initialize in-memory fields
-    inode->_in_id = id;
-    inode->_in_refcount = 0;
-
-    return 0;
-}
-
 //input: none
 //output: INode id
 //function: allocate a free inode
@@ -254,7 +226,7 @@ UINT allocINode(FileSystem* fs, INode* inode) {
     nextFreeINodeID = fs->superblock.freeINodeCache[fs->superblock.pNextFreeINode]; 
     
     // initialize the inode
-    initializeINode(fs, inode, nextFreeINodeID);
+    initializeINode(inode, nextFreeINodeID);
     
     // write the inode back to disk
     if(writeINode(fs, nextFreeINodeID, inode) == -1){
@@ -285,6 +257,7 @@ UINT freeINode(FileSystem* fs, UINT id) {
 
     // update the inode table to mark the inode free
     INode inode;
+    initializeINode(&inode, id);
     inode._in_type = FREE;
     
     if(writeINode(fs, id, &inode) == -1){

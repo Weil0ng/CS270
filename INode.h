@@ -45,5 +45,7 @@ typedef struct INode {
 
 } INode;
 
+UINT initializeINode(INode*, UINT);
+
 // prints an inode out for debugging
 void printINode(INode*);
