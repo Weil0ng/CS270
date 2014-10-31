@@ -10,6 +10,7 @@ typedef enum{
   _dsk_readOutOfBoundry,
   _dsk_writeOutOfBoundry,
   _fs_DBlkOutOfNumber,
+  _fs_NonDirInPath,
 } ERROR;
 
 extern ERROR _err_last;    

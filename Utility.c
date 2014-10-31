@@ -26,6 +26,10 @@ void THROW()
     printf("No more free data block on disk!\n");
     break;
   }
+  case _fs_NonDirInPath: {
+    printf("Wrong path, containing non-dir type file!\n");
+    break;
+  }
   default: break;
   }
   return;

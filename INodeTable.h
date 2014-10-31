@@ -1,27 +1,18 @@
-// This is the in-memory inode table
-// // Each entry is an instance/index of an inode in buffer (or on disk)
-//
+// This is the in core INodeTable
+
 #include "Globals.h"
-#include "Utility.h"
+#include "INodeTableEntry.h"
+#include "FileSystem.h"
 
-struct INodeEntry {
-// __index property__
-     
-//inode id of this entry
-  UINT _in_id;
-           
+struct INodeTable {
+  FileSystem *fs;
 
-// __instance property__
-
-//ref count of this entry
-  UINT _in_ref;
-                   
-//pointer to previous entry, head points to NULL
-  INodeEntry *prev;
-
-//pointer to next entry, tail points to NULL
-  INodeEntry *next;
+  INodeTableEntry *[INODE_TABLE_LENGTH] hashQ;
 };
 
 //interface to layer2 funcs, pass back the pointer to an INodeEntry, return status
-BOOL getINodeEntry(INodeEntry *);
+//args: table, inode id, return pointer to entry
+BOOL getINodeEntry(INodeTable *, UINT, INodeEntry *);
+
+//resolve path to inode id
+UINT namei(char *);
