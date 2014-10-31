@@ -132,6 +132,7 @@ int main(int args, char* argv[])
 
     //test group readINode
     printf("\n==== readINode ====\n");
+        
     for(int i = 0; i < NUM_TEST_INODES; i++) {
         INode testINode;
         

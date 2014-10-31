@@ -276,6 +276,7 @@ UINT freeINode(FileSystem* fs, UINT id) {
 // output: the pointer to the inode
 // function: read a disk inode
 UINT readINode(FileSystem* fs, UINT id, INode* inode) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
 
@@ -318,6 +319,7 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
 // output: none
 // function: write the disk inode #id in the inode table
 UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
     
@@ -434,6 +436,7 @@ UINT freeDBlk(FileSystem* fs, UINT id) {
 // 1. convert logical id of DBlk to logical id of disk block
 // 2. read data
 UINT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
 
@@ -443,6 +446,7 @@ UINT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
 // dBlkId: the data block logical id (not raw logical id!)
 // buf: the buffer to write (must be exactly block-sized)
 UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return writeBlk(fs->disk, bid, buf);
 }
