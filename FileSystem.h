@@ -68,9 +68,10 @@ UINT bmap(FileSystem* fs, INode* inode, UINT offset, UINT* cvt_blk_num);
 #ifdef DEBUG
 // prints all the inodes for debugging
 void printINodes(FileSystem*);
-#endif
 
-#ifdef DEBUG
+//prints a data block as ints for debugging
+void printDBlk(BYTE *buf);
+
 // prints all the data blocks for debugging
 void printDBlks(FileSystem*);
 #endif

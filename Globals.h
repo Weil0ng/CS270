@@ -18,8 +18,8 @@
 //File system specific
 #define MAX_FS_SIZE (4294967296) //Maximum supported filesystem size (2^32 bytes)
 
-#define BLK_SIZE (512) //Block size in bytes
-#define INODE_SIZE (256) //INode size in bytes
+#define BLK_SIZE (128) //Block size in bytes
+#define INODE_SIZE (64) //INode size in bytes
 #define INODES_PER_BLK (BLK_SIZE / INODE_SIZE) //INodes per block (computed)
 
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
@@ -27,7 +27,7 @@
 #define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(UINT)) //In-memory free block cache size, 1 block of ints
 #define FREE_INODE_CACHE_SIZE (4) //In-memory inode cache size, 100 = 400 bytes of superblock
 
-#define INODE_NUM_DIRECT_BLKS (10) // number of direct blocks per inode 
+#define INODE_NUM_DIRECT_BLKS (1) // number of direct blocks per inode 
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 
 #define INODE_NUM_D_INDIRECT_BLKS (1) // number of double direct blocks per inode 
 

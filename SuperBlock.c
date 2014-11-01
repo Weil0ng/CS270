@@ -4,12 +4,43 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "SuperBlock.h"
 
 UINT blockify(SuperBlock* superblock, BYTE* buf) {
 
-    //to do
+    DSuperBlock* dsb = (DSuperBlock*) buf;
+
+    dsb->nDBlks = superblock->nDBlks;
+    dsb->nFreeDBlks = superblock->nFreeDBlks;
+    dsb->pFreeDBlksHead = superblock->pFreeDBlksHead;
+    dsb->pNextFreeDBlk = superblock->pNextFreeDBlk;
+
+    dsb->nINodes = superblock->nINodes;
+    dsb->nFreeINodes = superblock->nFreeINodes;
+    memcpy(dsb->freeINodeCache, superblock->freeINodeCache, FREE_INODE_CACHE_SIZE * sizeof(UINT));
+    dsb->pNextFreeINode = superblock->pNextFreeINode;
+
+    return 0;
+}
+
+UINT unblockify(BYTE* buf, SuperBlock* superblock) {
+
+    DSuperBlock* dsb = (DSuperBlock*) buf;
+
+    superblock->nDBlks = dsb->nDBlks;
+    superblock->nFreeDBlks = dsb->nFreeDBlks;
+    superblock->pFreeDBlksHead = dsb->pFreeDBlksHead;
+    superblock->pNextFreeDBlk = dsb->pNextFreeDBlk;
+
+    superblock->nINodes = dsb->nINodes;
+    superblock->nFreeINodes = dsb->nFreeINodes;
+    memcpy(superblock->freeINodeCache, dsb->freeINodeCache, FREE_INODE_CACHE_SIZE * sizeof(UINT));
+    superblock->pNextFreeINode = dsb->pNextFreeINode;
+
+    superblock->modified = 0;
+
     return 0;
 }
 

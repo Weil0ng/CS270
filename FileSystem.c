@@ -14,7 +14,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
     #endif
-	
+    
     //validate file system parameters
     #ifndef DEBUG
     if(nDBlks <= 0 || nINodes <= 0) {
@@ -57,8 +57,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->superblock.nDBlks = nDBlks;
     fs->superblock.nFreeDBlks = nDBlks;
     fs->superblock.pFreeDBlksHead = 0;
-    fs->superblock.pNextFreeDBlk = fs->superblock.nDBlks >= FREE_DBLK_CACHE_SIZE 
-            ? FREE_DBLK_CACHE_SIZE - 1 : fs->superblock.nDBlks - 1;
+    fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
     
     fs->superblock.nINodes = nINodes;
     fs->superblock.nFreeINodes = nINodes;
@@ -124,9 +123,9 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
     
     while(nextListBlk < fs->superblock.nDBlks) {
-        if(fs->superblock.nDBlks <= nextListBlk + FREE_DBLK_CACHE_SIZE) {
+        if(fs->superblock.nDBlks < nextListBlk + FREE_DBLK_CACHE_SIZE) {
             //special case: not enough data blocks to fill another cache block
-            fprintf(stderr, "Warning: %d data blocks do not fill cache of size %d!\n", fs->superblock.nDBlks, FREE_DBLK_CACHE_SIZE);
+            fprintf(stderr, "Warning: %d data blocks do not divide evenly into caches of size %d!\n", fs->superblock.nDBlks, FREE_DBLK_CACHE_SIZE);
             UINT remaining = fs->superblock.nDBlks - nextListBlk;
             UINT offset = FREE_DBLK_CACHE_SIZE - remaining;
             for(int i = 0; i < offset; i++) {
@@ -134,6 +133,12 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
             }
             for(int i = offset; i < FREE_DBLK_CACHE_SIZE; i++) {
                 freeDBlkList[i] = nextListBlk + i - offset;
+            }
+        }
+        else if(fs->superblock.nDBlks == nextListBlk + FREE_DBLK_CACHE_SIZE) {
+            //special case: exactly enough data blocks to fill last cache block
+            for(UINT i = 0; i < FREE_DBLK_CACHE_SIZE; i++) {
+                freeDBlkList[i] = nextListBlk + i;
             }
         }
         else {
@@ -186,6 +191,10 @@ UINT allocINode(FileSystem* fs, INode* inode) {
 
     // the inode cache is empty
     if(fs->superblock.pNextFreeINode < 0) {
+    
+        #ifdef DEBUG
+        printf("INode cache empty, scanning disk for more free inodes\n");
+        #endif
         
         // scan inode list and fill the inode cache list to capacity
         UINT nextINodeBlk = fs->diskINodeBlkOffset;
@@ -234,7 +243,8 @@ UINT allocINode(FileSystem* fs, INode* inode) {
         return -1;
     }
     
-    // update the inode cache list
+    // update the inode cache list and stack pointer
+    fs->superblock.freeINodeCache[fs->superblock.pNextFreeINode] = -1;
     fs->superblock.pNextFreeINode --;
 
     // decrement the free inodes count
@@ -248,6 +258,7 @@ UINT allocINode(FileSystem* fs, INode* inode) {
 // output: none
 // function: free a inode, which updates the inode cache and/or inode table
 UINT freeINode(FileSystem* fs, UINT id) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
 
     // if inode cache not full, store the inode number in the list
     if (fs->superblock.pNextFreeINode < FREE_INODE_CACHE_SIZE - 1){
@@ -362,71 +373,93 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 //Try to alloc a free data block from disk:
 //1. check if there are free DBlk at all
 //2. check the pNextFreeDBlk
-//	if DBlk cache has free entry 
-//		alloc that entry
-//	else
-//		alloc current free list blk
-//		move pFreeDBlksHead to next list blk
+//  if DBlk cache has free entry 
+//      alloc that entry
+//  else
+//      alloc current free list blk
+//      move pFreeDBlksHead to next list blk
 //3. # free blocks --
 //4. return the logical id of allocaed DBlk
 UINT allocDBlk(FileSystem* fs) {
     //1. check full
     if (fs->superblock.nFreeDBlks == 0) {
         _err_last = _fs_DBlkOutOfNumber;
-	THROW();
-	return -1;
+        THROW();
+        return -1;
     }
     
     UINT returnID = -1;
 
     //2. check pNextFreeDBlk
     if (fs->superblock.pNextFreeDBlk != 0) {
+        //alloc next block in cache
         returnID = (fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk];
         // mark it as allocated
         (fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk] = -1;
+        fs->superblock.pNextFreeDBlk--;
     }
     else {
         //alloc this very block
         returnID = fs->superblock.pFreeDBlksHead;
-	//move head
-	fs->superblock.pFreeDBlksHead = (fs->superblock.freeDBlkCache)[0];
-	//load cache
-	readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
-	//move pNextFreeDBlk
-	fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
+        //retrieve next head and mark current block as allocated
+        UINT nextHead = (fs->superblock.freeDBlkCache)[0];
+        (fs->superblock.freeDBlkCache)[0] = -1;
+        //wipe cache and write to disk
+        writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+
+        //if we know more dblks are available on disk, load them into cache
+        if(fs->superblock.nFreeDBlks > 1) {
+            #ifdef DEBUG
+            printf("Returning last free block, loading next cache from disk at id: %d\n", nextHead);
+            #endif
+            //move head in superblock
+            fs->superblock.pFreeDBlksHead = nextHead;
+            //load cache from next head
+            readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+            //reset stack pointer
+            fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
+        }
     }
 
     fs->superblock.nFreeDBlks --;
     return returnID;
     //return 0;
-
 }
 
 // Try to insert a free DBlk back to free list
 // 1. check pNextFreeDBlk
-// 2.	if current cache full
-// 		wrtie cache back
-// 		use newly free block NFB as head free block list
-// 	else
-// 		insert to current cache
+// 2.   if current cache full
+//      wrtie cache back
+//      use newly free block NFB as head free block list
+//  else
+//      insert to current cache
 // 3. # Free DBlks ++
 UINT freeDBlk(FileSystem* fs, UINT id) {
+    // if no other blocks are free
+    if (fs->superblock.nFreeDBlks == 0) {
+        fs->superblock.pFreeDBlksHead = id;
+        fs->superblock.freeDBlkCache[0] = id;
+        fs->superblock.pNextFreeDBlk = 0;
+    }
     // if current cache is full
-    if (fs->superblock.pNextFreeDBlk == FREE_DBLK_CACHE_SIZE - 1) {
-	//write cache back
-	writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
-	//init cache
-	(fs->superblock.freeDBlkCache)[0] = fs->superblock.pFreeDBlksHead;
-	for (UINT i=1; i<FREE_DBLK_CACHE_SIZE - 1; i++)
-	    (fs->superblock.freeDBlkCache)[i] = -1;
-	//move pNextFreeDBlk
-	fs->superblock.pNextFreeDBlk = 0;
-	//move head
-	fs->superblock.pFreeDBlksHead = id;
+    else if (fs->superblock.pNextFreeDBlk == FREE_DBLK_CACHE_SIZE - 1) {
+        #ifdef DEBUG
+        printf("DBlk cache full, dumping cache to disk at id: %d\n", fs->superblock.pFreeDBlksHead);
+        #endif
+        //write cache back
+        writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+        //init cache
+        (fs->superblock.freeDBlkCache)[0] = fs->superblock.pFreeDBlksHead;
+        for (UINT i=1; i<FREE_DBLK_CACHE_SIZE; i++)
+            (fs->superblock.freeDBlkCache)[i] = -1;
+        //move pNextFreeDBlk
+        fs->superblock.pNextFreeDBlk = 0;
+        //move head
+        fs->superblock.pFreeDBlksHead = id;
     }
     else {
-	fs->superblock.pNextFreeDBlk ++;
-	(fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk] = id;
+        fs->superblock.pNextFreeDBlk ++;
+        (fs->superblock.freeDBlkCache)[fs->superblock.pNextFreeDBlk] = id;
     }
     fs->superblock.nFreeDBlks ++;
     return 0;
@@ -534,19 +567,22 @@ void printINodes(FileSystem* fs) {
         printINode(&inode);
     }
 }
-#endif
 
-#ifdef DEBUG
+void printDBlk(BYTE *buf)
+{
+    for(UINT k = 0; k < BLK_SIZE; k+=sizeof(UINT)) {
+        UINT* val = (UINT*) (buf + k);
+        printf("%d ", *val);
+    }
+    printf("\n");
+}
+
 void printDBlks(FileSystem* fs) {
     for(UINT i = 0; i < fs->superblock.nDBlks; i++) {
         BYTE buf[BLK_SIZE];
         readDBlk(fs, i, buf);
         printf("%d\t| ", i);
-        for(UINT k = 0; k < BLK_SIZE; k+=4) {
-            UINT* val = (UINT*) (buf + k);
-            printf("%d ", *val);
-        }
-        printf("\n");
+        printDBlk(buf);
     }
 }
 #endif
