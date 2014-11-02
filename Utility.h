@@ -17,3 +17,6 @@ extern ERROR _err_last;
 
 // Print out error msg
 void THROW();
+
+// Shuffle an array of ints
+void shuffle(int* array, int n);

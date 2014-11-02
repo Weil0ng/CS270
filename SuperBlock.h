@@ -45,9 +45,28 @@ typedef struct SuperBlock
 
 } SuperBlock;
 
+// helper structure, used only to write superblocks to disk
+typedef struct DSuperBlock
+{
+  UINT nDBlks;
+  UINT nFreeDBlks;
+  UINT pFreeDBlksHead;
+  UINT pNextFreeDBlk;
+
+  UINT nINodes;
+  UINT nFreeINodes;
+  UINT freeINodeCache[FREE_INODE_CACHE_SIZE];
+  UINT pNextFreeINode;
+
+} DSuperBlock;
+
 // writes disk fields of superblock into a block-sized buffer
 // note: exactly BLK_SIZE bytes of memory must be allocated for buf
 UINT blockify(SuperBlock*, BYTE* buf);
+
+// reads disk fields of superblock from a block-sized disk buffer to core
+// note: this will not initialize the free data block cache, that must be loaded manually
+UINT unblockify(BYTE* buf, SuperBlock*);
 
 #ifdef DEBUG
 // prints out a superblock for debugging
