@@ -26,22 +26,14 @@ typedef struct INode {
 	LONG _in_accesstime;
 
 	UINT _in_filesize;
+    
+    UINT _in_linkcount;
 
 	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
 	UINT _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
 
 	UINT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
-
-	//memory fields
-        
-        //UINT _in_status; // locked/modified/mount_point/
-
-	UINT _in_id;
-
-	//Lock* _in_lock;
-
-	UINT _in_refcount;
 
 } INode;
 
