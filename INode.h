@@ -30,7 +30,7 @@ typedef struct INode {
 
 	UINT _in_filesize;
     
-    UINT _in_linkcount;
+        UINT _in_linkcount;
 
 	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
