@@ -323,6 +323,10 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
+UINT readINodeData(INode* inode, BYTE* buf, UINT offset, UINT len) {
+
+}
+
 // input: inode number id, an inode
 // output: none
 // function: write the disk inode #id in the inode table
@@ -366,6 +370,10 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     }
     
     return 0;
+}
+
+UINT writeINodeData(INode* inode, BYTE* buf, UINT offset, UINT len) {
+
 }
 
 //Try to alloc a free data block from disk:
