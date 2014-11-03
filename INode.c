@@ -16,6 +16,7 @@ UINT initializeINode(INode *inode, UINT id) {
     inode->_in_accesstime = time(NULL);
     //inode->_in_accesstime = get_time();
     inode->_in_filesize = 0;
+    inode->_in_linkcount = 0;
 
     //since we are storing logical data blk id, 0 could be a valid blk
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
@@ -27,10 +28,6 @@ UINT initializeINode(INode *inode, UINT id) {
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode->_in_dIndirectBlocks[i] = -1;
     }
-    
-    //initialize in-memory fields
-    inode->_in_id = id;
-    inode->_in_refcount = 0;
 
     return 0;
 }

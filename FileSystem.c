@@ -308,6 +308,8 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     inode->_in_modtime =  inode_d->_in_modtime;
     inode->_in_accesstime = inode_d->_in_accesstime;
     inode->_in_filesize = inode_d->_in_filesize;
+    inode->_in_linkcount = inode_d->_in_linkcount;
+    
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
         inode->_in_directBlocks[i] = inode_d->_in_directBlocks[i];
     }
@@ -317,12 +319,6 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode->_in_dIndirectBlocks[i] = inode_d->_in_dIndirectBlocks[i];
     }
-
-    //TODO: set id to parameter id instead of reading it (just making sure disk read is working properly for now)
-    inode->_in_id = inode_d->_in_id;
-
-    //TODO: reset refcount instead of reading it (just making sure disk read is working properly for now)
-    inode->_in_refcount = inode_d->_in_refcount;
 
     return 0;
 }
@@ -607,6 +603,7 @@ void printINodes(FileSystem* fs) {
     for(UINT i = 0; i < fs->superblock.nINodes; i++) {
         INode inode;
         readINode(fs, i, &inode);
+        printf("%d\t| ", i);
         printINode(&inode);
     }
 }

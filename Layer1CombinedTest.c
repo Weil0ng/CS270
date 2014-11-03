@@ -393,7 +393,6 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         printINode(&inodes[i]);
 
         //ensure allocated IDs are valid and unique
-        assert(inodeIds[i] == inodes[i]._in_id);
         assert(inodeIds[i] >= 0 && inodeIds[i] < nINodes);
         for(UINT j = 0; j < i; j++) {
             assert(inodeIds[i] != inodeIds[j]);

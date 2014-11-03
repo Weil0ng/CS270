@@ -13,22 +13,19 @@ UINT mkdir(char* path);
 UINT mknod(char* path);
 
 // reads directory contents
-UINT readdir(Dir*, DFile*);
+//UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
 UINT unlink(char* path);
 
-// opens a file. returning the descriptor
+// opens a file
 UINT open(char* path);
 
 // closes a file
-// params: file descriptor
-UINT close(UINT);
+UINT close(char* path);
 
 // reads a file
-// params: file descriptor, buffer, number of bytes
-UINT read(UINT, byte*, UINT);
+UINT read(char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
-// params: file descriptor, buffer, number of bytes
-UINT write(UINT, byte*, UINT);
+UINT write(char* path, UINT offset, BYTE* buf, UINT numBytes);
