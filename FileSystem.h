@@ -62,6 +62,12 @@ UINT readDBlk(FileSystem*, UINT, BYTE*);
 // writes a data block
 UINT writeDBlk(FileSystem*, UINT, BYTE*); 
 
+// reads certain number of bytes from a block with offset
+UINT readDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT);
+
+// writes certain number of bytes of a block with offset
+UINT writeDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT); 
+
 // converts file byte offset in inode to logical block ID
 UINT bmap(FileSystem* fs, INode* inode, UINT offset, UINT* cvt_blk_num);
 

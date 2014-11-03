@@ -302,7 +302,8 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     
     // asssign struct field from the buffer to the inode
     inode->_in_type = inode_d->_in_type;
-    inode->_in_owner = inode_d->_in_owner;
+    //inode->_in_owner = inode_d->_in_owner;
+    strcpy(inode->_in_owner, inode_d->_in_owner);
     inode->_in_permissions = inode_d->_in_permissions;
     inode->_in_modtime =  inode_d->_in_modtime;
     inode->_in_accesstime = inode_d->_in_accesstime;
@@ -346,7 +347,8 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 
     // replace the inode
     inode_d->_in_type = inode->_in_type;
-    inode_d->_in_owner = inode->_in_owner;
+    //inode_d->_in_owner = inode->_in_owner;
+    strcpy(inode_d->_in_owner, inode->_in_owner);
     inode_d->_in_permissions = inode->_in_permissions;
     inode_d->_in_modtime =  inode->_in_modtime;
     inode_d->_in_accesstime = inode->_in_accesstime;
@@ -482,6 +484,47 @@ UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
     assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return writeBlk(fs->disk, bid, buf);
+}
+
+// input: the data block logical id, the offset into that block, length of
+//        bytes to read in that block
+// output: a buffer that contains len bytes
+// function: read a data block with byte offset
+UINT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+    BYTE readBuf[BLK_SIZE];
+
+    if (readDBlk(fs, id, readBuf) == -1) {
+        fprintf(stderr, "In readDBlkOffset, fail to readDblk %d!\n", id);
+        return -1;
+    }
+    
+    memcpy(buf, readBuf + off, len);
+
+    return 0;
+}
+
+// input: the data block logical id, the offset into that block, length of
+//        bytes to write in that block
+// output: the data block being updated
+// function: read a data block with byte offset
+UINT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+    BYTE writeBuf[BLK_SIZE];
+
+    if (readDBlk(fs, id, writeBuf) == -1) {
+        fprintf(stderr, "In writeDBlkOffset, fail to readDblk %d!\n", id);
+        return -1;
+    }
+
+    memcpy(writeBuf + off, buf, len);
+
+    if (writeDBlk(fs, id, writeBuf) == -1) {
+        fprintf(stderr, "In writeDBlkOffset, fail to writeDblk %d!\n", id);
+        return -1;
+    }
+
+    return 0;
 }
 
 // input: inode, logic file byte offset

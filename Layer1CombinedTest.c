@@ -13,11 +13,16 @@
 
 #define NUM_TEST_INODES (8)
 #define NUM_TEST_DBLKS (8)
-#define TEST_OWNER (999)
+//#define TEST_OWNER (999)
 #define TEST_PERMISSIONS (555)
 #define TEST_MODTIME (42)
 #define TEST_ACCESSTIME (24)
 #define TEST_FILESIZE (9000)
+
+#define TEST_DBLK_BYTE_LEN (12)
+#define TEST_DBLK_BYTE_OFF (48)
+
+const char TEST_OWNER[INODE_OWNER_NAME_LEN]= "JARIC";
 
 void testDBlks(UINT, UINT);
 void testINodes(UINT, UINT);
@@ -204,7 +209,37 @@ void testDBlks(UINT nDBlks, UINT nINodes) {
             assert(buf[j] == -j);
         }
     }
+    
+    //test writeDBlkOffset
+    printf("\n---- writeDBlkOffset ----\n");
+    for(int i = 0; i < NUM_TEST_DBLKS; i++) {
+        UINT* buf = (UINT*) &dblks[i];
+        for(int j = 0; j < TEST_DBLK_BYTE_LEN / sizeof(UINT); j++) {
+            buf[j] = - (int) (j+ TEST_DBLK_BYTE_OFF / sizeof(UINT) + 3);
+        }
 
+        printf("Writing test data to dblk id: %d, with offset: %d, and length: %d\n", dblkIds[i], TEST_DBLK_BYTE_OFF, TEST_DBLK_BYTE_LEN);
+        succ = writeDBlkOffset(&fs, dblkIds[i], (BYTE*) buf, TEST_DBLK_BYTE_OFF, TEST_DBLK_BYTE_LEN);
+        assert(succ == 0);
+    }
+
+    //test readDblkOffset
+    printf("\n---- readDBlkOffset ----\n");
+
+    for(int i = 0; i < NUM_TEST_DBLKS; i++) {
+        BYTE testDBlkOff[TEST_DBLK_BYTE_LEN];
+        printf("Reading test data from dblk id: %d, with offset: %d, and length: %d\n", dblkIds[i], TEST_DBLK_BYTE_OFF, TEST_DBLK_BYTE_LEN);
+        succ = readDBlkOffset(&fs, dblkIds[i], testDBlkOff, TEST_DBLK_BYTE_OFF, TEST_DBLK_BYTE_LEN);
+        assert(succ == 0);
+        
+        UINT* buf = (UINT*) &testDBlkOff;
+        for(int j = 0; j < TEST_DBLK_BYTE_LEN / sizeof(UINT); j++) {
+            //printf("%d, %d\n", buf[j], - (int) (j + TEST_READ_DBLK_OFF / sizeof(UINT) + 3));
+            assert(buf[j] == - (int) (j + TEST_DBLK_BYTE_OFF / sizeof(UINT) + 3));
+        }
+
+    }
+    
     //test modifying read/writeDBlk
     printf("\n---- modify read/writeDBlk ----\n");
     printDBlks(&fs);
@@ -302,6 +337,7 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         assert(succ == 0);
     }
 
+    printf("%d, %d\n", fs.superblock.nFreeINodes, nINodes);
     assert(fs.superblock.nFreeINodes == nINodes);
 
     printf("\nSuperblock:\n");
@@ -367,7 +403,8 @@ void testINodes(UINT nDBlks, UINT nINodes) {
     //test group writeINode
     printf("\n---- writeINode ----\n");
     for(int i = 0; i < NUM_TEST_INODES; i++) {
-        inodes[i]._in_owner = TEST_OWNER;
+        //inodes[i]._in_owner = TEST_OWNER;
+        strcpy(inodes[i]._in_owner, TEST_OWNER);
         inodes[i]._in_permissions = TEST_PERMISSIONS;
         inodes[i]._in_modtime = TEST_MODTIME;
         inodes[i]._in_accesstime = TEST_ACCESSTIME;
@@ -389,7 +426,8 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         succ = readINode(&fs, inodeIds[i], &testINode);
         printINode(&testINode);
         assert(succ == 0);
-        assert(testINode._in_owner = TEST_OWNER);
+        //assert(testINode._in_owner = TEST_OWNER);
+        assert(!strcmp(testINode._in_owner, TEST_OWNER));
         assert(testINode._in_permissions = TEST_PERMISSIONS);
         assert(testINode._in_modtime = TEST_MODTIME);
         assert(testINode._in_accesstime = TEST_ACCESSTIME);
@@ -404,7 +442,8 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         assert(succ == 0);
 
         printf("Modifying inode id: %d\n", inodeIds[i]);
-        inodes[i]._in_owner = TEST_OWNER - 1;
+        //inodes[i]._in_owner = "WILL";
+        strcpy(inodes[i]._in_owner, "WILL");
         inodes[i]._in_permissions = TEST_PERMISSIONS - 1;
         inodes[i]._in_modtime = TEST_MODTIME - 1;
         inodes[i]._in_accesstime = TEST_ACCESSTIME - 1;
@@ -416,7 +455,8 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         succ = readINode(&fs, inodeIds[i], &testINode2);
         printINode(&testINode2);
         assert(succ == 0);
-        assert(testINode2._in_owner = inodes[i]._in_owner);
+        //assert(testINode2._in_owner = inodes[i]._in_owner);
+        assert(!strcmp(testINode2._in_owner, inodes[i]._in_owner));
         assert(testINode2._in_permissions = inodes[i]._in_permissions);
         assert(testINode2._in_modtime = inodes[i]._in_modtime);
         assert(testINode2._in_accesstime = inodes[i]._in_accesstime);

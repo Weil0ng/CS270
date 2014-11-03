@@ -3,6 +3,8 @@
  */
 
 #include "Globals.h"
+#include "time.h"
+#include "string.h"
 
 enum FILE_TYPE {
         FREE = -1,
@@ -17,7 +19,8 @@ typedef struct INode {
 
 	enum FILE_TYPE _in_type;
 
-	UINT _in_owner;
+	//UINT _in_owner;
+        char _in_owner[INODE_OWNER_NAME_LEN];
 
 	UINT _in_permissions;
 

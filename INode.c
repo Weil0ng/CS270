@@ -4,18 +4,16 @@
  */
 
 #include <stdio.h>
-
 #include "INode.h"
 
 UINT initializeINode(INode *inode, UINT id) {
     inode->_in_type = INIT;
-    //FIXME: shall we make owner string?
-    inode->_in_owner = -1;
+    strcpy(inode->_in_owner, "NULL");
     inode->_in_permissions = 777;
     //TODO: get time
     //inode->_in_modtime = get_time();
-    inode->_in_modtime = -1;
-    inode->_in_accesstime = -1;
+    inode->_in_modtime = time(NULL);
+    inode->_in_accesstime = time(NULL);
     //inode->_in_accesstime = get_time();
     inode->_in_filesize = 0;
 
@@ -38,6 +36,6 @@ UINT initializeINode(INode *inode, UINT id) {
 }
 
 void printINode(INode* inode) {
-    printf("[INode: id = %d, type = %d, owner = %d, permissions = %d, modtime = %d, accesstime = %d, filesize = %d, refcount = %d]\n",
+    printf("[INode: id = %d, type = %d, owner = %s, permissions = %d, modtime = %llu, accesstime = %llu, filesize = %d, refcount = %d]\n",
         inode->_in_id, inode->_in_type, inode->_in_owner, inode->_in_permissions, inode->_in_modtime, inode->_in_accesstime, inode->_in_filesize, inode->_in_refcount);
 }

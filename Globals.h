@@ -27,8 +27,10 @@
 #define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(UINT)) //In-memory free block cache size, 1 block of ints
 #define FREE_INODE_CACHE_SIZE (4) //In-memory inode cache size, 100 = 400 bytes of superblock
 
+#define INODE_OWNER_NAME_LEN (10) // number of characters of the owner name 
 #define INODE_NUM_DIRECT_BLKS (1) // number of direct blocks per inode 
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 
 #define INODE_NUM_D_INDIRECT_BLKS (1) // number of double direct blocks per inode 
 
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
+
