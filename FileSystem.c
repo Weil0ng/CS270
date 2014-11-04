@@ -323,8 +323,65 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
-UINT readINodeData(INode* inode, BYTE* buf, UINT offset, UINT len) {
-
+UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {    
+    //compute start block id
+    UINT nextBlkId = -1;
+    UINT succ = bmap(fs, inode, offset, &nextBlkId);
+    if(succ != 0) return -1;
+    
+    //convert byte offset to logical id + block offset
+    UINT logicalId = offset / BLK_SIZE;
+    offset = offset % BLK_SIZE;
+    
+    //return bytes read upon completion
+    UINT bytesRead = 0;
+    
+    //special case to handle offset in the middle of first block
+    if(offset > 0) {
+        if(offset + len <= BLK_SIZE) {
+            //entire read falls within first block
+            readDBlkOffset(fs, nextBlkId, buf, offset, len);
+            bytesRead = len;
+            len = 0;
+        }
+        else {
+            //read is larger than first block
+            readDBlkOffset(fs, nextBlkId, buf, offset, BLK_SIZE - (offset + len));
+            bytesRead = BLK_SIZE - (offset + len);
+            len -= bytesRead;
+            
+            //compute next block id
+            logicalId++;
+            UINT succ = bmap(fs, inode, logicalId * BLK_SIZE, &nextBlkId);
+        }
+    }
+    
+    //continue while more bytes to read AND end of inode not reached
+    while(len > 0 && succ == 0) {
+        //read next block into buf
+        if(len <= BLK_SIZE) {
+            //end of read falls within block
+            readDBlkOffset(fs, nextBlkId, buf + bytesRead, 0, len);
+            
+            //update len (end of read)
+            bytesRead += len;
+            len = 0;
+        }
+        else {
+            //read is larger than current block
+            readDBlk(fs, nextBlkId, buf + bytesRead);
+           
+            //update len (remaining read)
+            bytesRead += BLK_SIZE;
+            len -= BLK_SIZE;
+            
+            //compute next block id
+            logicalId++;
+            UINT succ = bmap(fs, inode, logicalId * BLK_SIZE, &nextBlkId);
+        }
+    }
+    
+    return bytesRead;
 }
 
 // input: inode number id, an inode
@@ -372,8 +429,65 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
-UINT writeINodeData(INode* inode, BYTE* buf, UINT offset, UINT len) {
-
+UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+    //compute start block id
+    UINT nextBlkId = -1;
+    UINT succ = bmap(fs, inode, offset, &nextBlkId);
+    if(succ != 0) return -1;
+    
+    //convert byte offset to logical id + block offset
+    UINT logicalId = offset / BLK_SIZE;
+    offset = offset % BLK_SIZE;
+    
+    //return bytes written upon completion
+    UINT bytesWritten = 0;
+    
+    //special case to handle offset in the middle of first block
+    if(offset > 0) {
+        if(offset + len <= BLK_SIZE) {
+            //entire write falls within first block
+            writeDBlkOffset(fs, nextBlkId, buf, offset, len);
+            bytesWritten = len;
+            len = 0;
+        }
+        else {
+            //write is larger than first block
+            writeDBlkOffset(fs, nextBlkId, buf, offset, BLK_SIZE - (offset + len));
+            bytesWritten = BLK_SIZE - (offset + len);
+            len -= bytesWritten;
+            
+            //compute next block id
+            logicalId++;
+            UINT succ = bmap(fs, inode, logicalId * BLK_SIZE, &nextBlkId);
+        }
+    }
+    
+    //continue while more bytes to write AND end of inode not reached
+    while(len > 0 && succ == 0) {
+        //write next block into buf
+        if(len <= BLK_SIZE) {
+            //end of write falls within block
+            readDBlkOffset(fs, nextBlkId, buf + bytesWritten, 0, len);
+            
+            //update len (end of write)
+            bytesWritten += len;
+            len = 0;
+        }
+        else {
+            //write is larger than current block
+            writeDBlk(fs, nextBlkId, buf + bytesWritten);
+           
+            //update len (remaining write)
+            bytesWritten += BLK_SIZE;
+            len -= BLK_SIZE;
+            
+            //compute next block id
+            logicalId++;
+            UINT succ = bmap(fs, inode, logicalId * BLK_SIZE, &nextBlkId);
+        }
+    }
+    
+    return bytesWritten;
 }
 
 //Try to alloc a free data block from disk:
