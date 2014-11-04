@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=c99 -g
-OBJS=DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o
+OBJS=DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o Directories.o
 
 test: $(OBJS) Layer0Test Layer1CombinedTest
 
@@ -17,4 +17,4 @@ Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr Layer0Test Layer1CombinedTest *.o
+	rm -fr Layer0Test Layer1CombinedTest *.o diskFile diskDump
