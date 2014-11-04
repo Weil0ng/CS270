@@ -409,9 +409,7 @@ UINT allocDBlk(FileSystem* fs) {
         returnID = fs->superblock.pFreeDBlksHead;
         //retrieve next head and mark current block as allocated
         UINT nextHead = (fs->superblock.freeDBlkCache)[0];
-        //zero out before allocation
-        for (UINT i=0; i<FREE_DBLK_CACHE_SIZE; i++)
-          (fs->superblock.freeDBlkCache)[i] = 0;
+        (fs->superblock.freeDBlkCache)[0] = -1;
         //wipe cache and write to disk
         writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
