@@ -60,7 +60,7 @@ UINT mkdir(FileSystem* fs, char* path) {
             BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
             
             // read the parent directory table
-            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // find an empty directory entry and insert with the new directory
             BOOL FIND = false;
@@ -80,7 +80,7 @@ UINT mkdir(FileSystem* fs, char* path) {
             }
 
             // update the parent directory table
-            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             
             /* allocate two entries in the new directory table (. , id) and (.., par_id) */
@@ -102,7 +102,7 @@ UINT mkdir(FileSystem* fs, char* path) {
             inode._in_type = DIRECTORY;
 
             // update the new directory table
-            writeINodeData(&inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            writeINodeData(fs, &inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
         }
 
     }
@@ -158,7 +158,7 @@ UINT mknod(FileSystem* fs, char* path) {
 
             // allocate one entry in the parent directory table: (ptr, id)
             BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
-            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // find an empty directory entry and insert with the new file
             BOOL FIND = false;
@@ -178,7 +178,7 @@ UINT mknod(FileSystem* fs, char* path) {
             }
 
             // update the parent directory table
-            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // change the newly allocated inode type to REGULAR file
             inode._in_type = REGULAR;
@@ -241,7 +241,7 @@ UINT unlink(FileSystem* fs, char* path) {
         BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
         
         // read the parent directory table
-        readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+        readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
         // find an empty directory entry and insert with the new directory
         BOOL FIND = false;
@@ -261,7 +261,7 @@ UINT unlink(FileSystem* fs, char* path) {
         }
 
         // update the parent directory table
-        writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+        writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
         
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {

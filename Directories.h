@@ -27,10 +27,10 @@ UINT open(char* path);
 UINT close(char* path);
 
 // reads a file
-UINT read(char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
-UINT write(char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 //resolve path to inode id
 UINT namei(FileSystem *, char *);
