@@ -322,7 +322,7 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //1. resolve path
 //2. get INodeTable Entry
 //3. load inode
-//4. check length (extend)
+//4. modify inode if necessary
 //5. call writeINodeData
 UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   INode curINode;
@@ -334,8 +334,8 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //2. get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
-    //4. check length
-    //UINT curLength = curINode.
+    //4. modify inode
+    
     //5. writeINodeData
     writeINodeData(fs, &curINode, buf, offset, numBytes);
     
