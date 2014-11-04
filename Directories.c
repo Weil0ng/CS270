@@ -319,7 +319,7 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //3. load inode
     readINode(fs, curINodeID, &curINode);
     //5. readINodeData
-    readINodeData(&curINode, buf, offset, numBytes);
+    readINodeData(fs, &curINode, buf, offset, numBytes);
   }
   return numBytes; // what should we return?
 }
@@ -341,9 +341,9 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //3. load inode
     readINode(fs, curINodeID, &curINode);
     //4. check length
-    UINT curLength = curINode.
+    //UINT curLength = curINode.
     //5. writeINodeData
-    writeINodeData(&curINode, buf, offset, numBytes);
+    writeINodeData(fs, &curINode, buf, offset, numBytes);
     
   }
   return numBytes;	
