@@ -4,7 +4,6 @@
  */
  
 #include "Directories.h"
-#include "Directory.h"
  
 UINT mkdir(FileSystem* fs, char* path) {
  
@@ -119,7 +118,7 @@ UINT namei(FileSystem *fs, char *path)
     while (strcmp((curDir[curDirEntry]).key, "") != 0) {
       if (strcmp(tok, curDir[curDirEntry].key) == 1) {
 	entryFound = true;
-        curID = curDir[curDirEntry].INodeID; // move pointer to the next inode of dir or file
+        curID = (curDir[curDirEntry]).INodeID; // move pointer to the next inode of dir or file
         break;
       }
       curDirEntry ++;

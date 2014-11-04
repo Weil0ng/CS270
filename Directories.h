@@ -5,6 +5,7 @@
  */
 
 #include "Globals.h"
+#include "Directory.h"
 #include "FileSystem.h"
 
 // makes a new directory
