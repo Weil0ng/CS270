@@ -21,16 +21,16 @@ UINT mknod(FileSystem* fs, char* path);
 UINT unlink(FileSystem* fs, char* path);
 
 // opens a file
-UINT open(char* path);
+UINT open(FileSystem* fs, char* path);
 
 // closes a file
-UINT close(char* path);
+UINT close(FileSystem* fs, char* path);
 
 // reads a file
-UINT read(char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT read(FileSytem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
-UINT write(char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 //resolve path to inode id
 UINT namei(FileSystem *, char *);
