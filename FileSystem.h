@@ -48,13 +48,15 @@ UINT freeINode(FileSystem*, UINT);
 UINT readINode(FileSystem*, UINT, INode*);
 
 // reads from the file section of the inode
-UINT readINodeData(INode*, BYTE*, UINT, UINT);
+// returns the number of bytes read, -1 on failure
+UINT readINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
 
 // writes to an inode
 UINT writeINode(FileSystem*, UINT, INode*);
 
 // writes to the file section of the inode
-UINT writeINodeData(INode*, BYTE*, UINT, UINT);
+// returns the number of bytes written, -1 on failure
+UINT writeINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
 
 // allocate a free data block
 UINT allocDBlk(FileSystem*);
