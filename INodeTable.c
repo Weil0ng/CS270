@@ -1,5 +1,5 @@
 // This is the implementation of in core INodeTable
-//
+// by Weil0ng
 
 #include "Utility.h"
 #include "INodeTable.h"
@@ -14,12 +14,12 @@ BOOL getINodeEntry(INodeTable *iTable, UINT id, INodeEntry *iEntry)
   INodeEntry curEntry = iTable->hashQ[bin]; 
   INodeEntry tailEntry = NULL;
   while (curEntry != NULL) {
-    if (curEntry -> _in_id == id ) {
+    if (curEntry->_in_id == id ) {
       iEntry = curEntry;
       return true;
     }
     tailEntry = curEntry;
-    curEntry = curEntry -> next;
+    curEntry = curEntry->next;
   }
 
   //if not in table, instantiate an entry
@@ -42,35 +42,17 @@ BOOL getINodeEntry(INodeTable *iTable, UINT id, INodeEntry *iEntry)
   return iEntry;
 }
 
-
-//take absolute path as argument
-//"/foo/bar"
-UINT namei(FileSystem *fs, char *path)
+BOOL hasINodeEntry(INodeTable *iTable, UINT id)
 {
-  UINT id = 0;
-  UINT curId = 0; //root
+  //hash id to bin
+  UINT bin = id % INODE_TABLE_LENGTH;
 
-  //parse path
-  BYTE buf[BLK_SIZE];
-  INode curINode;
-  BOOL foundINode = false;
-  UINT bid = -1;
-
-  char *tok = strtok(path, "/");
-  while (tok) {
-    readINode(fs, curID, &curINode);
-    //if not directory, throw error
-    if (curINode._in_type != DIRECTORY) {
-      _err_last = _fs_NonDirInPath;
-      THROW();
-      return -1;
-    }
-    //else, search for tok in curINode's direct 
-    for (UINT k=0; k<INODE_NUM_DIRECT_BLKS; k++) {
-      bid = curINode._in_directBlocks[k];
-      if (bid == -1)
-    }
-    tok = strtok(NULL, "/");
+  //search bin
+  INodeEntry curEntry = iTable->hashQ[bin];
+  while (curEntry != NULL) {
+    if (curEntry->_in_id == id)
+      return true;
+    curEntry = curEntry->next;
   }
- 
+  return false;
 }

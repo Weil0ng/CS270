@@ -29,3 +29,6 @@ UINT read(char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
 UINT write(char* path, UINT offset, BYTE* buf, UINT numBytes);
+
+//resolve path to inode id
+UINT namei(FileSystem *, char *);

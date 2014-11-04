@@ -14,5 +14,5 @@ struct INodeTable {
 //args: table, inode id, return pointer to entry
 BOOL getINodeEntry(INodeTable *, UINT, INodeEntry *);
 
-//resolve path to inode id
-UINT namei(char *);
+//check if a certain entry is already loaded
+BOOL hasINodeEntry(INodeTable *, UINT);
