@@ -57,17 +57,17 @@ UINT mkdir(FileSystem* fs, char* path) {
             /* allocate one entry in the directory table: (ptr, id)
                FIXME: here I assume MAX_FILE_NUM_IN_DIR is the max number of
                entries in a directory table */
-            BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry)];
+            BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
             
             // read the parent directory table
-            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // find an empty directory entry and insert with the new directory
             BOOL FIND = false;
             UINT i = 0;
             //FIXME: here we assume the directory table will never be full
             while(!FIND) {
-                struct DirEntry *DEntry = (struct DirEntry *) (parBuf + i*sizeof(struct DirEntry));
+                DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
                 if (DEntry->INodeID < 0){
                     printf("find an empty entry in the parent directory table");
                     strcpy(DEntry->key, ptr);
@@ -80,19 +80,19 @@ UINT mkdir(FileSystem* fs, char* path) {
             }
 
             // update the parent directory table
-            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             
             /* allocate two entries in the new directory table (. , id) and (.., par_id) */
-            BYTE newBuf[MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry)];
+            BYTE newBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
            
             // insert an entry for current directory 
-            struct DirEntry *curDEntry = (struct DirEntry *) newBuf;
+            DirEntry *curDEntry = (DirEntry *) newBuf;
             strcpy(curDEntry->key, ptr);
             curDEntry->INodeID = id;
 
             // insert an entry for parent directory
-            struct DirEntry *parDEntry = (struct DirEntry *) (newBuf + sizeof(struct DirEntry));
+            DirEntry *parDEntry = (DirEntry *) (newBuf + sizeof(DirEntry));
             //get the name of the parent directory
             char *par_ptr = strrchr(par_path, ch);
             strcpy(parDEntry->key, par_ptr);
@@ -102,7 +102,7 @@ UINT mkdir(FileSystem* fs, char* path) {
             inode._in_type = DIRECTORY;
 
             // update the new directory table
-            writeINodeData(&inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+            writeINodeData(&inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
         }
 
     }
@@ -157,15 +157,15 @@ UINT mknod(FileSystem* fs, char* path) {
             }
 
             // allocate one entry in the parent directory table: (ptr, id)
-            BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry)];
-            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+            BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
+            readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // find an empty directory entry and insert with the new file
             BOOL FIND = false;
             UINT i = 0;
             //FIXME: here we assume the directory table will never be full
             while(!FIND) {
-                struct DirEntry *DEntry = (struct DirEntry *) (parBuf + i*sizeof(struct DirEntry));
+                DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
                 if (DEntry->INodeID < 0){
                     printf("find an empty entry in the parent directory table");
                     strcpy(DEntry->key, ptr);
@@ -178,7 +178,7 @@ UINT mknod(FileSystem* fs, char* path) {
             }
 
             // update the parent directory table
-            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+            writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
             // change the newly allocated inode type to REGULAR file
             inode._in_type = REGULAR;
@@ -238,17 +238,17 @@ UINT unlink(FileSystem* fs, char* path) {
         /* allocate one entry in the directory table: (ptr, id)
            FIXME: here I assume MAX_FILE_NUM_IN_DIR is the max number of
            entries in a directory table */
-        BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry)];
+        BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
         
         // read the parent directory table
-        readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+        readINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
         // find an empty directory entry and insert with the new directory
         BOOL FIND = false;
         UINT i = 0;
         //FIXME: here we assume the directory table will never be full
         while(!FIND) {
-            struct DirEntry *DEntry = (struct DirEntry *) (parBuf + i*sizeof(struct DirEntry));
+            DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
             if (DEntry->INodeID  == id){
                 printf("find the to-be-unlinked entry in the parent directory table");
                 strcpy(DEntry->key, "");
@@ -261,7 +261,7 @@ UINT unlink(FileSystem* fs, char* path) {
         }
 
         // update the parent directory table
-        writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(struct DirEntry));
+        writeINodeData(&par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
         
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {

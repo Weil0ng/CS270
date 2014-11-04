@@ -3,8 +3,8 @@
 
 #include "Globals.h"
 
-typedef struct {
-  char key[FILE_NAME_LENGTH];
+typedef struct DirEntry {
+  BYTE key[FILE_NAME_LENGTH];
   UINT INodeID;
 } DirEntry;
 
