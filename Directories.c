@@ -4,14 +4,8 @@
  */
  
 #include "Directories.h"
-<<<<<<< HEAD
-=======
-#include "Directory.h"
 #include <stdio.h>
->>>>>>> f69aa5545efb7b0aa0620bab2cabcd10eea69cf0
  
-//UINT namei(FileSystem *fs, char *path);
-
 // make a new directory
 UINT mkdir(FileSystem* fs, char* path) {
     
