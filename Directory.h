@@ -3,9 +3,9 @@
 
 #include "Globals.h"
 
-struct DirEntry {
+typedef struct DirEntry {
   BYTE key[FILE_NAME_LENGTH];
   UINT INodeID;
-};
+} DirEntry;
 
 
