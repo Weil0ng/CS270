@@ -17,4 +17,4 @@ Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr Layer0Test Layer1CombinedTest *.o diskFile diskDump
+	rm -fr Layer0Test Layer1CombinedTest *.o

@@ -11,7 +11,6 @@ typedef enum{
   _dsk_writeOutOfBoundry,
   _fs_DBlkOutOfNumber,
   _fs_NonDirInPath,
-  _fs_NonExistFile,
 } ERROR;
 
 extern ERROR _err_last;    
