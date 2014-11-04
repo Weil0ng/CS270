@@ -35,3 +35,7 @@
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
 #define FILE_NAME_LENGTH (16)      //number of bytes in the file name in bytes
 
+#define MAX_PATH_LEN (100)
+
+#define MAX_FILE_NUM_IN_DIR (1024)
+

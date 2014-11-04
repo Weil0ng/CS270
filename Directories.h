@@ -5,18 +5,19 @@
  */
 
 #include "Globals.h"
+#include "FileSystem.h"
 
 // makes a new directory
-UINT mkdir(char* path);
+UINT mkdir(FileSystem* fs, char* path);
 
 // makes a new file
-UINT mknod(char* path);
+UINT mknod(FileSystem* fs, char* path);
 
 // reads directory contents
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
-UINT unlink(char* path);
+UINT unlink(FileSystem* fs, char* path);
 
 // opens a file
 UINT open(char* path);
