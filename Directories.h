@@ -27,7 +27,7 @@ UINT open(FileSystem* fs, char* path);
 UINT close(FileSystem* fs, char* path);
 
 // reads a file
-UINT read(FileSytem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
 UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
