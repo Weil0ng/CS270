@@ -5,7 +5,7 @@
  
 #include "Directories.h"
 #include <stdio.h>
- 
+
 // make a new directory
 UINT mkdir(FileSystem* fs, char* path) {
     
@@ -288,11 +288,11 @@ UINT unlink(FileSystem* fs, char* path) {
     return 0;
 }
 
-UINT open(FileSystem* fs, char* path) {
+UINT open(char* path) {
 
 }
 
-UINT close(FileSystem* fs, char* path) {
+UINT close(char* path) {
 
 }
 
@@ -340,39 +340,24 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     writeINodeData(fs, &curINode, buf, offset, numBytes);
     
   }
-  return numBytes;	
+  return numBytes;
 }
 
-//resolve a path to its corresponding inode id
-//1. parse the path
-//2. traverse along the tokens from the root, assuming root is 0
-//	2. read in the inode
-//		2.1 check type
-//		2.2 read in the data
-//	3. scan through to find next tok's id
 UINT namei(FileSystem *fs, char *path)
 {
-  // current inode ID in traversal
-  UINT curID = 0; //root
+  UINT id = 0;
+  UINT curId = 0; //root
 
-  // memory for INode
+  //parse path
+  BYTE buf[BLK_SIZE];
   INode curINode;
-
-  // pointer to dir entry
-  UINT curDirEntry = 0;
-
-  // memory for current directory
-  DirEntry curDir[MAX_FILE_NUM_IN_DIR];
+  BOOL foundINode = false;
+  UINT bid = -1;
   
-  // flag for scan result
-  BOOL entryFound = false;
-
-  //1. parse path
   char *tok = strtok(path, "/");
-  //2 traverse along the tokens
   while (tok) {
     readINode(fs, curID, &curINode);
-    //2.1 if not directory, throw error
+    //if not directory, throw error
     if (curINode._in_type != DIRECTORY) {
       _err_last = _fs_NonDirInPath;
       THROW();
@@ -402,10 +387,6 @@ UINT namei(FileSystem *fs, char *path)
       THROW();
       return -1;
     }
-
-    //1. advance in traversal
     tok = strtok(NULL, "/");
   }
-
-  return curID;
 }

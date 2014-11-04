@@ -31,10 +31,6 @@ void THROW()
     printf("Wrong path, containing non-dir type file!\n");
     break;
   }
-  case _fs_NonExistFile: {
-    printf("File does not exist!\n");
-    break;
-  }
   default: break;
   }
   return;

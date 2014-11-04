@@ -9,28 +9,28 @@
 #include "FileSystem.h"
 
 // makes a new directory
-UINT mkdir(FileSystem*, char*);
+UINT mkdir(FileSystem* fs, char* path);
 
 // makes a new file
-UINT mknod(FileSystem*, char*);
+UINT mknod(FileSystem* fs, char* path);
 
 // reads directory contents
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
-UINT unlink(FileSystem*, char*);
+UINT unlink(FileSystem* fs, char* path);
 
 // opens a file
-UINT open(FileSystem*, char*);
+UINT open(char* path);
 
 // closes a file
-UINT close(FileSystem*, char*);
+UINT close(char* path);
 
 // reads a file
-UINT read(FileSystem*, char*, UINT, BYTE*, UINT);
+UINT read(char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
-UINT write(FileSystem*, char*, UINT, BYTE*, UINT);
+UINT write(char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 //resolve path to inode id
 UINT namei(FileSystem *, char *);
