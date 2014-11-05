@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-=== Team Members ====
-=======
-
 ==== Team Members ====
->>>>>>> ab4df9903d977adaae2a3634270d7055c75579b6
 
 Weilong Cui
 Jia Zhan
