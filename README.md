@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 === Team Members ====
+=======
+
+==== Team Members ====
+>>>>>>> ab4df9903d977adaae2a3634270d7055c75579b6
 
 Weilong Cui
 Jia Zhan
@@ -40,9 +45,16 @@ make main
    
     Tests the Layer 2 functionality by making a file system
     with the parameters specified and giving a menu of 
+<<<<<<< HEAD
     commands.  Currently, mkdir, mknod, unlink, open, close, read, write
     system calls are implemented and tested.
    
     In addition to these syste calls, "quit" allows you to exit the program;
     "stats" is a debugging function that will show you the state of the FS
     after makefs or any command.
+=======
+    commands.  Currently makefs succeeds, but the 
+    implementation of the Layer 2 commands is quite buggy.  
+    However, "stats" is a debugging function that will show
+    you the state of the FS after makefs or any command.
+>>>>>>> ab4df9903d977adaae2a3634270d7055c75579b6

@@ -55,6 +55,9 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         return 2;
     }
     
+    // mark this as rootINodeID
+    fs->rootINodeID = id;
+
     // init directory table for root directory
     DirEntry dirBuf[MAX_FILE_NUM_IN_DIR];
    
@@ -479,22 +482,29 @@ UINT close(FileSystem* fs, char* path) {
 // 1. resolve path
 // 2. get INodeTable Entry (ommitted for now)
 // 3. load inode
-// 4. check length (what if numBytes > fileSize ? return the max possible)
+// 4. check length and update inode info
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+  UINT returnSize = 0;
   INode curINode;
   //1. resolve path
   UINT curINodeID = namei(fs, path);
-  if (curINodeID == -1)
-    exit(1);
+  if (curINodeID == -1) {
+    _err_last = _fs_NonExistFile;
+    THROW();
+    return -1;
+  }
   else {
-    //2. get INodeTable Entry
+    //2. TODO: get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
+    //4.
+    returnSize = curINode._in_filesize < numBytes?curINode._in_filesize:numBytes;
+    //curINode._in_modtime
     //5. readINodeData
     readINodeData(fs, &curINode, buf, offset, numBytes);
   }
-  return numBytes; // what should we return?
+  return returnSize; 
 }
 
 //write file from offset for numBytes
@@ -505,21 +515,49 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //5. call writeINodeData
 UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   INode curINode;
+  UINT returnSize = numBytes;
   //1. resolve path
   UINT curINodeID = namei(fs, path);
-  if (curINodeID == -1)
-    exit(1);
+  if (curINodeID == -1) {
+    _err_last = _fs_NonExistFile;
+    THROW();
+    return -1;
+  }
   else {
-    //2. get INodeTable Entry
+    //2. TODO: get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
     //4. modify inode
-    
+    UINT curFileSize = curINode._in_filesize;
+    //4.1 if file needs to be extended
+    if (offset + numBytes > curFileSize) {
+      // this is the ?th data block we are on
+      UINT DBlkOffset = curFileSize / BLK_SIZE;
+      UINT remainSize = (offset + numBytes)<MAX_FILE_SIZE?(offset + numBytes):MAX_FILE_SIZE;
+      remainSize -= curFileSize;
+      //use up the current DBlk
+      remainSize -= (BLK_SIZE - curFileSize % BLK_SIZE);
+
+      //position
+      UINT pDBlkToAlloc = DBlkOffset + 1;
+      //id
+      UINT DBlkToAlloc = -1;
+      while (remainSize) {
+        DBlkToAlloc = allocDBlk(fs);
+        if (DBlkToAlloc == -1)
+          break;
+        //TODO: conver position to inode directory index
+        //TODO: update inode directory, may need to update indirect inodes
+        remainSize = remainSize > BLK_SIZE ? (remainSize - BLK_SIZE) : 0;
+      }
+    }
+    //TODO: update filesize and remainsize
+    //update INode
+    writeINode(fs, curINodeID, &curINode);
     //5. writeINodeData
     writeINodeData(fs, &curINode, buf, offset, numBytes);
-    
   }
-  return numBytes;
+  return returnSize;
 }
 
 //resolve a path to its corresponding inode id
@@ -535,7 +573,7 @@ UINT namei(FileSystem *fs, char *path)
   strcpy(local_path, path);
 
   // current inode ID in traversal
-  UINT curID = 0; //root
+  UINT curID = fs->rootINodeID; //root
   // memory for INode
   INode curINode;
   // pointer to dir entry
