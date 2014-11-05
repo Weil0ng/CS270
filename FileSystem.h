@@ -8,6 +8,7 @@
 #include "Globals.h"
 #include "INode.h"
 #include "OpenFileTable.h"
+#include "INodeTable.h"
 #include "SuperBlock.h"
 #include "Utility.h"
 
@@ -27,6 +28,12 @@ typedef struct FileSystem {
     
     //the open file table of the filesystem
     OpenFileTable openFileTable;
+    
+    //in core INode Table
+    INodeTable iTable;
+
+    //INode ID for root dir
+    UINT rootINodeID;
 
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array

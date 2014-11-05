@@ -2,13 +2,10 @@
 
 #include "Globals.h"
 #include "INodeTableEntry.h"
-#include "FileSystem.h"
 
-struct INodeTable {
-  FileSystem *fs;
-
-  INodeTableEntry *[INODE_TABLE_LENGTH] hashQ;
-};
+typedef struct {
+  INodeEntry* hashQ[INODE_TABLE_LENGTH];
+} INodeTable;
 
 //interface to layer2 funcs, pass back the pointer to an INodeEntry, return status
 //args: table, inode id, return pointer to entry

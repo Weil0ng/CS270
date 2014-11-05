@@ -303,6 +303,7 @@ UINT close(FileSystem* fs, char* path) {
 // 4. check length (what if numBytes > fileSize ? return the max possible)
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+  UINT returnSize = 0;
   INode curINode;
   //1. resolve path
   UINT curINodeID = namei(fs, path);
@@ -312,10 +313,11 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //2. get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
+    returnSize = curINode._in_filesize < numBytes?curINode._in_filesize:numBytes;
     //5. readINodeData
     readINodeData(fs, &curINode, buf, offset, numBytes);
   }
-  return numBytes; // what should we return?
+  return returnSize; 
 }
 
 //write file from offset for numBytes
