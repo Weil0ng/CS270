@@ -5,35 +5,74 @@
  
 #include "Directories.h"
 #include <stdio.h>
+#include <assert.h>
+
+// make a new filesystem with a root directory
+UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+    //call layer 1 makefs
+    UINT succ = makefs(nDBlks, nINodes, fs);
+    if(succ != 0) return 1;
+    
+    //make the root directory
+    INode rootINode;
+    UINT id = allocINode(fs, &rootINode); 
+    if(id == -1) {
+        fprintf(stderr, "fail to allocate an inode for the root directory!\n");
+        return 2;
+    }
+    
+    // init directory table for root directory
+    DirEntry dirBuf[MAX_FILE_NUM_IN_DIR];
+   
+    // insert an entry for current directory 
+    strcpy(dirBuf[0].key, ".");
+    dirBuf[0].INodeID = id;
+
+    // special parent directory points back to root
+    strcpy(dirBuf[1].key, "..");
+    dirBuf[1].INodeID = id;
+
+    // update the new directory table
+    writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+
+    // change the inode type to directory
+    rootINode._in_type = DIRECTORY;
+    
+    // write completed root inode to disk
+    writeINode(fs, id, &rootINode);
+}
 
 // make a new directory
 UINT mkdir(FileSystem* fs, char* path) {
     
     UINT id; // the inode id associated with the new directory
     UINT par_id; // the inode id of the parent directory
-    //FIXME: assume a fixed maximum length of path
     char par_path[MAX_PATH_LEN];
-   
+
     //check if the directory already exist
     if (namei(fs, path) != -1) {
         fprintf(stderr, "Directory %s already exists!\n", path);
         return -1;
     }
     else {
-        
+
+        // root directory already created in initfs()
+        assert(strcmp(path, "/")!=0);
+
         char *ptr;
         int ch = '/';
 
         // find the last recurrence of '/'
         ptr = strrchr(path, ch);
         strncpy(par_path, path, strlen(path) - strlen(ptr));
+        par_path[strlen(path) - strlen(ptr)] = '\0';
        
         // find the inode id of the parent directory 
         par_id = namei(fs, par_path);
 
         // check if the parent directory exists
         if((int) par_id == -1) {
-            fprintf(stderr, "Directory %s not found!\n", par_path);
+            fprintf(stderr, "Parent directory %s not found!\n", par_path);
             return -1;
         }
         else {
@@ -49,14 +88,12 @@ UINT mkdir(FileSystem* fs, char* path) {
            
             // allocate a free inode for the new directory 
             id = allocINode(fs, &inode); 
-            if(id == -1) {
+            if((int) id == -1) {
                 fprintf(stderr, "fail to alllocate an inode for the new directory!\n");
                 return -1;
             }
 
-            /* allocate one entry in the directory table: (ptr, id)
-               FIXME: here I assume MAX_FILE_NUM_IN_DIR is the max number of
-               entries in a directory table */
+            /* allocate one entry in the directory table: (dir_name, id) */
             BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
             
             // read the parent directory table
@@ -64,18 +101,15 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             // find an empty directory entry and insert with the new directory
             BOOL FIND = false;
-            UINT i = 0;
-            //FIXME: here we assume the directory table will never be full
-            while(!FIND) {
+            for (UINT i = 0; i < MAX_FILE_NUM_IN_DIR && !FIND; i ++) {
                 DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
                 if (DEntry->INodeID < 0){
                     printf("find an empty entry in the parent directory table");
-                    strcpy(DEntry->key, ptr);
+                    // ptr = "/dir_name"
+                    char *dir_name = strtok(ptr, "/");
+                    strcpy(DEntry->key, dir_name);
                     DEntry->INodeID = id;
                     FIND = true;
-                }
-                else {
-                    i ++;
                 }
             }
 
@@ -88,18 +122,52 @@ UINT mkdir(FileSystem* fs, char* path) {
            
             // insert an entry for current directory 
             DirEntry *curDEntry = (DirEntry *) newBuf;
-            strcpy(curDEntry->key, ptr);
+            strcpy(curDEntry->key, ".");
             curDEntry->INodeID = id;
 
             // insert an entry for parent directory
             DirEntry *parDEntry = (DirEntry *) (newBuf + sizeof(DirEntry));
-            //get the name of the parent directory
-            char *par_ptr = strrchr(par_path, ch);
-            strcpy(parDEntry->key, par_ptr);
+            strcpy(parDEntry->key, "..");
             parDEntry->INodeID = par_id;
 
             // change the inode type to directory
             inode._in_type = DIRECTORY;
+            
+            // update the direct/indirect blocks in the inode
+            if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
+                // number of direct blocks to be allocated
+                UINT num_direct = (MAX_DIR_TABLE_SIZE + BLK_SIZE -1) / BLK_SIZE;
+                
+                for (UINT i = 0; i < num_direct; i ++) {
+                    inode._in_directBlocks[i] = allocDBlk(fs); 
+                    //TODO: confirm allocDblk returns the logical data block id, not raw disk blcok id
+                }
+            }
+            else if (MAX_DIR_TABLE_SIZE <= INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE/sizeof(UINT)* BLK_SIZE)) {
+                // number of single indirect blocks 
+                UINT num_s_indirect = (MAX_DIR_TABLE_SIZE + (BLK_SIZE/sizeof(UINT)* BLK_SIZE) - 1)/(BLK_SIZE/sizeof(UINT)* BLK_SIZE);
+                
+                for (UINT i = 0; i < num_s_indirect; i ++) {
+                    inode._in_sIndirectBlocks[i] = allocDBlk(fs);
+                    
+                    // allocate data blocks for all the entries in the indirect data block
+                    UINT blk_buf[BLK_SIZE/sizeof(UINT)];
+                    for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
+                        blk_buf[j] = allocDBlk(fs);
+                    }
+                    
+                    // write the indirect block 
+                    writeDBlk(fs, inode._in_sIndirectBlocks[i], (BYTE*) blk_buf);
+                }
+            }
+            else {
+                // TODO: in general, directory table wouldn't exceed the single indirect
+                // space.. I don't implement it for now.
+                assert(false);
+            }
+
+            // update the disk inode
+            writeINode(fs, id, &inode);
 
             // update the new directory table
             writeINodeData(fs, &inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
@@ -115,7 +183,6 @@ UINT mknod(FileSystem* fs, char* path) {
 
     UINT id; // the inode id associated with the new file
     UINT par_id; // the inode id of the parent directory
-    //FIXME: assume a fixed maximum length of path
     char par_path[MAX_PATH_LEN];
 
     //check if the directory already exist
@@ -131,6 +198,7 @@ UINT mknod(FileSystem* fs, char* path) {
         // find the last recurrence of '/'
         ptr = strrchr(path, ch);
         strncpy(par_path, path, strlen(path) - strlen(ptr));
+        par_path[strlen(path) - strlen(ptr)] = '\0';
        
         // find the inode id of the parent directory 
         par_id = namei(fs, par_path);
@@ -168,6 +236,8 @@ UINT mknod(FileSystem* fs, char* path) {
                 DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
                 if (DEntry->INodeID < 0){
                     printf("find an empty entry in the parent directory table");
+                    // ptr = "/file_name"
+                    char *dir_name = strtok(ptr, "/");
                     strcpy(DEntry->key, ptr);
                     DEntry->INodeID = id;
                     FIND = true;
@@ -211,6 +281,7 @@ UINT unlink(FileSystem* fs, char* path) {
     // find the last recurrence of '/'
     ptr = strrchr(path, ch);
     strncpy(par_path, path, strlen(path) - strlen(ptr));
+    par_path[strlen(path) - strlen(ptr)] = '\0';
    
     // find the inode id of the parent directory 
     par_id = namei(fs, par_path);
@@ -277,11 +348,9 @@ UINT unlink(FileSystem* fs, char* path) {
             writeINode(fs, id, &inode);
         }
         else {
-            // free file inode when its link count is 0
+            // free file inode when its link count is 0, which also frees the
+            // associated data blocks.
             freeINode(fs, id);
-            
-            //TODO: free the data blocks corresponding to the inode
-
         }
     }
 

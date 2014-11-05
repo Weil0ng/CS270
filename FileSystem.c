@@ -268,8 +268,52 @@ UINT freeINode(FileSystem* fs, UINT id) {
 
     // update the inode table to mark the inode free
     INode inode;
+
+    if(readINode(fs, id, &inode) == -1){
+        fprintf(stderr, "error: read inode %d from disk\n", id);
+        return -1;
+    }
+   
+    // free all data blocks associated with this inode 
+    for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
+        if ( (int) inode._in_directBlocks[i] != -1) {
+            freeDBlk(fs,inode._in_directBlocks[i]);
+        }
+    }
+    for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
+        if ( (int) inode._in_sIndirectBlocks[i] != -1) {
+            BYTE buf[BLK_SIZE];
+            readDBlk(fs, inode._in_sIndirectBlocks[i], buf);
+            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
+                // free the actual data blocks
+                freeDBlk(fs, *(UINT*)(buf + j*sizeof(UINT)));
+            }
+            // free the indirect data block
+            freeDBlk(fs, inode._in_sIndirectBlocks[i]);
+        }
+    }
+    for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
+        if((int)inode._in_dIndirectBlocks[i] != -1) {
+            BYTE buf_s[BLK_SIZE];
+            readDBlk(fs, inode._in_dIndirectBlocks[i], buf_s);
+            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
+                BYTE buf_d[BLK_SIZE];
+                readDBlk(fs, *(UINT*)(buf_s + j*sizeof(UINT)), buf_d);
+                for (UINT k = 0; k < (BLK_SIZE / sizeof(UINT)); k ++) {
+                    // free the actual data blocks
+                    freeDBlk(fs, *(UINT*)(buf_d + k*sizeof(UINT)));
+                }
+                // free the single indirect blocks
+                freeDBlk(fs, *(UINT*)(buf_s + j*sizeof(UINT)));
+            }
+            // free the double indirect blocks
+            freeDBlk(fs, inode._in_dIndirectBlocks[i]);
+        }
+    }
+
     initializeINode(&inode, id);
     inode._in_type = FREE;
+
     
     if(writeINode(fs, id, &inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", id);
