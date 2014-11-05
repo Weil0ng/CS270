@@ -15,29 +15,6 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     if(succ == 0) {
         printf("makefs succeeded with filesystem size: %d\n", fs->nBytes);
     }
-/*
-    printf("\nSuperblock:\n");
-    printSuperBlock(&fs->superblock);
-    printf("\nINodes:\n");
-    printINodes(fs);
-    printf("\nData blocks:\n");
-    printDBlks(fs);
-    printf("\nFree inode cache:\n");
-    printFreeINodeCache(&fs->superblock);
-    printf("\nFree dblk cache:\n");
-    printFreeDBlkCache(&fs->superblock);
-
-    assert(fs->diskINodeBlkOffset == 1);
-    assert(fs->diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
-    
-    printf("\n---- allocINode ----\n");
-    for(int i = 0; i < nINodes; i++) {
-        INode testINode;
-        UINT id = allocINode(fs, &testINode);
-        printf("allocINode call %d returned ID %d\n", i, id);
-        printINode(&testINode);
-    }
-    */
     
     assert(fs->diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
     
@@ -47,9 +24,9 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
     INode rootINode;
     rootINode._in_type = DIRECTORY;
-    //writeINode(fs, 0, &rootINode); // reserve inode 0 as root inode
+    
     //UINT id = allocINode(fs, &rootINode); 
-    UINT id = 0;
+    UINT id = 0; // inode 0 is reserved as root inode
     if(id == -1) {
         fprintf(stderr, "fail to allocate an inode for the root directory!\n");
         return 2;
@@ -74,8 +51,6 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         dirBuf[i].INodeID = -1;
     }
     
-    //printf("MAX DIR SIZE: %d\n", MAX_DIR_TABLE_SIZE);
-    
     // update the direct/indirect blocks in the rootINode
     if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
         // number of direct blocks to be allocated
@@ -85,7 +60,6 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         for (UINT i = 0; i < num_direct; i ++) {
             rootINode._in_directBlocks[i] = allocDBlk(fs); 
             //printf("allocate data block %d for direct block %d\n",rootINode._in_directBlocks[i], i);
-            //TODO: confirm allocDblk returns the logical data block id, not raw disk blcok id
         }
     }
     else if (MAX_DIR_TABLE_SIZE <= INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE/sizeof(UINT)* BLK_SIZE)) {
@@ -211,7 +185,6 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             
             /* allocate two entries in the new directory table (. , id) and (.., par_id) */
-            
             // init directory table for the new directory
             DirEntry newBuf[MAX_FILE_NUM_IN_DIR];
            
@@ -344,9 +317,8 @@ UINT mknod(FileSystem* fs, char* path) {
             BOOL FIND = false;
             for (UINT i = 0; i < MAX_FILE_NUM_IN_DIR && !FIND; i ++) {
                 DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
-                //printf("inode id of this entry is %d\n", DEntry->INodeID);
                 if ((int)DEntry->INodeID < 0){
-                    printf("insert an new file to an empty entry in the parent directory table\n");
+                    printf("insert a new file to an empty entry in the parent directory table\n");
                     strcpy(DEntry->key, file_name);
                     DEntry->INodeID = id;
                     FIND = true;
@@ -378,7 +350,6 @@ UINT unlink(FileSystem* fs, char* path) {
     
     UINT id; // the inode id of the unlinked file
     UINT par_id; // the inode id of the parent directory
-    //FIXME: assume a fixed maximum length of path
     char par_path[MAX_PATH_LEN];
     
     char *ptr;
@@ -391,7 +362,7 @@ UINT unlink(FileSystem* fs, char* path) {
     
     // special case for root
     if(strcmp(par_path, "") == 0) {
-        printf("its parent is root\n");
+        printf("Its parent is root\n");
         strcpy(par_path, "/");
     }
    
@@ -451,7 +422,8 @@ UINT unlink(FileSystem* fs, char* path) {
         }
 
         // decrement the link count of the file inode
-        // TODO: does mkdir/mknod increment the linkcount?
+        // TODO: does mkdir/mknod increment the linkcount? otherwise this goes
+        // to -1
         inode._in_linkcount --;
         printf("update the link count to this file/directory\n");
 
@@ -569,7 +541,7 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 // 3. scan through to find next tok's id
 UINT namei(FileSystem *fs, char *path)
 {
-  char local_path[MAX_PATH_LEN];
+  char local_path[MAX_PATH_LEN]; // cannot use "path" directly, namei will truncate it
   strcpy(local_path, path);
 
   // current inode ID in traversal
@@ -599,16 +571,14 @@ UINT namei(FileSystem *fs, char *path)
     //2.2 read in the directory
     memset(curDir, 0, sizeof(curDir));
     readINodeData(fs, &curINode, &curDir, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+    
     //3 scan through the dir
-    //curDirEntry = 0;
     entryFound = false;
     // Given the assumption that all blocks are initialized to be 0
     //  while (strcmp((curDir[curDirEntry]).key, "") != 0) {
-    for (UINT curDirEntry = 0; curDirEntry < MAX_FILE_NUM_IN_DIR && !entryFound; curDirEntry ++) {
-                
+    for (curDirEntry = 0; curDirEntry < MAX_FILE_NUM_IN_DIR && !entryFound; curDirEntry ++) {
       DirEntry *DEntry = (DirEntry *) (curDir + curDirEntry*sizeof(DirEntry));
       if (strcmp(tok, DEntry->key) == 0) {
-        //printf("inode id of this entry is %d\n", DEntry->INodeID);
         entryFound = true;
         curID = DEntry->INodeID; // move pointer to the next inode of dir or file
         //printf("find the inode for %s, its inode id = %d\n", tok, curID);
