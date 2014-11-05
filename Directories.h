@@ -8,6 +8,9 @@
 #include "Directory.h"
 #include "FileSystem.h"
 
+// makes a new filesystem with a root directory
+UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
+
 // makes a new directory
 UINT mkdir(FileSystem* fs, char* path);
 

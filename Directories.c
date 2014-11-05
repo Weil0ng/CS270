@@ -6,6 +6,41 @@
 #include "Directories.h"
 #include <stdio.h>
 
+// make a new filesystem with a root directory
+UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+    //call layer 1 makefs
+    UINT succ = makefs(nDBlks, nINodes, fs);
+    if(succ != 0) return 1;
+    
+    //make the root directory
+    INode rootINode;
+    UINT id = allocINode(fs, &rootINode); 
+    if(id == -1) {
+        fprintf(stderr, "fail to allocate an inode for the root directory!\n");
+        return 2;
+    }
+    
+    // init directory table for root directory
+    DirEntry dirBuf[MAX_FILE_NUM_IN_DIR];
+   
+    // insert an entry for current directory 
+    strcpy(dirBuf[0].key, ".");
+    dirBuf[0].INodeID = id;
+
+    // special parent directory points back to root
+    strcpy(dirBuf[1].key, "..");
+    dirBuf[1].INodeID = id;
+
+    // update the new directory table
+    writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+
+    // change the inode type to directory
+    rootINode._in_type = DIRECTORY;
+    
+    // write completed root inode to disk
+    writeINode(fs, id, &rootINode);
+}
+
 // make a new directory
 UINT mkdir(FileSystem* fs, char* path) {
     
