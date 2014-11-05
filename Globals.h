@@ -32,6 +32,7 @@
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 
 #define INODE_NUM_D_INDIRECT_BLKS (1) // number of double direct blocks per inode 
 
+#define OPEN_FILE_TABLE_LENGTH (1024)   //length of open file table
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
 #define FILE_NAME_LENGTH (16)      //number of bytes in the file name in bytes
 

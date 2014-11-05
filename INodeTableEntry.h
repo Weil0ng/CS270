@@ -2,9 +2,8 @@
 // Each entry is an instance/index of an inode in buffer (or on disk)
 //
 #include "Globals.h"
-#include "Utility.h"
 
-struct INodeEntry {
+typedef struct INodeEntry {
 // __index property__
      
 //inode id of this entry
@@ -16,5 +15,5 @@ struct INodeEntry {
   UINT _in_ref;
 
 //pointer to the next entry in this bin
-  INodeEntry *next;
-};
+  struct INodeEntry *next;
+} INodeEntry;

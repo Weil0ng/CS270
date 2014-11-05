@@ -4,11 +4,12 @@
  * by Jon
  */
 
-#include "Globals.h"
-#include "Utility.h"
 #include "DiskEmulator.h"
+#include "Globals.h"
 #include "INode.h"
+#include "OpenFileTable.h"
 #include "SuperBlock.h"
+#include "Utility.h"
 
 typedef struct FileSystem {
 
@@ -23,6 +24,9 @@ typedef struct FileSystem {
 
     //logical id of the first data block
     UINT diskDBlkOffset;
+    
+    //the open file table of the filesystem
+    OpenFileTable openFileTable;
 
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array
