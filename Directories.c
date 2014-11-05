@@ -12,13 +12,44 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     //call layer 1 makefs
     UINT succ = makefs(nDBlks, nINodes, fs);
     if(succ != 0) return 1;
+    if(succ == 0) {
+        printf("makefs succeeded with filesystem size: %d\n", fs->nBytes);
+    }
+/*
+    printf("\nSuperblock:\n");
+    printSuperBlock(&fs->superblock);
+    printf("\nINodes:\n");
+    printINodes(fs);
+    printf("\nData blocks:\n");
+    printDBlks(fs);
+    printf("\nFree inode cache:\n");
+    printFreeINodeCache(&fs->superblock);
+    printf("\nFree dblk cache:\n");
+    printFreeDBlkCache(&fs->superblock);
+
+    assert(fs->diskINodeBlkOffset == 1);
+    assert(fs->diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
+    
+    printf("\n---- allocINode ----\n");
+    for(int i = 0; i < nINodes; i++) {
+        INode testINode;
+        UINT id = allocINode(fs, &testINode);
+        printf("allocINode call %d returned ID %d\n", i, id);
+        printINode(&testINode);
+    }
+    */
+    
+    assert(fs->diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
     
     //make the root directory
     #ifdef DEBUG
     printf("Creating root directory...\n");
     #endif
     INode rootINode;
-    UINT id = allocINode(fs, &rootINode); 
+    rootINode._in_type = DIRECTORY;
+    //writeINode(fs, 0, &rootINode); // reserve inode 0 as root inode
+    //UINT id = allocINode(fs, &rootINode); 
+    UINT id = 0;
     if(id == -1) {
         fprintf(stderr, "fail to allocate an inode for the root directory!\n");
         return 2;
@@ -34,16 +65,23 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     // special parent directory points back to root
     strcpy(dirBuf[1].key, "..");
     dirBuf[1].INodeID = id;
+
+    for (UINT i = 2; i < MAX_FILE_NUM_IN_DIR; i ++ ) {
+        strcpy(dirBuf[i].key, "");
+        dirBuf[i].INodeID = -1;
+    }
     
-    printf("MAX DIR SIZE: %d\n", MAX_DIR_TABLE_SIZE);
+    //printf("MAX DIR SIZE: %d\n", MAX_DIR_TABLE_SIZE);
     
     // update the direct/indirect blocks in the rootINode
     if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
         // number of direct blocks to be allocated
         UINT num_direct = (MAX_DIR_TABLE_SIZE + BLK_SIZE -1) / BLK_SIZE;
+        //printf("allocated %d direct blocks for this directory\n", num_direct);
         
         for (UINT i = 0; i < num_direct; i ++) {
             rootINode._in_directBlocks[i] = allocDBlk(fs); 
+            //printf("allocate data block %d for direct block %d\n",rootINode._in_directBlocks[i], i);
             //TODO: confirm allocDblk returns the logical data block id, not raw disk blcok id
         }
     }
@@ -53,6 +91,7 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         
         for (UINT i = 0; i < num_s_indirect; i ++) {
             rootINode._in_sIndirectBlocks[i] = allocDBlk(fs);
+            //printf("allocate data block %d for indirect block %d\n",rootINode._in_sIndirectBlocks[i], i);
             
             // allocate data blocks for all the entries in the indirect data block
             UINT blk_buf[BLK_SIZE/sizeof(UINT)];
@@ -78,6 +117,8 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     
     // write completed root inode to disk
     writeINode(fs, id, &rootINode);
+          
+    return 0;
 }
 
 // make a new directory
@@ -88,11 +129,12 @@ UINT mkdir(FileSystem* fs, char* path) {
     char par_path[MAX_PATH_LEN];
 
     //check if the directory already exist
-    if (namei(fs, path) != -1) {
+    if ((int)namei(fs, path) != -1) {
         fprintf(stderr, "Directory %s already exists!\n", path);
         return -1;
     }
     else {
+        //printf("directory does not exist, try create a new dir\n");
 
         // root directory already created in initfs()
         assert(strcmp(path, "/")!=0);
@@ -102,9 +144,19 @@ UINT mkdir(FileSystem* fs, char* path) {
 
         // find the last recurrence of '/'
         ptr = strrchr(path, ch);
+        
+        // ptr = "/dir_name"
+        char *dir_name = strtok(ptr, "/");
+       
         strncpy(par_path, path, strlen(path) - strlen(ptr));
         par_path[strlen(path) - strlen(ptr)] = '\0';
-       
+
+        // special case for root
+        if(strcmp(par_path, "") == 0) {
+            printf("its parent is root\n");
+            strcpy(par_path, "/");
+        }
+        
         // find the inode id of the parent directory 
         par_id = namei(fs, par_path);
 
@@ -126,6 +178,7 @@ UINT mkdir(FileSystem* fs, char* path) {
            
             // allocate a free inode for the new directory 
             id = allocINode(fs, &inode); 
+            printf("allocated inode id %d for directory %s\n", id, dir_name);
             if((int) id == -1) {
                 fprintf(stderr, "fail to alllocate an inode for the new directory!\n");
                 return -1;
@@ -141,10 +194,9 @@ UINT mkdir(FileSystem* fs, char* path) {
             BOOL FIND = false;
             for (UINT i = 0; i < MAX_FILE_NUM_IN_DIR && !FIND; i ++) {
                 DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
-                if (DEntry->INodeID < 0){
-                    printf("find an empty entry in the parent directory table");
-                    // ptr = "/dir_name"
-                    char *dir_name = strtok(ptr, "/");
+                //printf("inode id of this entry is %d\n", DEntry->INodeID);
+                if ((int)DEntry->INodeID < 0){
+                    printf("insert a new directory to an empty entry in the parent directory table\n");
                     strcpy(DEntry->key, dir_name);
                     DEntry->INodeID = id;
                     FIND = true;
@@ -156,17 +208,23 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             
             /* allocate two entries in the new directory table (. , id) and (.., par_id) */
-            BYTE newBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
+            
+            // init directory table for the new directory
+            DirEntry newBuf[MAX_FILE_NUM_IN_DIR];
            
             // insert an entry for current directory 
-            DirEntry *curDEntry = (DirEntry *) newBuf;
-            strcpy(curDEntry->key, ".");
-            curDEntry->INodeID = id;
+            strcpy(newBuf[0].key, ".");
+            newBuf[0].INodeID = id;
 
-            // insert an entry for parent directory
-            DirEntry *parDEntry = (DirEntry *) (newBuf + sizeof(DirEntry));
-            strcpy(parDEntry->key, "..");
-            parDEntry->INodeID = par_id;
+            // special parent directory points back to parent
+            strcpy(newBuf[1].key, "..");
+            newBuf[1].INodeID = id;
+
+            // initialize other entries to empty
+            for (UINT i = 2; i < MAX_FILE_NUM_IN_DIR; i ++ ) {
+                strcpy(newBuf[i].key, "");
+                newBuf[i].INodeID = -1;
+            }
 
             // change the inode type to directory
             inode._in_type = DIRECTORY;
@@ -235,11 +293,21 @@ UINT mknod(FileSystem* fs, char* path) {
 
         // find the last recurrence of '/'
         ptr = strrchr(path, ch);
+        // ptr = "/file_name"
+        char *file_name = strtok(ptr, "/");
+        
         strncpy(par_path, path, strlen(path) - strlen(ptr));
         par_path[strlen(path) - strlen(ptr)] = '\0';
+        
+        // special case for root
+        if(strcmp(par_path, "") == 0) {
+            printf("Its parent is root\n");
+            strcpy(par_path, "/");
+        }
        
         // find the inode id of the parent directory 
         par_id = namei(fs, par_path);
+        //printf("parent inode id = %d\n", par_id);
         if((int) par_id == -1) { // parent directory does not exist
             fprintf(stderr, "Directory %s not found!\n", par_path);
             return -1;
@@ -257,34 +325,31 @@ UINT mknod(FileSystem* fs, char* path) {
             
             // allocate a free inode for the new file
             id = allocINode(fs, &inode); 
+            printf("allocated inode id %d for file %s\n", id, file_name);
             if(id == -1) {
                 fprintf(stderr, "fail to alllocate an inode for the new file!\n");
                 return -1;
             }
-
-            // allocate one entry in the parent directory table: (ptr, id)
+            
+            /* allocate one entry in the directory table: (dir_name, id) */
             BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
+            
+            // read the parent directory table
             readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
-            // find an empty directory entry and insert with the new file
+            // find an empty directory entry and insert with the new directory
             BOOL FIND = false;
-            UINT i = 0;
-            //FIXME: here we assume the directory table will never be full
-            while(!FIND) {
+            for (UINT i = 0; i < MAX_FILE_NUM_IN_DIR && !FIND; i ++) {
                 DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
-                if (DEntry->INodeID < 0){
-                    printf("find an empty entry in the parent directory table");
-                    // ptr = "/file_name"
-                    char *dir_name = strtok(ptr, "/");
-                    strcpy(DEntry->key, ptr);
+                //printf("inode id of this entry is %d\n", DEntry->INodeID);
+                if ((int)DEntry->INodeID < 0){
+                    printf("insert an new file to an empty entry in the parent directory table\n");
+                    strcpy(DEntry->key, file_name);
                     DEntry->INodeID = id;
                     FIND = true;
                 }
-                else {
-                    i ++;
-                }
             }
-
+            
             // update the parent directory table
             writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
@@ -320,6 +385,12 @@ UINT unlink(FileSystem* fs, char* path) {
     ptr = strrchr(path, ch);
     strncpy(par_path, path, strlen(path) - strlen(ptr));
     par_path[strlen(path) - strlen(ptr)] = '\0';
+    
+    // special case for root
+    if(strcmp(par_path, "") == 0) {
+        printf("its parent is root\n");
+        strcpy(par_path, "/");
+    }
    
     // find the inode id of the parent directory 
     par_id = namei(fs, par_path);
@@ -344,9 +415,7 @@ UINT unlink(FileSystem* fs, char* path) {
             return -1;
         }
 
-        /* allocate one entry in the directory table: (ptr, id)
-           FIXME: here I assume MAX_FILE_NUM_IN_DIR is the max number of
-           entries in a directory table */
+        /* allocate one entry in the directory table: (ptr, id)*/
         BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
         
         // read the parent directory table
@@ -359,7 +428,7 @@ UINT unlink(FileSystem* fs, char* path) {
         while(!FIND) {
             DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
             if (DEntry->INodeID  == id){
-                printf("find the to-be-unlinked entry in the parent directory table");
+                printf("zero out the to-be-unlinked entry in the parent directory table\n");
                 strcpy(DEntry->key, "");
                 DEntry->INodeID = -1;
                 FIND = true;
@@ -379,7 +448,9 @@ UINT unlink(FileSystem* fs, char* path) {
         }
 
         // decrement the link count of the file inode
+        // TODO: does mkdir/mknod increment the linkcount?
         inode._in_linkcount --;
+        printf("update the link count to this file/directory\n");
 
         // write the file inode to disk
         if (inode._in_linkcount != 0) {
@@ -389,6 +460,7 @@ UINT unlink(FileSystem* fs, char* path) {
             // free file inode when its link count is 0, which also frees the
             // associated data blocks.
             freeINode(fs, id);
+            printf("free the inode %d associated with this file/dir\n", id);
         }
     }
 
@@ -459,6 +531,9 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 // 3. scan through to find next tok's id
 UINT namei(FileSystem *fs, char *path)
 {
+  char local_path[MAX_PATH_LEN];
+  strcpy(local_path, path);
+
   // current inode ID in traversal
   UINT curID = 0; //root
   // memory for INode
@@ -466,13 +541,16 @@ UINT namei(FileSystem *fs, char *path)
   // pointer to dir entry
   UINT curDirEntry = 0;
   // memory for current directory
-  DirEntry curDir[MAX_FILE_NUM_IN_DIR];
+  // DirEntry curDir[MAX_FILE_NUM_IN_DIR];
+  BYTE curDir[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
+  
   // flag for scan result
   BOOL entryFound = false;
   //1. parse path
-  char *tok = strtok(path, "/");
+  char *tok = strtok(local_path, "/");
   //2 traverse along the tokens
   while (tok) {
+    //printf("looking for the inode for %s\n", tok);
     readINode(fs, curID, &curINode);
     //2.1 if not directory, throw error
     if (curINode._in_type != DIRECTORY) {
@@ -484,16 +562,19 @@ UINT namei(FileSystem *fs, char *path)
     memset(curDir, 0, sizeof(curDir));
     readINodeData(fs, &curINode, &curDir, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
     //3 scan through the dir
-    curDirEntry = 0;
+    //curDirEntry = 0;
     entryFound = false;
     // Given the assumption that all blocks are initialized to be 0
-    while (strcmp((curDir[curDirEntry]).key, "") != 0) {
-      if (strcmp(tok, curDir[curDirEntry].key) == 1) {
+    //  while (strcmp((curDir[curDirEntry]).key, "") != 0) {
+    for (UINT curDirEntry = 0; curDirEntry < MAX_FILE_NUM_IN_DIR && !entryFound; curDirEntry ++) {
+                
+      DirEntry *DEntry = (DirEntry *) (curDir + curDirEntry*sizeof(DirEntry));
+      if (strcmp(tok, DEntry->key) == 0) {
+        //printf("inode id of this entry is %d\n", DEntry->INodeID);
         entryFound = true;
-        curID = (curDir[curDirEntry]).INodeID; // move pointer to the next inode of dir or file
-        break;
+        curID = DEntry->INodeID; // move pointer to the next inode of dir or file
+        //printf("find the inode for %s, its inode id = %d\n", tok, curID);
       }
-      curDirEntry ++;
     }
     //exception: dir does not contain target tok
     if (!entryFound) {

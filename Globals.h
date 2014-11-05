@@ -18,8 +18,8 @@
 //File system specific
 #define MAX_FS_SIZE (4294967296) //Maximum supported filesystem size (2^32 bytes)
 
-#define BLK_SIZE (128) //Block size in bytes
-#define INODE_SIZE (64) //INode size in bytes
+#define BLK_SIZE (1024) //Block size in bytes
+#define INODE_SIZE (512) //INode size in bytes
 #define INODES_PER_BLK (BLK_SIZE / INODE_SIZE) //INodes per block (computed)
 
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
@@ -28,7 +28,7 @@
 #define FREE_INODE_CACHE_SIZE (4) //In-memory inode cache size, 100 = 400 bytes of superblock
 
 #define INODE_OWNER_NAME_LEN (10) // number of characters of the owner name 
-#define INODE_NUM_DIRECT_BLKS (1) // number of direct blocks per inode 
+#define INODE_NUM_DIRECT_BLKS (10) // number of direct blocks per inode 
 #define INODE_NUM_S_INDIRECT_BLKS (1) // number of single direct blocks per inode 
 #define INODE_NUM_D_INDIRECT_BLKS (1) // number of double direct blocks per inode 
 
@@ -36,7 +36,7 @@
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
 #define FILE_NAME_LENGTH (16)      //number of bytes in the file name in bytes
 
-#define MAX_FILE_NUM_IN_DIR (1024)  //maximum number of files in a single directory
+#define MAX_FILE_NUM_IN_DIR (10)  //maximum number of files in a single directory
 #define MAX_DIR_TABLE_SIZE (MAX_FILE_NUM_IN_DIR * (FILE_NAME_LENGTH + sizeof(UINT)))
 #define MAX_PATH_LEN (100) //maximum length of the path
 #define MAX_FILE_SIZE (BLK_SIZE * INODE_NUM_DIRECT_BLKS + BLK_SIZE * INODE_NUM_S_INDIRECT_BLKS * INODES_PER_BLK + BLK_SIZE * INODE_NUM_D_INDIRECT_BLKS * INODES_PER_BLK * INODES_PER_BLK)
