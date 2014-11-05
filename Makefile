@@ -5,7 +5,12 @@ LD=gcc
 CFLAGS=-O2 -std=c99 -g
 OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o OpenFileTable.o SuperBlock.o Utility.o 
 
+main: $(OBJS) TestMain
+
 test: $(OBJS) Layer0Test Layer1CombinedTest
+
+TestMain: $(OBJS) TestMain.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 Layer0Test: $(OBJS) Layer0Test.o
 	$(CC) $(CFLAGS) -o $@ $^
