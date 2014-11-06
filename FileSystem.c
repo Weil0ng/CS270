@@ -70,7 +70,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("Initializing superblock free inode cache...\n");
     #endif
-    if(fs->superblock.nINodes < FREE_INODE_CACHE_SIZE) { 
+    if(fs->superblock.nINodes < FREE_INODE_CACHE_SIZE) {
         //special case: not enough inodes to fill cache
         fprintf(stderr, "Warning: %d inodes do not fill cache of size %d!\n", fs->superblock.nINodes, FREE_INODE_CACHE_SIZE);
         for(UINT i = 0; i < fs->superblock.nINodes; i++) {
@@ -107,13 +107,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         for(UINT i = 0; i < INODES_PER_BLK; i++) {
             INode* inode = (INode*) &nextINodeBlkBuf[i * INODE_SIZE];
             initializeINode(inode, nextINodeId++);
-
-            if (nextINodeId - 1 ==0) {
-                inode->_in_type = DIRECTORY;
-            }
-            else {
-                inode->_in_type = FREE;
-            }
+            inode->_in_type = FREE;
         }
 
         writeBlk(fs->disk, nextINodeBlkId, nextINodeBlkBuf);
@@ -255,7 +249,6 @@ UINT allocINode(FileSystem* fs, INode* inode) {
 
     // decrement the free inodes count
     fs->superblock.nFreeINodes --;
-    printf("number of free inodes = %d\n", fs->superblock.nFreeINodes);
 
     return nextFreeINodeID;
 
@@ -783,11 +776,27 @@ void printINodes(FileSystem* fs) {
     }
 }
 
-void printDBlk(BYTE *buf)
+void printDBlkInts(BYTE *buf)
 {
     for(UINT k = 0; k < BLK_SIZE; k+=sizeof(UINT)) {
         UINT* val = (UINT*) (buf + k);
         printf("%d ", *val);
+    }
+    printf("\n");
+}
+
+void printDBlkBytes(BYTE *buf)
+{
+    for(UINT k = 0; k < BLK_SIZE; k++) {
+        printf("%x ", buf[k]);
+    }
+    printf("\n");
+}
+
+void printDBlkChars(BYTE *buf)
+{
+    for(UINT k = 0; k < BLK_SIZE; k++) {
+        printf("%c ", (char) buf[k]);
     }
     printf("\n");
 }
@@ -797,7 +806,7 @@ void printDBlks(FileSystem* fs) {
         BYTE buf[BLK_SIZE];
         readDBlk(fs, i, buf);
         printf("%d\t| ", i);
-        printDBlk(buf);
+        printDBlkInts(buf);
     }
 }
 #endif
