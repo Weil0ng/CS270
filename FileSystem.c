@@ -367,11 +367,24 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
-UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {    
+UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+    #ifdef DEBUG
+    assert(offset < inode->_in_filesize);
+    assert(offset + len <= inode->_in_filesize);
+    #else
+    if(offset >= inode->_in_filesize || offset + len > inode->_in_filesize) {
+        fprintf(stderr, "Error: readINodeData offset %d with length %d exceeds file size %d!\n", offset, len, inode->_in_filesize);
+        return -1;
+    }
+    #endif
+
     //compute start block id
     UINT nextBlkId = -1;
     UINT succ = bmap(fs, inode, offset, &nextBlkId);
-    if(succ != 0) return -1;
+    if(succ != 0) {
+        fprintf(stderr, "Error: unallocated data blocks found in range of readINodeData offset %d with length %d", offset, len);
+        return -2;
+    }
     
     //convert byte offset to logical id + block offset
     UINT logicalId = offset / BLK_SIZE;
@@ -474,8 +487,12 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 }
 
 UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+    assert(offset < MAX_FILE_SIZE);
+    assert(offset + len <= MAX_FILE_SIZE);
+
     //compute start block id
     UINT nextBlkId = -1;
+    //todo: change this to ballocate instead of bmap
     UINT succ = bmap(fs, inode, offset, &nextBlkId);
     if(succ != 0) return -1;
     
@@ -502,6 +519,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
             
             //compute next block id
             logicalId++;
+            //todo: change this to ballocate instead of bmap
             UINT succ = bmap(fs, inode, logicalId * BLK_SIZE, &nextBlkId);
         }
     }
@@ -589,7 +607,6 @@ UINT allocDBlk(FileSystem* fs) {
 
     fs->superblock.nFreeDBlks --;
     return returnID;
-    //return 0;
 }
 
 // Try to insert a free DBlk back to free list
@@ -601,6 +618,8 @@ UINT allocDBlk(FileSystem* fs) {
 //      insert to current cache
 // 3. # Free DBlks ++
 UINT freeDBlk(FileSystem* fs, UINT id) {
+    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+
     // if no other blocks are free
     if (fs->superblock.nFreeDBlks == 0) {
         fs->superblock.pFreeDBlksHead = id;
@@ -656,6 +675,9 @@ UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
 // function: read a data block with byte offset
 UINT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
     assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+    assert(off < BLK_SIZE);
+    assert(off + len <= BLK_SIZE);
+
     BYTE readBuf[BLK_SIZE];
 
     if (readDBlk(fs, id, readBuf) == -1) {
@@ -674,6 +696,9 @@ UINT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
 // function: read a data block with byte offset
 UINT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
     assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+    assert(off < BLK_SIZE);
+    assert(off + len <= BLK_SIZE);
+
     BYTE writeBuf[BLK_SIZE];
 
     if (readDBlk(fs, id, writeBuf) == -1) {
