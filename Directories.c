@@ -25,8 +25,8 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     INode rootINode;
     rootINode._in_type = DIRECTORY;
     
-    //UINT id = allocINode(fs, &rootINode); 
-    UINT id = 0; // inode 0 is reserved as root inode
+    UINT id = allocINode(fs, &rootINode); 
+    //UINT id = 0; // inode 0 is reserved as root inode
     if(id == -1) {
         fprintf(stderr, "fail to allocate an inode for the root directory!\n");
         return 2;

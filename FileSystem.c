@@ -60,7 +60,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
     
     fs->superblock.nINodes = nINodes;
-    fs->superblock.nFreeINodes = nINodes - 1;
+    fs->superblock.nFreeINodes = nINodes;
     fs->superblock.pNextFreeINode = fs->superblock.nINodes >= FREE_INODE_CACHE_SIZE
             ? FREE_INODE_CACHE_SIZE - 1 : fs->superblock.nINodes - 1;
 
@@ -70,20 +70,20 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("Initializing superblock free inode cache...\n");
     #endif
-    if(fs->superblock.nINodes < FREE_INODE_CACHE_SIZE + 1) { 
+    if(fs->superblock.nINodes < FREE_INODE_CACHE_SIZE) { 
         //special case: not enough inodes to fill cache
         fprintf(stderr, "Warning: %d inodes do not fill cache of size %d!\n", fs->superblock.nINodes, FREE_INODE_CACHE_SIZE);
-        for(UINT i = 0; i < fs->superblock.nINodes - 1; i++) {
-            fs->superblock.freeINodeCache[i] = i + 1;
+        for(UINT i = 0; i < fs->superblock.nINodes; i++) {
+            fs->superblock.freeINodeCache[i] = i;
         }
-        for(UINT i = fs->superblock.nINodes - 1; i < FREE_INODE_CACHE_SIZE; i++) {
+        for(UINT i = fs->superblock.nINodes; i < FREE_INODE_CACHE_SIZE; i++) {
             fs->superblock.freeINodeCache[i] = -1;
         }
     }
     else {
         //typical case: fill cache with first inodes
         for(UINT i = 0; i < FREE_INODE_CACHE_SIZE; i++) {
-            fs->superblock.freeINodeCache[i] = i + 1;
+            fs->superblock.freeINodeCache[i] = i;
         }
     }
     
