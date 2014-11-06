@@ -1,4 +1,3 @@
-
 ==== Team Members ====
 
 Weilong Cui
@@ -41,7 +40,9 @@ make main
    
     Tests the Layer 2 functionality by making a file system
     with the parameters specified and giving a menu of 
-    commands.  Currently makefs succeeds, but the 
-    implementation of the Layer 2 commands is quite buggy.  
-    However, "stats" is a debugging function that will show
-    you the state of the FS after makefs or any command.
+    commands.  Currently, mkdir, mknod, unlink, open, close, read, write
+    system calls are implemented and tested.
+   
+    In addition to these syste calls, "quit" allows you to exit the program;
+    "stats" is a debugging function that will show you the state of the FS
+    after makefs or any command.

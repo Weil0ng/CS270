@@ -9,17 +9,17 @@ main: $(OBJS) TestMain
 
 test: $(OBJS) Layer0Test Layer1CombinedTest
 
+Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 TestMain: $(OBJS) TestMain.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 Layer0Test: $(OBJS) Layer0Test.o
-	$(CC) $(CFLAGS) -o $@ $^
-
-Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
 	$(CC) $(CFLAGS) -o $@ $^
     
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr Layer0Test Layer1CombinedTest *.o diskFile diskDump
+	rm -fr Layer0Test Layer1CombinedTest *.o diskFile diskDump TestMain

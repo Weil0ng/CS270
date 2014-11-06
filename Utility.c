@@ -32,7 +32,7 @@ void THROW()
     break;
   }
   case _fs_NonExistFile: {
-    printf("File does not exist!\n");
+    printf("File/Directory does not exist!\n");
     break;
   }
   default: break;

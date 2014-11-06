@@ -29,7 +29,7 @@ int main(int args, char* argv[])
     printf("Initializing file system with makefs...\n");
     UINT succ = initfs(nDBlks, nINodes, &fs);
     if(succ == 0) {
-        printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
+        printf("makeis succeeded with filesystem size: %d\n", fs.nBytes);
     }
     else {
         printf("Error: initfs failed with error code: %d\n", succ);
@@ -47,19 +47,19 @@ int main(int args, char* argv[])
         scanf("%s", command);
         
         if(strcmp(command, "mkdir") == 0) {
-            printf("Enter directory path: ");
+            //printf("Enter directory path: ");
             scanf("%s", path);
             
             mkdir(&fs, path);
         }
         else if(strcmp(command, "mknod") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
             
             mknod(&fs, path);
         }
         else if(strcmp(command, "unlink") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
             
             unlink(&fs, path);
@@ -130,13 +130,14 @@ void printMenu() {
     printf("====================\n");
     printf("File system commands\n");
     printf("--------------------\n");
-    printf(" mkdir\n");
-    printf(" mknod\n");
-    printf(" unlink\n");
-    printf(" open\n");
-    printf(" close\n");
-    printf(" read\n");
-    printf(" write\n");
+    printf("IMPORTANT: please provide an absolute path!\n");
+    printf(" mkdir /path/to/directory\n");
+    printf(" mknod /path/to/file\n");
+    printf(" unlink /path/to/file_or_dir\n");
+    printf(" open /path/to/file_or_dir\n");
+    printf(" close /path/to/file_or_dir\n");
+    printf(" read /path/to/file_or_dir\n");
+    printf(" write /path/to/file_or_dir\n");
     printf("--------------------\n");
     printf(" stats\n");
     printf(" quit\n");
