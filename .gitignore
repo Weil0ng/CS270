@@ -1,0 +1,11 @@
+*.npp
+
+*.o
+*.out
+
+TestMain
+Layer1CombinedTest
+Layer0Test
+
+diskDump
+diskFile
