@@ -55,7 +55,7 @@ UINT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_readOutOfBoundry;
-    THROW();
+    THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
   UINT offset = bid2Offset(bid);
@@ -68,7 +68,7 @@ UINT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_writeOutOfBoundry;
-    THROW();
+    THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
   UINT offset = bid2Offset(bid);

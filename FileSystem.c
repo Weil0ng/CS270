@@ -566,7 +566,7 @@ UINT allocDBlk(FileSystem* fs) {
     //1. check full
     if (fs->superblock.nFreeDBlks == 0) {
         _err_last = _fs_DBlkOutOfNumber;
-        THROW();
+        THROW(__FILE__, __LINE__, __func__);
         return -1;
     }
     
@@ -715,6 +715,80 @@ UINT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
 
     return 0;
 }
+
+// Definition:
+// 	map internal index of an inode to its "flattened" id
+// Errors:
+// 	1. internal index out of range
+// 	2. target block not allocated
+// Algo:
+// 	1. check direct range
+// 	
+UINT bmap_new(FileSystem* fs, INode* inode, UINT internal_index) 
+{
+    UINT DBlkID = -1;
+    if (internal_index < INODE_NUM_DIRECT_BLKS) {
+        DBlkID = inode->_in_directBlocks[internal_index];
+        if (DBlkID == -1) {
+	    _err_last = _in_NonAllocDBlk;
+	    THROW(__FILE__, __LINE__, __func__);
+	    return -1;
+        }
+	return DBlkID;
+    }
+    UINT entryNum = BLK_SIZE / sizeof (UINT);
+    internal_index -= (INODE_NUM_DIRECT_BLKS);
+    if (internal_index < INODE_NUM_S_INDIRECT_BLKS * entryNum) {
+	UINT S_index = internal_index / entryNum;
+	UINT S_offset = internal_index % entryNum;
+        UINT S_BlkID = inode -> _in_sIndirectBlocks[S_index];
+	if (S_BlkID == -1) {
+	    _err_last = _in_NonAllocIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+	    return -1;
+	}
+        BYTE blkBuf[BLK_SIZE];
+	readDBlk(fs, S_BlkID, blkBuf);
+	if (blkBuf[S_offset] == -1) {
+	    _err_last = _in_NonAllocDBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+        }
+        return blkBuf[S_offset];
+    }
+    UINT entryNumS = entryNum * entryNum;
+    internal_index -= (INODE_NUM_S_INDIRECT_BLKS * entryNum);
+    if (internal_index < INODE_NUM_D_INDIRECT_BLKS * entryNumS) {
+        UINT D_index = internal_index / entryNumS;
+	internal_index -= D_index * entryNumS;
+	UINT S_Index = internal_index / entryNum;
+	UINT S_offset = internal_index % entryNum;
+        UINT D_BlkID = inode -> _in_dIndirectBlocks[D_index];
+        if (D_BlkID == -1) {
+            _err_last = _in_NonAllocIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+        }
+	BYTE blkBuf[BLK_SIZE];
+	readDBlk(fs, D_BlkID, blkBuf);
+	if (blkBuf[S_Index] == -1) {
+	    _err_last = _in_NonAllocIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+	}
+	readDBlk(fs, blkBuf[S_Index], blkBuf);
+	if (blkBuf[S_offset] == -1) {
+	     _err_last = _in_NonAllocDBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+	}
+	return blkBuf[S_offset];
+    }
+     _err_last = _in_IndexOutOfRange;
+     THROW(__FILE__, __LINE__, __func__);
+     return -1;
+}
+
 
 // input: inode, logic file byte offset
 // output: logical data block #,

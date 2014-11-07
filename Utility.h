@@ -12,12 +12,15 @@ typedef enum{
   _fs_DBlkOutOfNumber,
   _fs_NonDirInPath,
   _fs_NonExistFile,
+  _in_NonAllocDBlk,
+  _in_NonAllocIndirectBlk,
+  _in_IndexOutOfRange,
 } ERROR;
 
 extern ERROR _err_last;    
 
 // Print out error msg
-void THROW();
+void THROW(const char *, int, const char *);
 
 // Shuffle an array of ints
 void shuffle(int* array, int n);

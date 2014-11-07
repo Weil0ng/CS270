@@ -460,7 +460,7 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   UINT curINodeID = namei(fs, path);
   if (curINodeID == -1) {
     _err_last = _fs_NonExistFile;
-    THROW();
+    THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
   else {
@@ -489,7 +489,7 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   UINT curINodeID = namei(fs, path);
   if (curINodeID == -1) {
     _err_last = _fs_NonExistFile;
-    THROW();
+    THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
   else {
@@ -562,7 +562,7 @@ UINT namei(FileSystem *fs, char *path)
     //2.1 if not directory, throw error
     if (curINode._in_type != DIRECTORY) {
       _err_last = _fs_NonDirInPath;
-      THROW();
+      THROW(__FILE__, __LINE__, __func__);
       return -1;
     }
     //2.2 read in the directory
@@ -584,7 +584,7 @@ UINT namei(FileSystem *fs, char *path)
     //exception: dir does not contain target tok
     if (!entryFound) {
       _err_last = _fs_NonExistFile;
-      THROW();
+      THROW(__FILE__, __LINE__, __func__);
       return -1;
     }
     //1. advance in traversal

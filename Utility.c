@@ -8,8 +8,9 @@
 
 ERROR _err_last;
 
-void THROW()
+void THROW(const char *fname, int lineno, const char *fxname)
 {
+  printf("Error in %s, line %d, %s:\n", fname, lineno, fxname);
   switch(_err_last) {
   case _dsk_full: {
     printf("Disk is full!\n");
@@ -34,6 +35,15 @@ void THROW()
   case _fs_NonExistFile: {
     printf("File/Directory does not exist!\n");
     break;
+  }
+  case _in_NonAllocDBlk: {
+    printf("Trying to access block that is not allocated!\n");
+  }
+  case _in_NonAllocIndirectBlk: {
+    printf("Trying to access single indirect block that is not allocated!\n");
+  }
+  case _in_IndexOutOfRange: {
+    printf("INode indexing out of range!\n");
   }
   default: break;
   }
