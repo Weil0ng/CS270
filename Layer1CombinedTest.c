@@ -201,7 +201,7 @@ void testDBlks(UINT nDBlks, UINT nINodes) {
         
         printf("Reading test data from dblk id: %d\n", dblkIds[i]);
         succ = readDBlk(&fs, dblkIds[i], testDBlk);
-        printDBlk(testDBlk);
+        printDBlkInts(testDBlk);
         assert(succ == 0);
         
         UINT* buf = (UINT*) &testDBlk;
@@ -257,7 +257,7 @@ void testDBlks(UINT nDBlks, UINT nINodes) {
 
         BYTE testDBlk2[BLK_SIZE];
         succ = readDBlk(&fs, dblkIds[i], testDBlk2);
-        printDBlk(testDBlk2);
+        printDBlkInts(testDBlk2);
         assert(succ == 0);
         
         UINT* buf2 = (UINT*) &testDBlk2;

@@ -11,24 +11,20 @@
 UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     //call layer 1 makefs
     UINT succ = makefs(nDBlks, nINodes, fs);
-    if(succ != 0) return 1;
-    if(succ == 0) {
-        printf("makefs succeeded with filesystem size: %d\n", fs->nBytes);
+    if(succ != 0) {
+        fprintf(stderr, "Error: internal makefs failed with error code: %d\n", succ);
+        return 1;
     }
-    
-    assert(fs->diskDBlkOffset == 1 + nINodes / INODES_PER_BLK);
     
     //make the root directory
     #ifdef DEBUG
     printf("Creating root directory...\n");
     #endif
     INode rootINode;
-    rootINode._in_type = DIRECTORY;
     
     UINT id = allocINode(fs, &rootINode); 
-    //UINT id = 0; // inode 0 is reserved as root inode
     if(id == -1) {
-        fprintf(stderr, "fail to allocate an inode for the root directory!\n");
+        fprintf(stderr, "Error: failed to allocate an inode for the root directory!\n");
         return 2;
     }
     
@@ -46,6 +42,7 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     strcpy(dirBuf[1].key, "..");
     dirBuf[1].INodeID = id;
 
+    // zero out remaining entries
     for (UINT i = 2; i < MAX_FILE_NUM_IN_DIR; i ++ ) {
         strcpy(dirBuf[i].key, "");
         dirBuf[i].INodeID = -1;
@@ -242,7 +239,7 @@ UINT mkdir(FileSystem* fs, char* path) {
             writeINode(fs, id, &inode);
 
             // update the new directory table
-            writeINodeData(fs, &inode, newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            writeINodeData(fs, &inode, (BYTE*) newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
         }
 
     }
@@ -570,7 +567,7 @@ UINT namei(FileSystem *fs, char *path)
     }
     //2.2 read in the directory
     memset(curDir, 0, sizeof(curDir));
-    readINodeData(fs, &curINode, &curDir, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+    readINodeData(fs, &curINode, (BYTE*) &curDir, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
     
     //3 scan through the dir
     entryFound = false;

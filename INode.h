@@ -19,8 +19,7 @@ typedef struct INode {
 
 	enum FILE_TYPE _in_type;
 
-	//UINT _in_owner;
-        char _in_owner[INODE_OWNER_NAME_LEN];
+	char _in_owner[INODE_OWNER_NAME_LEN];
 
 	UINT _in_permissions;
 
@@ -30,7 +29,7 @@ typedef struct INode {
 
 	UINT _in_filesize;
     
-        UINT _in_linkcount;
+    UINT _in_linkcount;
 
 	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
