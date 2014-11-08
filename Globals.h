@@ -38,5 +38,6 @@
 
 #define MAX_PATH_LEN (100) //maximum length of the path
 #define MAX_FILE_SIZE (BLK_SIZE * INODE_NUM_DIRECT_BLKS + BLK_SIZE * INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) + BLK_SIZE * INODE_NUM_D_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) * (BLK_SIZE / sizeof(UINT)))
+#define MAX_FILE_BLKS (MAX_FILE_SIZE / BLK_SIZE) //max number of data blocks allocatable per file
 #define MAX_FILE_NUM_IN_DIR (MAX_FILE_SIZE / (FILE_NAME_LENGTH + sizeof(UINT))) //maximum number of files in a directory
 #define MAX_DIR_TABLE_SIZE (MAX_FILE_NUM_IN_DIR * (FILE_NAME_LENGTH + sizeof(UINT)))
