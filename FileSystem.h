@@ -90,6 +90,9 @@ UINT writeDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT);
 // converts file byte offset in inode to logical block ID
 UINT bmap(FileSystem* fs, INode* inode, UINT offset, UINT* cvt_blk_num);
 
+// map flattened index to internal index of the inode
+UINT balloc(FileSystem*, INode *, UINT);
+
 #ifdef DEBUG
 // prints all the inodes for debugging
 void printINodes(FileSystem*);
