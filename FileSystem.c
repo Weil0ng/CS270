@@ -807,7 +807,7 @@ UINT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 }
 
 // Functionality:
-//     expand inode directories till fileBlkId, return number of "Data" Blocks (excluding entry blocks) allocated
+//     expand inode directories till fileBlkId, return DBlkID
 // Errors:
 //     1. disk full (catched by allocDBlk)
 // Steps:
@@ -817,10 +817,10 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     // check if already allocated
     UINT DBlkID = bmap(fs, inode, fileBlkId);
     if (DBlkID > 0 )
-        return count;
+        return DBlkID;
 
     UINT cur_internal_index = 0;
-    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0; cur_internal_index ++);
+    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0 && cur_internal_index < fileBlkID; cur_internal_index ++);
     
     UINT newDBlkID = -1;
     BYTE blkBuf[BLK_SIZE];
@@ -835,7 +835,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
             if (newDBlkID == -1) {
                 _err_last = _fs_DBlkOutOfNumber;
                 THROW(__FILE__, __LINE__, __func__);
-                return count;
+                return newDBlkID;
             }
 	    inode->_in_directBlocks[cur_internal_index] = newDBlkID;
 	    count ++;
@@ -850,7 +850,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	        if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
-                    return count;
+                    return newDBlkID;
         	}
 		inode->_in_sIndirectBlocks[S_index] = newDBlkID;
 	    }
@@ -859,7 +859,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
             if (newDBlkID == -1) {
                 _err_last = _fs_DBlkOutOfNumber;
                 THROW(__FILE__, __LINE__, __func__);
-                return count;
+                return newDBlkID;
             }
 	    UINT S_DBlkID = inode->_in_sIndirectBlocks[S_index];
 	    readDBlk(fs, S_DBlkID, blkBuf);
@@ -878,7 +878,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
-                    return count;
+                    return newDBlkID;
                 }
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
 	    }
@@ -889,7 +889,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
-                    return count;
+                    return newDBlkID;
                 }
 		*((UINT *)blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
@@ -898,7 +898,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
             if (newDBlkID == -1) {
                 _err_last = _fs_DBlkOutOfNumber;
                 THROW(__FILE__, __LINE__, __func__);
-                return count;
+                return newDBlkID;
             }
 	    UINT S_DBlkID = *((UINT *)blkBuf + S_index);
 	    readDBlk(fs, S_DBlkID, blkBuf);
@@ -910,10 +910,10 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	else {
 	    _err_last = _in_IndexOutOfRange;
 	    THROW(__FILE__, __LINE__, __func__);
-	    return count;
+	    return -1;
 	}
     }
-    return count;
+    return newDBlkID;
 }
 
 #ifdef DEBUG
