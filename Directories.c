@@ -9,6 +9,10 @@
 
 // make a new filesystem with a root directory
 UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+    #ifdef DEBUG 
+    printf("initfs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
+    #endif
+    
     //call layer 1 makefs
     UINT succ = makefs(nDBlks, nINodes, fs);
     if(succ != 0) {

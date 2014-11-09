@@ -509,8 +509,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
     
     //compute start block id
     //TODO merge this into one line by making balloc return the ID
-    balloc(fs, inode, fileBlkId);
-    UINT dataBlkId = bmap(fs, inode, fileBlkId);
+    UINT dataBlkId = balloc(fs, inode, fileBlkId);
     if((int) dataBlkId < 0) {
         printf("Warning: could not allocate more data blocks for write!\n");
         return bytesWritten;
@@ -536,8 +535,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
     //continue while more bytes to write AND max filesize not reached
     while(len > 0 && fileBlkId < MAX_FILE_BLKS) {
         //compute next data block id using balloc
-        balloc(fs, inode, fileBlkId);
-        dataBlkId = bmap(fs, inode, fileBlkId);
+        dataBlkId = balloc(fs, inode, fileBlkId);
         if((int) dataBlkId < 0) {
             printf("Warning: could not allocate more data blocks for write!\n");
             return bytesWritten;
