@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=gnu99 -g
-OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o OpenFileTable.o SuperBlock.o Utility.o 
+OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o INodeTable.o OpenFileTable.o SuperBlock.o Utility.o 
 
 all: main test
 

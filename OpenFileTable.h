@@ -1,6 +1,6 @@
 // Open file table keeps track of which files are opened for read/write
 
-#include "INodeTableEntry.h"
+#include "INodeEntry.h"
 
 //not used yet
 enum FILE_OP {

@@ -2,6 +2,7 @@
  * This is the inode structure
  */
 
+#pragma once
 #include "Globals.h"
 #include "time.h"
 #include "string.h"

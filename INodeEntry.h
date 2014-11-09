@@ -3,8 +3,11 @@
 //
 #pragma once
 #include "Globals.h"
+#include "INode.h"
 
-typedef struct {
+typedef struct INodeEntry INodeEntry;
+
+struct INodeEntry {
 // __index property__
      
 //inode id of this entry
@@ -14,7 +17,10 @@ typedef struct {
 
 //ref count of this entry
   UINT _in_ref;
+  
+//pointer to in-core inode
+  INode* _in_node;
 
 //pointer to the next entry in this bin
-  struct INodeEntry *next;
-} INodeEntry;
+  INodeEntry *next;
+};

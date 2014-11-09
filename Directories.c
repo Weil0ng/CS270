@@ -444,11 +444,11 @@ UINT unlink(FileSystem* fs, char* path) {
 }
 
 UINT open(FileSystem* fs, char* path) {
-    addOpenFileEntry(&fs->openFileTable, path);
+    //addOpenFileEntry(&fs->openFileTable, path);
 }
 
 UINT close(FileSystem* fs, char* path) {
-    removeOpenFileEntry(&fs->openFileTable, path);
+    //removeOpenFileEntry(&fs->openFileTable, path);
 }
 
 // read file from offset for numBytes
