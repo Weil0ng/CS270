@@ -820,7 +820,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
         return DBlkID;
 
     UINT cur_internal_index = 0;
-    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0 && cur_internal_index < fileBlkID; cur_internal_index ++);
+    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0 && cur_internal_index < fileBlkId; cur_internal_index ++);
     
     UINT newDBlkID = -1;
     BYTE blkBuf[BLK_SIZE];

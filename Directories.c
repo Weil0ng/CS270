@@ -484,7 +484,7 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //5. call writeINodeData
 UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   INode curINode;
-  UINT returnSize = numBytes;
+  UINT bytesWritten = 0;
   //1. resolve path
   UINT curINodeID = namei(fs, path);
   if (curINodeID == -1) {
@@ -498,6 +498,7 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     readINode(fs, curINodeID, &curINode);
     //4. modify inode
     UINT curFileSize = curINode._in_filesize;
+    /*
     //4.1 if file needs to be extended
     if (offset + numBytes > curFileSize) {
       // this is the ?th data block we are on
@@ -521,12 +522,14 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
       }
     }
     //TODO: update filesize and remainsize
+    */
+    //5. writeINodeData
+    bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
+    curINode._in_filesize += bytesWritten;
     //update INode
     writeINode(fs, curINodeID, &curINode);
-    //5. writeINodeData
-    writeINodeData(fs, &curINode, buf, offset, numBytes);
   }
-  return returnSize;
+  return bytesWritten;
 }
 
 //resolve a path to its corresponding inode id
