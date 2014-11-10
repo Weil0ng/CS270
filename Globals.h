@@ -18,8 +18,8 @@
 //File system specific
 #define MAX_FS_SIZE (4294967296) //Maximum supported filesystem size (2^32 bytes)
 
-#define BLK_SIZE (1024) //Block size in bytes
-#define INODE_SIZE (512) //INode size in bytes
+#define BLK_SIZE (512) //Block size in bytes
+#define INODE_SIZE (256) //INode size in bytes
 #define INODES_PER_BLK (BLK_SIZE / INODE_SIZE) //INodes per block (computed)
 
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
@@ -39,5 +39,6 @@
 #define MAX_PATH_LEN (100) //maximum length of the path
 #define MAX_FILE_SIZE (BLK_SIZE * INODE_NUM_DIRECT_BLKS + BLK_SIZE * INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) + BLK_SIZE * INODE_NUM_D_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) * (BLK_SIZE / sizeof(UINT)))
 #define MAX_FILE_BLKS (MAX_FILE_SIZE / BLK_SIZE) //max number of data blocks allocatable per file
-#define MAX_FILE_NUM_IN_DIR (MAX_FILE_SIZE / (FILE_NAME_LENGTH + sizeof(UINT))) //maximum number of files in a directory
+//#define MAX_FILE_NUM_IN_DIR (MAX_FILE_SIZE / (FILE_NAME_LENGTH + sizeof(UINT))) //maximum number of files in a directory
+#define MAX_FILE_NUM_IN_DIR 10 //maximum number of files in a directory
 #define MAX_DIR_TABLE_SIZE (MAX_FILE_NUM_IN_DIR * (FILE_NAME_LENGTH + sizeof(UINT)))

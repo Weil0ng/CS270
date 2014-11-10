@@ -92,6 +92,9 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
     // change the inode type to directory
     rootINode._in_type = DIRECTORY;
+
+    // update the root inode file size
+    rootINode._in_filesize = MAX_FILE_NUM_IN_DIR * sizeof(DirEntry);
     
     // write completed root inode to disk
     writeINode(fs, id, &rootINode);
@@ -205,6 +208,7 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             // change the inode type to directory
             inode._in_type = DIRECTORY;
+            inode._in_filesize = MAX_FILE_NUM_IN_DIR * sizeof(DirEntry);
             
             // update the direct/indirect blocks in the inode
             if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
