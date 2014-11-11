@@ -480,8 +480,9 @@ UINT close(FileSystem* fs, char* path) {
 // 1. resolve path
 // 2. get INodeTable Entry (ommitted for now)
 // 3. load inode
-// 4. check length and update inode info
+// 4. modify modtime
 // 5. call readINodeData on current INode, offset to the buf for numBytes
+// 6. write back inode
 UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   UINT returnSize = 0;
   INode curINode;
@@ -496,11 +497,12 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //2. TODO: get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
-    //4.
-    returnSize = curINode._in_filesize < numBytes?curINode._in_filesize:numBytes;
-    //curINode._in_modtime
+    //4. curINode._in_modtime
+    curINode._in_modtime = time(NULL);
     //5. readINodeData
-    readINodeData(fs, &curINode, buf, offset, numBytes);
+    returnSize = readINodeData(fs, &curINode, buf, offset, numBytes);
+    //6. write back INode
+    writeINode(fs, curINodeID, &curINode);
   }
   return returnSize; 
 }
@@ -509,8 +511,8 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //1. resolve path
 //2. get INodeTable Entry
 //3. load inode
-//4. modify inode if necessary
-//5. call writeINodeData
+//4. call writeINodeData
+//5. modify inode if necessary
 UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   INode curINode;
   UINT bytesWritten = 0;
@@ -525,36 +527,11 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //2. TODO: get INodeTable Entry
     //3. load inode
     readINode(fs, curINodeID, &curINode);
-    //4. modify inode
-    UINT curFileSize = curINode._in_filesize;
-    /*
-    //4.1 if file needs to be extended
-    if (offset + numBytes > curFileSize) {
-      // this is the ?th data block we are on
-      UINT DBlkOffset = curFileSize / BLK_SIZE;
-      UINT remainSize = (offset + numBytes)<MAX_FILE_SIZE?(offset + numBytes):MAX_FILE_SIZE;
-      remainSize -= curFileSize;
-      //use up the current DBlk
-      remainSize -= (BLK_SIZE - curFileSize % BLK_SIZE);
-
-      //position
-      UINT pDBlkToAlloc = DBlkOffset + 1;
-      //id
-      UINT DBlkToAlloc = -1;
-      while (remainSize) {
-        DBlkToAlloc = allocDBlk(fs);
-        if (DBlkToAlloc == -1)
-          break;
-        //TODO: conver position to inode directory index
-        //TODO: update inode directory, may need to update indirect inodes
-        remainSize = remainSize > BLK_SIZE ? (remainSize - BLK_SIZE) : 0;
-      }
-    }
-    //TODO: update filesize and remainsize
-    */
-    //5. writeINodeData
+    //4. writeINodeData
     bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
+    //5. modify inode
     curINode._in_filesize += bytesWritten;
+    curINode._in_modtime = time(NULL);
     //update INode
     writeINode(fs, curINodeID, &curINode);
   }
