@@ -58,6 +58,12 @@ int main(int args, char* argv[])
             
             mknod(&fs, path);
         }
+        else if(strcmp(command, "readdir") == 0) {
+            //printf("Enter file path: ");
+            scanf("%s", path);
+            
+            readdir(&fs, path);
+        }
         else if(strcmp(command, "unlink") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);

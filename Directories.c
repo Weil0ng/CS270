@@ -171,7 +171,7 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             // special parent directory points back to parent
             strcpy(newBuf[1].key, "..");
-            newBuf[1].INodeID = id;
+            newBuf[1].INodeID = par_id;
 
             // initialize other entries to empty
             for (UINT i = 2; i < MAX_FILE_NUM_IN_DIR; i ++ ) {
@@ -282,6 +282,47 @@ UINT mknod(FileSystem* fs, char* path) {
     }
 
     return 0;
+}
+
+UINT readdir(FileSystem* fs, char* path) {
+    UINT id; // the inode of the dir
+
+    id = namei(fs, path);
+    
+    if((int) id == -1) { // directory does not exist
+        fprintf(stderr, "Directory %s not found!\n", path);
+        return -1;
+    }
+    else {
+        INode inode;
+        
+        if(readINode(fs, id, &inode) == -1) {
+            fprintf(stderr, "fail to read directory inode %d\n", id);
+            return -1;
+        }
+
+        if(inode._in_type != DIRECTORY) {
+            fprintf(stderr, "NOT a directory\n");
+            return -1;
+        }
+        else {
+            UINT numDirEntry = (inode._in_filesize)/sizeof(DirEntry);
+            BYTE dirBuf[inode._in_filesize];
+            
+            // read the directory table
+            readINodeData(fs, &inode, dirBuf, 0, inode._in_filesize);
+            
+            for(UINT i=0; i < numDirEntry; i ++){
+                DirEntry *DEntry = (DirEntry *) (dirBuf + i*sizeof(DirEntry));
+                if ((int) DEntry->INodeID >= 0){
+                    printf("%s, %d\n", DEntry->key, DEntry->INodeID);
+                }
+            }
+        }
+    }
+
+    return 0;
+
 }
 
 // remove a file
@@ -524,7 +565,7 @@ UINT namei(FileSystem *fs, char *path)
     //3 scan through the dir
     entryFound = false;
     // Given the assumption that all blocks are initialized to be 0
-    //  while (strcmp((curDir[curDirEntry]).key, "") != 0) {
+    //  while (strcmp((curDir[curDirEntry]).key, "") != 0) 
     for (curDirEntry = 0; curDirEntry < MAX_FILE_NUM_IN_DIR && !entryFound; curDirEntry ++) {
       DirEntry *DEntry = (DirEntry *) (curDir + curDirEntry*sizeof(DirEntry));
       if (strcmp(tok, DEntry->key) == 0) {
@@ -544,3 +585,4 @@ UINT namei(FileSystem *fs, char *path)
   }
   return curID;
 }
+
