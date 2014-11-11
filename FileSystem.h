@@ -6,6 +6,7 @@
 
 #include "DiskEmulator.h"
 #include "Globals.h"
+#include "INode.h"
 #include "OpenFileTable.h"
 #include "INodeTable.h"
 #include "SuperBlock.h"
@@ -26,7 +27,7 @@ typedef struct FileSystem {
     UINT diskDBlkOffset;
     
     //the open file table of the filesystem
-    //OpenFileTable openFileTable;
+    OpenFileTable openFileTable;
     
     //in core INode Table
     //INodeTable iTable;

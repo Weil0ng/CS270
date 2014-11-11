@@ -18,6 +18,7 @@ UINT mkdir(FileSystem* fs, char* path);
 UINT mknod(FileSystem* fs, char* path);
 
 // reads directory contents
+UINT readdir(FileSystem* fs, char* path);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
