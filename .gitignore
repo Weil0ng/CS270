@@ -1,5 +1,6 @@
 *.npp
 *sublime*
+*.swp
 
 *.o
 *.out
