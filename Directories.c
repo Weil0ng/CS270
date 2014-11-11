@@ -52,49 +52,19 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         dirBuf[i].INodeID = -1;
     }
     
-    // update the direct/indirect blocks in the rootINode
-    if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
-        // number of direct blocks to be allocated
-        UINT num_direct = (MAX_DIR_TABLE_SIZE + BLK_SIZE -1) / BLK_SIZE;
-        //printf("allocated %d direct blocks for this directory\n", num_direct);
-        
-        for (UINT i = 0; i < num_direct; i ++) {
-            rootINode._in_directBlocks[i] = allocDBlk(fs); 
-            //printf("allocate data block %d for direct block %d\n",rootINode._in_directBlocks[i], i);
-        }
-    }
-    else if (MAX_DIR_TABLE_SIZE <= INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE/sizeof(UINT)* BLK_SIZE)) {
-        // number of single indirect blocks 
-        UINT num_s_indirect = (MAX_DIR_TABLE_SIZE + (BLK_SIZE/sizeof(UINT)* BLK_SIZE) - 1)/(BLK_SIZE/sizeof(UINT)* BLK_SIZE);
-        
-        for (UINT i = 0; i < num_s_indirect; i ++) {
-            rootINode._in_sIndirectBlocks[i] = allocDBlk(fs);
-            //printf("allocate data block %d for indirect block %d\n",rootINode._in_sIndirectBlocks[i], i);
-            
-            // allocate data blocks for all the entries in the indirect data block
-            UINT blk_buf[BLK_SIZE/sizeof(UINT)];
-            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
-                blk_buf[j] = allocDBlk(fs);
-            }
-            
-            // write the indirect block 
-            writeDBlk(fs, rootINode._in_sIndirectBlocks[i], (BYTE*) blk_buf);
-        }
-    }
-    else {
-        // TODO: in general, directory table wouldn't exceed the single indirect
-        // space.. I don't implement it for now.
-        assert(false);
+    // update the new directory table
+    UINT bytesWritten = writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+    assert(bytesWritten == MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+    
+    // update the root inode file size
+    if(bytesWritten > 0) {
+        rootINode._in_filesize = bytesWritten;
     }
 
-    // update the new directory table
-    writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
 
     // change the inode type to directory
     rootINode._in_type = DIRECTORY;
 
-    // update the root inode file size
-    rootINode._in_filesize = MAX_FILE_NUM_IN_DIR * sizeof(DirEntry);
     
     // write completed root inode to disk
     writeINode(fs, id, &rootINode);
@@ -185,8 +155,11 @@ UINT mkdir(FileSystem* fs, char* path) {
             }
 
             // update the parent directory table
-            writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
-
+            UINT bytesWritten = writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            assert(bytesWritten == MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            if(bytesWritten > 0) {
+                inode._in_filesize = bytesWritten;
+            }
             
             /* allocate two entries in the new directory table (. , id) and (.., par_id) */
             // init directory table for the new directory
@@ -208,46 +181,12 @@ UINT mkdir(FileSystem* fs, char* path) {
 
             // change the inode type to directory
             inode._in_type = DIRECTORY;
-            inode._in_filesize = MAX_FILE_NUM_IN_DIR * sizeof(DirEntry);
             
-            // update the direct/indirect blocks in the inode
-            if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
-                // number of direct blocks to be allocated
-                UINT num_direct = (MAX_DIR_TABLE_SIZE + BLK_SIZE -1) / BLK_SIZE;
-                
-                for (UINT i = 0; i < num_direct; i ++) {
-                    inode._in_directBlocks[i] = allocDBlk(fs); 
-                    //TODO: confirm allocDblk returns the logical data block id, not raw disk blcok id
-                }
-            }
-            else if (MAX_DIR_TABLE_SIZE <= INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE/sizeof(UINT)* BLK_SIZE)) {
-                // number of single indirect blocks 
-                UINT num_s_indirect = (MAX_DIR_TABLE_SIZE + (BLK_SIZE/sizeof(UINT)* BLK_SIZE) - 1)/(BLK_SIZE/sizeof(UINT)* BLK_SIZE);
-                
-                for (UINT i = 0; i < num_s_indirect; i ++) {
-                    inode._in_sIndirectBlocks[i] = allocDBlk(fs);
-                    
-                    // allocate data blocks for all the entries in the indirect data block
-                    UINT blk_buf[BLK_SIZE/sizeof(UINT)];
-                    for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
-                        blk_buf[j] = allocDBlk(fs);
-                    }
-                    
-                    // write the indirect block 
-                    writeDBlk(fs, inode._in_sIndirectBlocks[i], (BYTE*) blk_buf);
-                }
-            }
-            else {
-                // TODO: in general, directory table wouldn't exceed the single indirect
-                // space.. I don't implement it for now.
-                assert(false);
-            }
-
-            // update the disk inode
-            writeINode(fs, id, &inode);
-
             // update the new directory table
             writeINodeData(fs, &inode, (BYTE*) newBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            
+            // update the disk inode
+            writeINode(fs, id, &inode);
         }
 
     }
@@ -306,7 +245,9 @@ UINT mknod(FileSystem* fs, char* path) {
             
             // allocate a free inode for the new file
             id = allocINode(fs, &inode); 
+#ifdef DEBUG
             printf("allocated inode id %d for file %s\n", id, file_name);
+#endif
             if(id == -1) {
                 fprintf(stderr, "fail to alllocate an inode for the new file!\n");
                 return -1;

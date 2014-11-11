@@ -281,12 +281,13 @@ UINT freeINode(FileSystem* fs, UINT id) {
         }
     }
     for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
-        if ( (int) inode._in_sIndirectBlocks[i] != -1) {
-            BYTE buf[BLK_SIZE];
-            readDBlk(fs, inode._in_sIndirectBlocks[i], buf);
+        if ((int) inode._in_sIndirectBlocks[i] != -1) {
+            UINT buf[BLK_SIZE/sizeof(UINT)];
+            readDBlk(fs, inode._in_sIndirectBlocks[i], (BYTE *)buf);
             for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
                 // free the actual data blocks
-                freeDBlk(fs, *(UINT*)(buf + j*sizeof(UINT)));
+                if((int) buf[j] != -1)
+                    freeDBlk(fs, buf[j]);
             }
             // free the indirect data block
             freeDBlk(fs, inode._in_sIndirectBlocks[i]);
@@ -294,17 +295,20 @@ UINT freeINode(FileSystem* fs, UINT id) {
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         if((int)inode._in_dIndirectBlocks[i] != -1) {
-            BYTE buf_s[BLK_SIZE];
-            readDBlk(fs, inode._in_dIndirectBlocks[i], buf_s);
+            UINT buf_s[BLK_SIZE/sizeof(UINT)];
+            readDBlk(fs, inode._in_dIndirectBlocks[i], (BYTE*)buf_s);
             for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
-                BYTE buf_d[BLK_SIZE];
-                readDBlk(fs, *(UINT*)(buf_s + j*sizeof(UINT)), buf_d);
-                for (UINT k = 0; k < (BLK_SIZE / sizeof(UINT)); k ++) {
-                    // free the actual data blocks
-                    freeDBlk(fs, *(UINT*)(buf_d + k*sizeof(UINT)));
+                if((int) buf_s[j] != -1) {
+                    UINT buf_d[BLK_SIZE/sizeof(UINT)];
+                    readDBlk(fs, buf_s[j], (BYTE*) buf_d);
+                    for (UINT k = 0; k < (BLK_SIZE / sizeof(UINT)); k ++) {
+                        // free the actual data blocks
+                        if((int) buf_d[k] != -1)
+                            freeDBlk(fs, buf_d[k]);
+                    }
+                    // free the single indirect blocks
+                    freeDBlk(fs, buf_s[j]);
                 }
-                // free the single indirect blocks
-                freeDBlk(fs, *(UINT*)(buf_s + j*sizeof(UINT)));
             }
             // free the double indirect blocks
             freeDBlk(fs, inode._in_dIndirectBlocks[i]);
@@ -814,11 +818,11 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     UINT count = 0;
     // check if already allocated
     UINT DBlkID = bmap(fs, inode, fileBlkId);
-    if (DBlkID > 0 )
+    if ((int)DBlkID > 0 )
         return DBlkID;
-
+    
     UINT cur_internal_index = 0;
-    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0 && cur_internal_index < fileBlkId; cur_internal_index ++);
+    //for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) > 0 && cur_internal_index < fileBlkId; cur_internal_index ++);
     
     UINT newDBlkID = -1;
     BYTE blkBuf[BLK_SIZE];
@@ -830,6 +834,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
         if (cur_internal_index < INODE_NUM_DIRECT_BLKS) {
 	    // alloc the DBlk
 	    newDBlkID = allocDBlk(fs);
+            printf("block %d allocated for file block %d\n", newDBlkID, fileBlkId);
             if (newDBlkID == -1) {
                 _err_last = _fs_DBlkOutOfNumber;
                 THROW(__FILE__, __LINE__, __func__);
