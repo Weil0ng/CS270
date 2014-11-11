@@ -36,7 +36,7 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->rootINodeID = id;
 
     // init directory table for root directory
-    DirEntry dirBuf[MAX_FILE_NUM_IN_DIR];
+    DirEntry dirBuf[2];
    
     // insert an entry for current directory 
     strcpy(dirBuf[0].key, ".");
@@ -46,55 +46,22 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     strcpy(dirBuf[1].key, "..");
     dirBuf[1].INodeID = id;
 
-    // zero out remaining entries
-    for (UINT i = 2; i < MAX_FILE_NUM_IN_DIR; i ++ ) {
-        strcpy(dirBuf[i].key, "");
-        dirBuf[i].INodeID = -1;
-    }
-    
-    // update the direct/indirect blocks in the rootINode
-    if (MAX_DIR_TABLE_SIZE <= INODE_NUM_DIRECT_BLKS * BLK_SIZE) {
-        // number of direct blocks to be allocated
-        UINT num_direct = (MAX_DIR_TABLE_SIZE + BLK_SIZE -1) / BLK_SIZE;
-        //printf("allocated %d direct blocks for this directory\n", num_direct);
-        
-        for (UINT i = 0; i < num_direct; i ++) {
-            rootINode._in_directBlocks[i] = allocDBlk(fs); 
-            //printf("allocate data block %d for direct block %d\n",rootINode._in_directBlocks[i], i);
-        }
-    }
-    else if (MAX_DIR_TABLE_SIZE <= INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE/sizeof(UINT)* BLK_SIZE)) {
-        // number of single indirect blocks 
-        UINT num_s_indirect = (MAX_DIR_TABLE_SIZE + (BLK_SIZE/sizeof(UINT)* BLK_SIZE) - 1)/(BLK_SIZE/sizeof(UINT)* BLK_SIZE);
-        
-        for (UINT i = 0; i < num_s_indirect; i ++) {
-            rootINode._in_sIndirectBlocks[i] = allocDBlk(fs);
-            //printf("allocate data block %d for indirect block %d\n",rootINode._in_sIndirectBlocks[i], i);
-            
-            // allocate data blocks for all the entries in the indirect data block
-            UINT blk_buf[BLK_SIZE/sizeof(UINT)];
-            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
-                blk_buf[j] = allocDBlk(fs);
-            }
-            
-            // write the indirect block 
-            writeDBlk(fs, rootINode._in_sIndirectBlocks[i], (BYTE*) blk_buf);
-        }
-    }
-    else {
-        // TODO: in general, directory table wouldn't exceed the single indirect
-        // space.. I don't implement it for now.
-        assert(false);
-    }
-
     // update the new directory table
-    writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
-
+    UINT bytesWritten = writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, 2 * sizeof(DirEntry));
+    #ifdef DEBUG
+    assert(bytesWritten == 2 * sizeof(DirEntry));
+    #else
+    if((int)bytesWritten < 2 * sizeof(DirEntry)) {
+        fprintf(stderr, "Error: initfs failed to allocate space for root directory!\n");
+        return 2;
+    }
+    #endif
+    
     // change the inode type to directory
     rootINode._in_type = DIRECTORY;
 
     // update the root inode file size
-    rootINode._in_filesize = MAX_FILE_NUM_IN_DIR * sizeof(DirEntry);
+    rootINode._in_filesize = 2 * sizeof(DirEntry);
     
     // write completed root inode to disk
     writeINode(fs, id, &rootINode);
@@ -134,7 +101,7 @@ UINT mkdir(FileSystem* fs, char* path) {
 
         // special case for root
         if(strcmp(par_path, "") == 0) {
-            printf("its parent is root\n");
+            //printf("its parent is root\n");
             strcpy(par_path, "/");
         }
         
@@ -147,7 +114,6 @@ UINT mkdir(FileSystem* fs, char* path) {
             return -1;
         }
         else {
-
             INode par_inode;
             INode inode;
 
@@ -159,17 +125,17 @@ UINT mkdir(FileSystem* fs, char* path) {
            
             // allocate a free inode for the new directory 
             id = allocINode(fs, &inode); 
+            #ifdef DEBUG
             printf("allocated inode id %d for directory %s\n", id, dir_name);
+            #endif
             if((int) id == -1) {
-                fprintf(stderr, "fail to alllocate an inode for the new directory!\n");
+                fprintf(stderr, "fail to allocate an inode for the new directory!\n");
                 return -1;
             }
 
-            /* allocate one entry in the directory table: (dir_name, id) */
-            BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
-            
             // read the parent directory table
-            readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+            BYTE parBuf[par_inode._in_filesize];
+            readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
 
             // find an empty directory entry and insert with the new directory
             BOOL FIND = false;
