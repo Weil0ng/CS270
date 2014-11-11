@@ -199,7 +199,7 @@ UINT mkdir(FileSystem* fs, char* path) {
     // update the disk inode
     writeINode(fs, id, &inode);
 
-    return 0;
+    return id;
 }
 
 // create a new file specified by an absolute path
@@ -307,7 +307,7 @@ UINT mknod(FileSystem* fs, char* path) {
     // update the disk inode
     writeINode(fs, id, &inode);
 
-    return 0;
+    return id;
 }
 
 UINT readdir(FileSystem* fs, char* path) {
