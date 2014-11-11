@@ -498,6 +498,7 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 }
 
 UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+    printf("offset %d, len = %d\n", offset, len);
     assert(offset < MAX_FILE_SIZE);
     assert(offset + len <= MAX_FILE_SIZE);
     
@@ -538,6 +539,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
     
     //continue while more bytes to write AND max filesize not reached
     while(len > 0 && fileBlkId < MAX_FILE_BLKS) {
+        printf("allocate data block for fileblkid %d\n", fileBlkId);
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
         if((int) dataBlkId < 0) {
@@ -834,7 +836,6 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
         if (cur_internal_index < INODE_NUM_DIRECT_BLKS) {
 	    // alloc the DBlk
 	    newDBlkID = allocDBlk(fs);
-            printf("block %d allocated for file block %d\n", newDBlkID, fileBlkId);
             if (newDBlkID == -1) {
                 _err_last = _fs_DBlkOutOfNumber;
                 THROW(__FILE__, __LINE__, __func__);
