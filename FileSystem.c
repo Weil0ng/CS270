@@ -498,7 +498,9 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
 }
 
 UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
-    printf("offset %d, len = %d\n", offset, len);
+    #ifdef DEBUG
+    printf("writeINodeData on inode of size %d with offset %d for len %d\n", inode->_in_filesize, offset, len);
+    #endif
     assert(offset < MAX_FILE_SIZE);
     assert(offset + len <= MAX_FILE_SIZE);
     
@@ -515,6 +517,9 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
     //compute start block id
     //TODO merge this into one line by making balloc return the ID
     UINT dataBlkId = balloc(fs, inode, fileBlkId);
+    #ifdef DEBUG
+    printf("Starting data block: %d\n", dataBlkId);
+    #endif
     if((int) dataBlkId < 0) {
         printf("Warning: could not allocate more data blocks for write!\n");
         return bytesWritten;
@@ -542,6 +547,10 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
         printf("allocate data block for fileblkid %d\n", fileBlkId);
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
+        #ifdef DEBUG
+        printf("Next data block: %d\n", dataBlkId);
+        #endif
+
         if((int) dataBlkId < 0) {
             printf("Warning: could not allocate more data blocks for write!\n");
             return bytesWritten;

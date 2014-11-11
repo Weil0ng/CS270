@@ -47,6 +47,9 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     dirBuf[1].INodeID = id;
 
     // update the new directory table
+    #ifdef DEBUG
+    printf("Writing root inode directory table...\n");
+    #endif
     UINT bytesWritten = writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, 2 * sizeof(DirEntry));
     #ifdef DEBUG
     assert(bytesWritten == 2 * sizeof(DirEntry));
@@ -64,6 +67,9 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     rootINode._in_filesize = 2 * sizeof(DirEntry);
     
     // write completed root inode to disk
+    #ifdef DEBUG
+    printf("Writing root inode to disk...\n");
+    #endif
     writeINode(fs, id, &rootINode);
           
     return 0;
@@ -71,6 +77,7 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
 // make a new directory
 UINT mkdir(FileSystem* fs, char* path) {
+    printf("mkdir(%s)\n", path);
     
     UINT id; // the inode id associated with the new directory
     UINT par_id; // the inode id of the parent directory
@@ -103,8 +110,14 @@ UINT mkdir(FileSystem* fs, char* path) {
         strcpy(par_path, "/");
     }
     
-    // find the inode id of the parent directory 
+    // find the inode id of the parent directory
+    #ifdef DEBUG
+    printf("Computing parent directory inode id...\n");
+    #endif
     par_id = namei(fs, par_path);
+    #ifdef DEBUG
+    printf("Parent directory inode id: %d\n", par_id);
+    #endif
 
     // check if the parent directory exists
     if((int) par_id == -1) {
