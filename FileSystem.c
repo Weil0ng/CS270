@@ -829,7 +829,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     UINT count = 0;
     // check if already allocated
     UINT DBlkID = bmap(fs, inode, fileBlkId);
-    if ((int)DBlkID > 0 )
+    if (DBlkID !=  -1 )
         return DBlkID;
     
     UINT cur_internal_index = 0;

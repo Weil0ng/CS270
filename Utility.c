@@ -38,12 +38,15 @@ void THROW(const char *fname, int lineno, const char *fxname)
   }
   case _in_NonAllocDBlk: {
     printf("Trying to access block that is not allocated!\n");
+    break;
   }
   case _in_NonAllocIndirectBlk: {
     printf("Trying to access single indirect block that is not allocated!\n");
+    break;
   }
   case _in_IndexOutOfRange: {
     printf("INode indexing out of range!\n");
+    break;
   }
   default: break;
   }
