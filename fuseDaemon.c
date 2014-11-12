@@ -15,13 +15,14 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-//#include "Directories.h"
+#include "Directories.h"
 
+static FileSystem fs;
 static struct fuse_context fs_ctx;
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
-static int l2_getattr(const char *path, struct stat *stbuf)
+static int l3_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
 	
@@ -41,7 +42,7 @@ static int l2_getattr(const char *path, struct stat *stbuf)
 	return res;
 }
 
-static int l2_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			 off_t offset, struct fuse_file_info *fi)
 {
 	(void) offset;
@@ -57,61 +58,63 @@ static int l2_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-static int l2_mknod(const char *path, mode_t mode, dev_t dev)
+static int l3_mknod(const char *path, mode_t mode, dev_t dev)
+{
+	return (int)l2_mknod(&fs, path);
+}
+
+static int l3_mkdir(const char *path, mode_t mode)
+{
+	return (int)l2_mkdir(&fs, path);
+}
+
+static int l3_unlink(const char *path)
+{
+	return (int)l2_unlink(&fs, path);
+}
+
+static int l3_rmdir(const char *path)
 {
 	;
 }
 
-static int l2_mkdir(const char *path, mode_t mode)
-{
-	;
-}
-
-static int l2_unlink(const char *path)
-{
-	;
-}
-
-static int l2_rmdir(const char *path)
-{
-	;
-}
-
-static int l2_rename(const char *path, const char *new_path)
+static int l3_rename(const char *path, const char *new_path)
 {
 	printf("old name: %s\n", path);
 	printf("new name: %s\n", new_path);
 }
 
-static int l2_chmod(const char *path, mode_t mode)
+static int l3_chmod(const char *path, mode_t mode)
 {
 	;
 }
 
-static int l2_chown(const char *path, uid_t uid, gid_t gid)
+static int l3_chown(const char *path, uid_t uid, gid_t gid)
 {
 	;
 }
 
-static int l2_truncate(const char *path, off_t offset)
+static int l3_truncate(const char *path, off_t offset)
 {
 	;
 }
 
-static int l2_open(const char *path, struct fuse_file_info *fi)
+static int l3_open(const char *path, struct fuse_file_info *fi)
 {
+	/*
 	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
 
 	if ((fi->flags & 3) != O_RDONLY)
 		return -EACCES;
-
-	return 0;
+	*/
+	return (int)l2_open(&fs, path);
 }
 
-static int l2_read(const char *path, char *buf, size_t size, off_t offset,
+static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 		      struct fuse_file_info *fi)
 {
+        /*
 	size_t len;
 	(void) fi;
 	if(strcmp(path, hello_path) != 0)
@@ -124,38 +127,39 @@ static int l2_read(const char *path, char *buf, size_t size, off_t offset,
 		memcpy(buf, hello_str + offset, size);
 	} else
 		size = 0;
+	*/
 
-	return size;
+	return (int)l2_read(&fs, path, offset, buf, size);
 }
 
-static int l2_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+static int l3_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+	return (int)l2_write(&fs, path, offset, buf, size);
+}
+
+static int l3_statfs(const char *path, struct statvfs *stat)
 {
 	;
 }
 
-static int l2_statfs(const char *path, struct statvfs *stat)
-{
-	;
-}
-
-static struct fuse_operations l2_oper = {
-	.getattr	= l2_getattr,
-	.readdir	= l2_readdir,
-	.mknod		= l2_mknod,
-	.mkdir		= l2_mkdir,
-	.unlink		= l2_unlink,
-	.rmdir		= l2_rmdir,
-	.rename		= l2_rename,
-	.chmod		= l2_chmod,
-	.chown		= l2_chown,
-	.truncate	= l2_truncate,
-	.open		= l2_open,
-	.read		= l2_read,
-	.write		= l2_write,
-	.statfs		= l2_statfs,
+static struct fuse_operations l3_oper = {
+	.getattr	= l3_getattr,
+	.readdir	= l3_readdir,
+	.mknod		= l3_mknod,
+	.mkdir		= l3_mkdir,
+	.unlink		= l3_unlink,
+	.rmdir		= l3_rmdir,
+	.rename		= l3_rename,
+	.chmod		= l3_chmod,
+	.chown		= l3_chown,
+	.truncate	= l3_truncate,
+	.open		= l3_open,
+	.read		= l3_read,
+	.write		= l3_write,
+	.statfs		= l3_statfs,
 };
 
 int main(int argc, char *argv[])
 {
-	return fuse_main(argc, argv, &l2_oper, NULL);
+	return fuse_main(argc, argv, &l3_oper, NULL);
 }

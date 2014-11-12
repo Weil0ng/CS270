@@ -8,32 +8,32 @@
 #include "FileSystem.h"
 
 // makes a new filesystem with a root directory
-UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
+UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
 
 // makes a new directory
-UINT mkdir(FileSystem* fs, char* path);
+UINT l2_mkdir(FileSystem* fs, char* path);
 
 // makes a new file
-UINT mknod(FileSystem* fs, char* path);
+UINT l2_mknod(FileSystem* fs, char* path);
 
 // reads directory contents
-UINT readdir(FileSystem* fs, char* path);
+UINT l2_readdir(FileSystem* fs, char* path);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
-UINT unlink(FileSystem* fs, char* path);
+UINT l2_unlink(FileSystem* fs, char* path);
 
 // opens a file
-UINT open(FileSystem* fs, char* path);
+UINT l2_open(FileSystem* fs, char* path);
 
 // closes a file
-UINT close(FileSystem* fs, char* path);
+UINT l2_close(FileSystem* fs, char* path);
 
 // reads a file
-UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 // writes to a file
-UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
+UINT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
 //resolve path to inode id
-UINT namei(FileSystem *, char *);
+UINT l2_namei(FileSystem *, char *);

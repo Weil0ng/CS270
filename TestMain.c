@@ -27,7 +27,7 @@ int main(int args, char* argv[])
     
     FileSystem fs;
     printf("Initializing file system with initfs...\n");
-    UINT succ = initfs(nDBlks, nINodes, &fs);
+    UINT succ = l2_initfs(nDBlks, nINodes, &fs);
     if(succ == 0) {
         printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
     }
@@ -45,42 +45,44 @@ int main(int args, char* argv[])
         printMenu();
         printf("\nEnter a command: ");
         scanf("%s", command);
-        
+
+        memset(buf, 0, sizeof(buf));        
+
         if(strcmp(command, "mkdir") == 0) {
             //printf("Enter directory path: ");
             scanf("%s", path);
             
-            mkdir(&fs, path);
+            l2_mkdir(&fs, path);
         }
         else if(strcmp(command, "mknod") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            mknod(&fs, path);
+            l2_mknod(&fs, path);
         }
         else if(strcmp(command, "readdir") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            readdir(&fs, path);
+            l2_readdir(&fs, path);
         }
         else if(strcmp(command, "unlink") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            unlink(&fs, path);
+            l2_unlink(&fs, path);
         }
         else if(strcmp(command, "open") == 0) {
             printf("Enter file path: ");
             scanf("%s", path);
             
-            open(&fs, path);
+            l2_open(&fs, path);
         }
         else if(strcmp(command, "close") == 0) {
             printf("Enter file path: ");
             scanf("%s", path);
             
-            close(&fs, path);
+            l2_close(&fs, path);
         }
         else if(strcmp(command, "read") == 0) {
             printf("Enter file path: ");
@@ -90,7 +92,7 @@ int main(int args, char* argv[])
             printf("Enter read length: ");
             scanf("%d", &len);
             
-            read(&fs, path, offset, buf, len);
+            l2_read(&fs, path, offset, buf, len);
             printf("Read data: %s", buf);
         }
         else if(strcmp(command, "write") == 0) {
@@ -102,7 +104,7 @@ int main(int args, char* argv[])
             scanf("%s", buf);
             
             len = strlen(buf);
-            write(&fs, path, offset, buf, len);
+            l2_write(&fs, path, offset, buf, len);
         }
         else if(strcmp(command, "stats") == 0) {
             #ifdef DEBUG
