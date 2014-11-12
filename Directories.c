@@ -158,7 +158,7 @@ UINT mkdir(FileSystem* fs, char* path) {
     for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
         DirEntry *DEntry = (DirEntry *) (parBuf + offset);
         // empty directory entry found, overwrite it
-        if (DEntry->INodeID == -1){
+        if ((int)DEntry->INodeID == -1){
             break;
         }
     }
@@ -171,7 +171,8 @@ UINT mkdir(FileSystem* fs, char* path) {
         printf("Appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
-    UINT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, par_inode._in_filesize, sizeof(DirEntry));
+    //UINT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, par_inode._in_filesize, sizeof(DirEntry));
+    UINT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
     if(bytesWritten != sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
         return -1;
@@ -377,6 +378,11 @@ UINT unlink(FileSystem* fs, char* path) {
     // 4. decrement file inode link count, write to disk
     // 5. if file link count = 0, release the inode and the data blocks (free)
     
+    if (strcmp(path, "/") == 0) {
+        fprintf(stderr, "Error: cannot unlink root directory!\n");
+        return -1;
+    }
+    
     UINT id; // the inode id of the unlinked file
     UINT par_id; // the inode id of the parent directory
     char par_path[MAX_PATH_LEN];
@@ -388,6 +394,9 @@ UINT unlink(FileSystem* fs, char* path) {
     ptr = strrchr(path, ch);
     strncpy(par_path, path, strlen(path) - strlen(ptr));
     par_path[strlen(path) - strlen(ptr)] = '\0';
+    
+    // ptr = "/node_name"
+    char *node_name = strtok(ptr, "/");
     
     // special case for root
     if(strcmp(par_path, "") == 0) {
@@ -422,27 +431,25 @@ UINT unlink(FileSystem* fs, char* path) {
         BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
         
         // read the parent directory table
-        readINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+        readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
 
         // find an empty directory entry and insert with the new directory
-        BOOL FIND = false;
-        UINT i = 0;
-        //FIXME: here we assume the directory table will never be full
-        while(!FIND) {
-            DirEntry *DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
-            if (DEntry->INodeID  == id){
+        DirEntry *DEntry;
+        UINT i;
+        for(i = 0; i < par_inode._in_filesize/sizeof(DirEntry); i ++) {
+            DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
+            if (strcmp(DEntry->key, node_name) == 0){
+                #ifdef DEBUG
                 printf("zero out the to-be-unlinked entry in the parent directory table\n");
+                #endif
                 strcpy(DEntry->key, "");
                 DEntry->INodeID = -1;
-                FIND = true;
-            }
-            else {
-                i ++;
+                break;
             }
         }
 
         // update the parent directory table
-        writeINodeData(fs, &par_inode, parBuf, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+        writeINodeData(fs, &par_inode, (BYTE*) DEntry, i*sizeof(DirEntry), sizeof(DirEntry));
         
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {
