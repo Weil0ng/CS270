@@ -558,7 +558,7 @@ UINT namei(FileSystem *fs, char *path)
   UINT curDirEntry = 0;
   // memory for current directory
   // DirEntry curDir[MAX_FILE_NUM_IN_DIR];
-  BYTE curDir[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
+  BYTE *curDir;
   
   // flag for scan result
   BOOL entryFound = false;
@@ -574,9 +574,11 @@ UINT namei(FileSystem *fs, char *path)
       THROW(__FILE__, __LINE__, __func__);
       return -1;
     }
+    // alloc space for curDir
+    curDir = malloc(curINode._in_filesize / sizeof(DirEntry));
     //2.2 read in the directory
     memset(curDir, 0, sizeof(curDir));
-    readINodeData(fs, &curINode, (BYTE*) &curDir, 0, MAX_FILE_NUM_IN_DIR * sizeof(DirEntry));
+    readINodeData(fs, &curINode, (BYTE*) &curDir, 0, curINode._in_filesize);
     
     //3 scan through the dir
     entryFound = false;
@@ -590,6 +592,8 @@ UINT namei(FileSystem *fs, char *path)
         //printf("find the inode for %s, its inode id = %d\n", tok, curID);
       }
     }
+    //release curDir
+    free(curDir);
     //exception: dir does not contain target tok
     if (!entryFound) {
       _err_last = _fs_NonExistFile;
