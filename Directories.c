@@ -306,7 +306,7 @@ UINT mknod(FileSystem* fs, char* path) {
         printf("Appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
-    UINT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, par_inode._in_filesize, sizeof(DirEntry));
+    UINT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
     if(bytesWritten != sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
         return -1;
