@@ -5,6 +5,7 @@
  
 #include "Directories.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 // make a new filesystem with a root directory
@@ -575,16 +576,16 @@ UINT namei(FileSystem *fs, char *path)
       return -1;
     }
     // alloc space for curDir
-    curDir = malloc(curINode._in_filesize / sizeof(DirEntry));
+    curDir = (BYTE *)malloc(curINode._in_filesize);
     //2.2 read in the directory
-    memset(curDir, 0, sizeof(curDir));
-    readINodeData(fs, &curINode, (BYTE*) &curDir, 0, curINode._in_filesize);
+    memset(curDir, 0, curINode._in_filesize);
+    readINodeData(fs, &curINode, curDir, 0, curINode._in_filesize);
     
     //3 scan through the dir
     entryFound = false;
     // Given the assumption that all blocks are initialized to be 0
     //  while (strcmp((curDir[curDirEntry]).key, "") != 0) 
-    for (curDirEntry = 0; curDirEntry < MAX_FILE_NUM_IN_DIR && !entryFound; curDirEntry ++) {
+    for (curDirEntry = 0; curDirEntry < (curINode._in_filesize / sizeof(DirEntry)) && !entryFound; curDirEntry ++) {
       DirEntry *DEntry = (DirEntry *) (curDir + curDirEntry*sizeof(DirEntry));
       if (strcmp(tok, DEntry->key) == 0) {
         entryFound = true;
