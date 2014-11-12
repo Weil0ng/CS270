@@ -180,6 +180,7 @@ UINT mkdir(FileSystem* fs, char* path) {
     // update parent directory file size, if it changed
     if(offset + bytesWritten > par_inode._in_filesize) {
         par_inode._in_filesize = offset + bytesWritten;
+        writeINode(fs, par_id, &par_inode);
     }
     
     /* allocate two entries in the new directory table (. , id) and (.., par_id) */
@@ -313,6 +314,7 @@ UINT mknod(FileSystem* fs, char* path) {
     // update parent directory file size, if it changed
     if(offset + bytesWritten > par_inode._in_filesize) {
         par_inode._in_filesize = offset + bytesWritten;
+        writeINode(fs, par_id, &par_inode);
     }
 
     // change the inode type to directory
