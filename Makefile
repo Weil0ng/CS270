@@ -11,6 +11,9 @@ main: $(OBJS) TestMain
 
 test: $(OBJS) Layer0Test Layer1CombinedTest
 
+fuseDaemon: $(OBJS) 
+	$(CC) $(CFLAGS) fuseDaemon.c $(FUSEFLAGS) -o $@ $^
+
 Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
 	$(CC) $(CFLAGS) -o $@ $^
 
