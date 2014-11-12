@@ -9,7 +9,7 @@
 #include <assert.h>
 
 // make a new filesystem with a root directory
-UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("initfs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
     #endif
@@ -77,7 +77,7 @@ UINT initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 }
 
 // make a new directory
-UINT mkdir(FileSystem* fs, char* path) {
+UINT l2_mkdir(FileSystem* fs, char* path) {
     printf("mkdir(%s)\n", path);
     
     UINT id; // the inode id associated with the new directory
@@ -89,7 +89,7 @@ UINT mkdir(FileSystem* fs, char* path) {
         fprintf(stderr, "Error: cannot create root directory outside of initfs!\n");
         return -1;
     }
-    else if ((int)namei(fs, path) != -1) {
+    else if ((int)l2_namei(fs, path) != -1) {
         fprintf(stderr, "Error: file or directory %s already exists!\n", path);
         return -1;
     }
@@ -115,7 +115,7 @@ UINT mkdir(FileSystem* fs, char* path) {
     #ifdef DEBUG
     printf("Computing parent directory inode id...\n");
     #endif
-    par_id = namei(fs, par_path);
+    par_id = l2_namei(fs, par_path);
     #ifdef DEBUG
     printf("Parent directory inode id: %d\n", par_id);
     #endif
@@ -219,7 +219,7 @@ UINT mkdir(FileSystem* fs, char* path) {
 }
 
 // create a new file specified by an absolute path
-UINT mknod(FileSystem* fs, char* path) {
+UINT l2_mknod(FileSystem* fs, char* path) {
 
     UINT id; // the inode id associated with the new directory
     UINT par_id; // the inode id of the parent directory
@@ -230,7 +230,7 @@ UINT mknod(FileSystem* fs, char* path) {
         fprintf(stderr, "Error: cannot create root directory outside of initfs!\n");
         return -1;
     }
-    else if ((int)namei(fs, path) != -1) {
+    else if ((int)l2_namei(fs, path) != -1) {
         fprintf(stderr, "Error: file or directory %s already exists!\n", path);
         return -1;
     }
@@ -253,7 +253,7 @@ UINT mknod(FileSystem* fs, char* path) {
     }
     
     // find the inode id of the parent directory 
-    par_id = namei(fs, par_path);
+    par_id = l2_namei(fs, par_path);
 
     // check if the parent directory exists
     if((int) par_id == -1) {
@@ -327,10 +327,10 @@ UINT mknod(FileSystem* fs, char* path) {
     return id;
 }
 
-UINT readdir(FileSystem* fs, char* path) {
+UINT l2_readdir(FileSystem* fs, char* path) {
     UINT id; // the inode of the dir
 
-    id = namei(fs, path);
+    id = l2_namei(fs, path);
     
     if((int) id == -1) { // directory does not exist
         fprintf(stderr, "Directory %s not found!\n", path);
@@ -369,9 +369,9 @@ UINT readdir(FileSystem* fs, char* path) {
 }
 
 // remove a file
-UINT unlink(FileSystem* fs, char* path) {
+UINT l2_unlink(FileSystem* fs, char* path) {
 
-    // 1. get the inode of the parent directory using namei
+    // 1. get the inode of the parent directory using l2_namei
     // 2. clears the corresponding entry in the parent directory table, write
     // inode number to 0 (or -1)
     // 3. write the parent inode back to disk
@@ -405,7 +405,7 @@ UINT unlink(FileSystem* fs, char* path) {
     }
    
     // find the inode id of the parent directory 
-    par_id = namei(fs, par_path);
+    par_id = l2_namei(fs, par_path);
     if((int) par_id == -1) { // parent directory does not exist
         fprintf(stderr, "Directory %s not found!\n", par_path);
         return -1;
@@ -415,7 +415,7 @@ UINT unlink(FileSystem* fs, char* path) {
         INode par_inode;
         INode inode;
         
-        id = namei(fs, path);
+        id = l2_namei(fs, path);
         if((int) id == -1) { // file does not exist
             fprintf(stderr, "file %s not found!\n", path);
             return -1;
@@ -478,11 +478,11 @@ UINT unlink(FileSystem* fs, char* path) {
     return 0;
 }
 
-UINT open(FileSystem* fs, char* path) {
+UINT l2_open(FileSystem* fs, char* path) {
     //addOpenFileEntry(&fs->openFileTable, path);
 }
 
-UINT close(FileSystem* fs, char* path) {
+UINT l2_close(FileSystem* fs, char* path) {
     //removeOpenFileEntry(&fs->openFileTable, path);
 }
 
@@ -493,11 +493,11 @@ UINT close(FileSystem* fs, char* path) {
 // 4. modify modtime
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 // 6. write back inode
-UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+UINT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   UINT returnSize = 0;
   INode curINode;
   //1. resolve path
-  UINT curINodeID = namei(fs, path);
+  UINT curINodeID = l2_namei(fs, path);
   if (curINodeID == -1) {
     _err_last = _fs_NonExistFile;
     THROW(__FILE__, __LINE__, __func__);
@@ -523,11 +523,11 @@ UINT read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //3. load inode
 //4. call writeINodeData
 //5. modify inode if necessary
-UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+UINT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   INode curINode;
   UINT bytesWritten = 0;
   //1. resolve path
-  UINT curINodeID = namei(fs, path);
+  UINT curINodeID = l2_namei(fs, path);
   if (curINodeID == -1) {
     _err_last = _fs_NonExistFile;
     THROW(__FILE__, __LINE__, __func__);
@@ -555,7 +555,7 @@ UINT write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 // 2.1 check type
 // 2.2 read in the data
 // 3. scan through to find next tok's id
-UINT namei(FileSystem *fs, char *path)
+UINT l2_namei(FileSystem *fs, char *path)
 {
   char local_path[MAX_PATH_LEN]; // cannot use "path" directly, namei will truncate it
   strcpy(local_path, path);
