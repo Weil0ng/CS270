@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "errno.h"
 
 // make a new filesystem with a root directory
 UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
@@ -73,6 +74,30 @@ UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
     writeINode(fs, id, &rootINode);
           
+    return 0;
+}
+
+// getattr
+UINT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
+    UINT INodeID = l2_namei(fs, path);
+    if (INodeID == -1)
+	return -ENOENT;
+
+    INode inode;
+    readINode(fs, INodeID, &inode);
+
+    stbuf->st_dev = 0;
+    stbuf->st_ino = INodeID;
+    stbuf->st_mode = inode._in_permissions;
+    stbuf->st_nlink = inode._in_linkcount;
+    //stbuf->uid_t;
+    //stbuf->gid_t;
+    stbuf->st_size = inode._in_filesize;
+    stbuf->st_blksize = BLK_SIZE;
+    stbuf->st_blocks = inode._in_filesize / BLK_SIZE;
+    stbuf->st_atime = inode._in_accesstime;
+    stbuf->st_mtime = inode._in_modtime;
+    //stbuf->st_ctime;
     return 0;
 }
 
@@ -327,8 +352,9 @@ UINT l2_mknod(FileSystem* fs, char* path) {
     return id;
 }
 
-UINT l2_readdir(FileSystem* fs, char* path) {
+UINT l2_readdir(FileSystem* fs, char* path, char** namelist) {
     UINT id; // the inode of the dir
+    UINT numDirEntry = 0;
 
     id = l2_namei(fs, path);
     
@@ -349,22 +375,27 @@ UINT l2_readdir(FileSystem* fs, char* path) {
             return -1;
         }
         else {
-            UINT numDirEntry = (inode._in_filesize)/sizeof(DirEntry);
+            numDirEntry = (inode._in_filesize)/sizeof(DirEntry);
             BYTE dirBuf[inode._in_filesize];
             
             // read the directory table
             readINodeData(fs, &inode, dirBuf, 0, inode._in_filesize);
             
+	    #ifdef DEBUG
+	    printf("%d entries in cur dir %s\n", numDirEntry, path);
+	    #endif
+ 
             for(UINT i=0; i < numDirEntry; i ++){
                 DirEntry *DEntry = (DirEntry *) (dirBuf + i*sizeof(DirEntry));
                 if ((int) DEntry->INodeID >= 0){
-                    printf("%s, %d\n", DEntry->key, DEntry->INodeID);
+		    namelist[i] = (char *)DEntry->key;
+                    printf("%s, %d\n", namelist[i], DEntry->INodeID);
                 }
             }
         }
     }
 
-    return 0;
+    return numDirEntry;
 
 }
 

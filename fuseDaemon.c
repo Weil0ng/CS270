@@ -18,7 +18,6 @@
 #include "Directories.h"
 
 static FileSystem fs;
-static struct fuse_context fs_ctx;
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
@@ -26,10 +25,15 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
 	
-	printf("getattr %p\n", fs_ctx.private_data);
-	
+	#ifdef DEBUG
+	printf("getattr %s\n", path);
+	#endif
+
 	memset(stbuf, 0, sizeof(struct stat));
-	if (strcmp(path, "/") == 0) {
+
+	return l2_getattr(&fs, path, stbuf);
+
+	/*if (strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 	} else if (strcmp(path, hello_path) == 0) {
@@ -39,7 +43,7 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 	} else
 		res = -ENOENT;
 
-	return res;
+	return res;*/
 }
 
 static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
@@ -47,14 +51,21 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 {
 	(void) offset;
 	(void) fi;
-
-	if (strcmp(path, "/") != 0)
+        char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
+	memset(namelist, NULL, sizeof(namelist));
+	
+	UINT numDirEntry = l2_readdir(&fs, path, namelist);
+	printf("readdir %s, %u enties\n", path, numDirEntry);
+	if (numDirEntry == -1 || numDirEntry == 0)
 		return -ENOENT;
 
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
-	filler(buf, hello_path + 1, NULL, 0);
-
+	/*if (strcmp(path, "/") != 0)
+		return -ENOENT;*/
+	
+	for (UINT i=0; i<numDirEntry; i++) {
+		filler(buf, namelist[i], NULL, 0);
+	}
+	
 	return 0;
 }
 
@@ -65,7 +76,7 @@ static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 
 static int l3_mkdir(const char *path, mode_t mode)
 {
-	return (int)l2_mkdir(&fs, path);
+	return ((int)l2_mkdir(&fs, path) == -1)?-1:0;
 }
 
 static int l3_unlink(const char *path)
@@ -161,5 +172,16 @@ static struct fuse_operations l3_oper = {
 
 int main(int argc, char *argv[])
 {
+	printf("Initializing file system with initfs...\n");
+    	UINT succ = l2_initfs(128, 16, &fs);
+    	if(succ == 0) {
+        	printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
+    	}
+    	else {
+        	printf("Error: initfs failed with error code: %d\n", succ);
+    	}
+
 	return fuse_main(argc, argv, &l3_oper, NULL);
+
+	
 }
