@@ -6,9 +6,13 @@
 
 #include "Directory.h"
 #include "FileSystem.h"
+#include "sys/stat.h"
 
 // makes a new filesystem with a root directory
 UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
+
+// getattr
+UINT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf);
 
 // makes a new directory
 UINT l2_mkdir(FileSystem* fs, char* path);
@@ -17,7 +21,7 @@ UINT l2_mkdir(FileSystem* fs, char* path);
 UINT l2_mknod(FileSystem* fs, char* path);
 
 // reads directory contents
-UINT l2_readdir(FileSystem* fs, char* path);
+UINT l2_readdir(FileSystem* fs, char* path, char** namelist);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
