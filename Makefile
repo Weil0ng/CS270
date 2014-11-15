@@ -10,7 +10,7 @@ all: main test
 
 main: $(OBJS) TestMain
 
-test: $(OBJS) Layer0Test Layer1CombinedTest
+test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest
 
 fuseDaemon: $(OBJS) $(SRCS)
 	$(CC) $(CFLAGS) $(SRCS) $(FUSEFLAGS) -o $@ $(OBJS)
@@ -23,9 +23,16 @@ TestMain: $(OBJS) TestMain.o
 
 Layer0Test: $(OBJS) Layer0Test.o
 	$(CC) $(CFLAGS) -o $@ $^
-    
+
+Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+Layer2MountTest: $(OBJS) Layer2MountTest.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr *.o Layer0Test Layer1CombinedTest TestMain fuseDaemon diskFile diskDump
+	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest TestMain fuseDaemon diskFile diskDump
+
