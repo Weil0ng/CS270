@@ -52,7 +52,22 @@ UINT l2_mount(FILE* device, FileSystem* fs) {
 }
 
 // unmounts a filesystem into a device
-UINT l2_unmount(FILE* device, FileSystem* fs) {
+UINT l2_unmount(FileSystem* fs) {
+    #ifdef DEBUG
+    printf("Unmounting filesystem...\n");
+    #endif
+
+    //write free block cache back to disk
+    writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+
+    //write superblock to disk
+    #ifdef DEBUG
+    printf("Writing superblock to disk...\n"); 
+    #endif
+    BYTE superblockBuf[BLK_SIZE];
+    blockify(&fs->superblock, superblockBuf);
+    writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
+    fs->superblock.modified = false;
 
     return 0;
 }
