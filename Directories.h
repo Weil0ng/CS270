@@ -7,6 +7,14 @@
 #include "Directory.h"
 #include "FileSystem.h"
 #include "sys/stat.h"
+ 
+#include <stdio.h>
+
+// mounts a filesystem from a device
+UINT l2_mount(FILE* device, FileSystem* fs);
+
+// unmounts a filesystem into a device
+UINT l2_unmount(FILE* device, FileSystem* fs);
 
 // makes a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
