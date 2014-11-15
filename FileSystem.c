@@ -47,7 +47,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
     
     //compute offsets for inode/data blocks
-    fs->diskINodeBlkOffset = 1;
+    fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
 
     //initialize in-memory superblock
@@ -174,6 +174,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
 INT destroyfs(FileSystem* fs) {
     destroyDisk(fs->disk);
+    free(fs->disk);
     return 0;
 }
 
