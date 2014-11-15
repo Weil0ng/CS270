@@ -10,6 +10,43 @@
 
 // mounts a filesystem from a device
 UINT l2_mount(FILE* device, FileSystem* fs) {
+    #ifdef DEBUG
+    printf("Mounting filesystem...\n");
+    #endif
+
+    //disk superblock buffer
+    BYTE dsb[BLK_SIZE];
+
+    //read first block as superblock
+    #ifdef DEBUG
+    printf("Reading superblock from disk...\n");
+    #endif
+    fseek(device, SUPERBLOCK_OFFSET, SEEK_SET);
+    UINT succ = fread(&dsb, BLK_SIZE, 1, device);
+    assert(succ == BLK_SIZE);
+    unblockify(dsb, &fs->superblock);
+
+    //initialize filesystem parameters
+    fs->nBytes = (BLK_SIZE + fs->superblock.nINodes * INODE_SIZE + fs->superblock.nDBlks * BLK_SIZE);
+    fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
+    fs->diskDBlkOffset = fs->diskINodeBlkOffset + fs->superblock.nINodes / INODES_PER_BLK;
+
+    //load free block cache into superblock
+    readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+
+    #ifdef DEBUG
+    printf("\nSuccessfully mounted filesystem!\n");
+    printf("\nSuperblock:\n");
+    printSuperBlock(&fs->superblock);
+    printf("\nINodes:\n");
+    printINodes(fs);
+    printf("\nData blocks:\n");
+    printDBlks(fs);
+    printf("\nFree inode cache:\n");
+    printFreeINodeCache(&fs->superblock);
+    printf("\nFree dblk cache:\n");
+    printFreeDBlkCache(&fs->superblock);
+    #endif
 
     return 0;
 }
