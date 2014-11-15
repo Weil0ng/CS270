@@ -4,10 +4,21 @@
  */
  
 #include "Directories.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "errno.h"
+
+// mounts a filesystem from a device
+UINT l2_mount(FILE* device, FileSystem* fs) {
+
+    return 0;
+}
+
+// unmounts a filesystem into a device
+UINT l2_unmount(FILE* device, FileSystem* fs) {
+
+    return 0;
+}
 
 // make a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
