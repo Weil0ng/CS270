@@ -39,7 +39,7 @@ INT unblockify(BYTE* buf, SuperBlock* superblock) {
     memcpy(superblock->freeINodeCache, dsb->freeINodeCache, FREE_INODE_CACHE_SIZE * sizeof(UINT));
     superblock->pNextFreeINode = dsb->pNextFreeINode;
 
-    superblock->modified = 0;
+    superblock->modified = false;
 
     return 0;
 }

@@ -93,6 +93,7 @@ void dumpDisk(DiskArray *disk)
 	    fprintf(dumpFile, "%x ", *((UINT *)buf+j));
 	fprintf(dumpFile, "\n");
   }
+  fclose(dumpFile);
   return;
 }
 #endif

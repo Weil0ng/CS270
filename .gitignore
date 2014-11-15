@@ -6,6 +6,7 @@
 *.out
 
 TestMain
+Layer2MountTest
 Layer1CombinedTest
 Layer0Test
 

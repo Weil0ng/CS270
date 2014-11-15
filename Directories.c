@@ -22,36 +22,48 @@ UINT l2_mount(FILE* device, FileSystem* fs) {
     printf("Reading superblock from disk...\n");
     #endif
     fseek(device, SUPERBLOCK_OFFSET, SEEK_SET);
-    UINT succ = fread(&dsb, BLK_SIZE, 1, device);
-    assert(succ == BLK_SIZE);
+    UINT succ = fread(dsb, BLK_SIZE, 1, device);
+    if(succ < 1) {
+        fprintf(stderr, "Error: failed to read superblock from device!\n");
+        return -1;
+    }
+
     unblockify(dsb, &fs->superblock);
+    #ifdef DEBUG
+    printf("Unblockified superblock:\n");
+    printSuperBlock(&fs->superblock);
+    #endif
 
     //initialize filesystem parameters
     fs->nBytes = (BLK_SIZE + fs->superblock.nINodes * INODE_SIZE + fs->superblock.nDBlks * BLK_SIZE);
     fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + fs->superblock.nINodes / INODES_PER_BLK;
 
-    //load free block cache into superblock
-    readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
+    //TODO: remove this code, which loads the entire file into the disk array in memory
+    #ifdef DEBUG
+    printf("Initializing filesystem disk array...\n");
+    #endif
+    fs->disk = malloc(sizeof(DiskArray));
+    initDisk(fs->disk, fs->nBytes);
 
     #ifdef DEBUG
-    printf("\nSuccessfully mounted filesystem!\n");
-    printf("\nSuperblock:\n");
-    printSuperBlock(&fs->superblock);
-    printf("\nINodes:\n");
-    printINodes(fs);
-    printf("\nData blocks:\n");
-    printDBlks(fs);
-    printf("\nFree inode cache:\n");
-    printFreeINodeCache(&fs->superblock);
-    printf("\nFree dblk cache:\n");
-    printFreeDBlkCache(&fs->superblock);
+    printf("Loading file to back the filesystem disk array...\n");
     #endif
+    fseek(device, 0, SEEK_SET);
+    succ = fread(fs->disk, fs->nBytes, 1, device);
+    assert(succ == 1);
+    //TODO: remove up to here
+
+    //load free block cache into superblock
+    #ifdef DEBUG
+    printf("Loading free dblk cache into superblock......\n");
+    #endif
+    readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
     return 0;
 }
 
-// unmounts a filesystem into a device
+// unmounts a filesystem by syncing the superblock to disk
 UINT l2_unmount(FileSystem* fs) {
     #ifdef DEBUG
     printf("Unmounting filesystem...\n");
