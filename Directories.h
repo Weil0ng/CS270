@@ -22,7 +22,7 @@ UINT l2_mkdir(FileSystem* fs, char* path);
 UINT l2_mknod(FileSystem* fs, char* path);
 
 // reads directory contents
-UINT l2_readdir(FileSystem* fs, char* path, char** namelist);
+UINT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory

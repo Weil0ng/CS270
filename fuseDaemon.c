@@ -55,7 +55,7 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	memset(namelist, NULL, sizeof(namelist));
 	
 	UINT numDirEntry = l2_readdir(&fs, path, namelist);
-	printf("readdir %s, %u enties\n", path, numDirEntry);
+	printf("l2_readdir %s, %u enties\n", path, numDirEntry);
 	if (numDirEntry == -1 || numDirEntry == 0)
 		return -ENOENT;
 
@@ -63,6 +63,7 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		return -ENOENT;*/
 	
 	for (UINT i=0; i<numDirEntry; i++) {
+		printf("filling %s\n", namelist[i]);
 		filler(buf, namelist[i], NULL, 0);
 	}
 	

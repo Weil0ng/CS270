@@ -67,6 +67,12 @@ UINT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
     // update the root inode file size
     rootINode._in_filesize = 2 * sizeof(DirEntry);
+
+    // set init link count for . and ..
+    rootINode._in_linkcount = 2;
+    
+    // set init permission
+    rootINode._in_permissions = S_IFDIR | 0755;
     
     // write completed root inode to disk
     #ifdef DEBUG
@@ -352,7 +358,7 @@ UINT l2_mknod(FileSystem* fs, char* path) {
     return id;
 }
 
-UINT l2_readdir(FileSystem* fs, char* path, char** namelist) {
+UINT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
     UINT id; // the inode of the dir
     UINT numDirEntry = 0;
 
@@ -388,8 +394,8 @@ UINT l2_readdir(FileSystem* fs, char* path, char** namelist) {
             for(UINT i=0; i < numDirEntry; i ++){
                 DirEntry *DEntry = (DirEntry *) (dirBuf + i*sizeof(DirEntry));
                 if ((int) DEntry->INodeID >= 0){
-		    namelist[i] = (char *)DEntry->key;
-                    printf("%s, %d\n", namelist[i], DEntry->INodeID);
+                    printf("%s, %d\n", (char *)DEntry->key, DEntry->INodeID);
+		    memcpy(namelist[i], (char *)DEntry->key, FILE_NAME_LENGTH);
                 }
             }
         }
@@ -639,6 +645,7 @@ UINT l2_namei(FileSystem *fs, char *path)
     if (!entryFound) {
       _err_last = _fs_NonExistFile;
       THROW(__FILE__, __LINE__, __func__);
+      printf("target: %s\n", tok);
       return -1;
     }
     //1. advance in traversal

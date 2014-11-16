@@ -64,7 +64,7 @@ int main(int args, char* argv[])
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            l2_readdir(&fs, path);
+            //l2_readdir(&fs, path);
         }
         else if(strcmp(command, "unlink") == 0) {
             //printf("Enter file path: ");
