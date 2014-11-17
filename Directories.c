@@ -239,6 +239,12 @@ UINT l2_mkdir(FileSystem* fs, char* path) {
 
     // change the inode type to directory
     inode._in_type = DIRECTORY;
+    
+    // init the mode
+    inode._in_permissions = S_IFDIR | 0755;
+
+    // init link count
+    inode._in_linkcount = 1;
 
     // update the inode file size
     inode._in_filesize = 2 * sizeof(DirEntry);
@@ -251,7 +257,7 @@ UINT l2_mkdir(FileSystem* fs, char* path) {
 
 // create a new file specified by an absolute path
 UINT l2_mknod(FileSystem* fs, char* path) {
-
+    printf("mknod %s\n", path);
     UINT id; // the inode id associated with the new directory
     UINT par_id; // the inode id of the parent directory
     char par_path[MAX_PATH_LEN];
@@ -351,6 +357,12 @@ UINT l2_mknod(FileSystem* fs, char* path) {
 
     // change the inode type to directory
     inode._in_type = REGULAR;
+
+    // init the mode
+    inode._in_permissions = S_IFREG | 0444;
+
+    // init link count
+    inode._in_linkcount = 1;
 
     // update the disk inode
     writeINode(fs, id, &inode);
