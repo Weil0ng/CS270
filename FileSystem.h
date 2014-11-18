@@ -5,8 +5,6 @@
  */
 
 #include "DiskEmulator.h"
-#include "Globals.h"
-#include "INode.h"
 #include "OpenFileTable.h"
 #include "INodeTable.h"
 #include "SuperBlock.h"
@@ -42,56 +40,56 @@ typedef struct FileSystem {
 } FileSystem;
 
 // creates the file system
-UINT makefs(UINT, UINT, FileSystem*);
+INT makefs(UINT, UINT, FileSystem*);
 
 // destroys a file system
-UINT destroyfs(FileSystem*);
+INT destroyfs(FileSystem*);
 
 // allocate a free inode
-UINT allocINode(FileSystem*, INode*);
+INT allocINode(FileSystem*, INode*);
 
 // free an allocated inode
-UINT freeINode(FileSystem*, UINT);
+INT freeINode(FileSystem*, UINT);
 
 // reads an inode (iget)
 // input: file system inode number
 // output: locked inode
-UINT readINode(FileSystem*, UINT, INode*);
+INT readINode(FileSystem*, UINT, INode*);
 
 // reads from the file section of the inode
 // returns the number of bytes read, -1 on failure
-UINT readINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
+INT readINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
 
 // writes to an inode
-UINT writeINode(FileSystem*, UINT, INode*);
+INT writeINode(FileSystem*, UINT, INode*);
 
 // writes to the file section of the inode
 // returns the number of bytes written, -1 on failure
-UINT writeINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
+INT writeINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
 
 // allocate a free data block
-UINT allocDBlk(FileSystem*);
+INT allocDBlk(FileSystem*);
 
 // free an allocated data block
-UINT freeDBlk(FileSystem*, UINT);
+INT freeDBlk(FileSystem*, UINT);
 
 // reads a data block
-UINT readDBlk(FileSystem*, UINT, BYTE*);
+INT readDBlk(FileSystem*, UINT, BYTE*);
 
 // writes a data block
-UINT writeDBlk(FileSystem*, UINT, BYTE*); 
+INT writeDBlk(FileSystem*, UINT, BYTE*); 
 
 // reads certain number of bytes from a block with offset
-UINT readDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT);
+INT readDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT);
 
 // writes certain number of bytes of a block with offset
-UINT writeDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT); 
+INT writeDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT); 
 
 // converts file byte offset in inode to logical block ID
-UINT bmap(FileSystem* fs, INode* inode, UINT fileBlkId);
+INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId);
 
 // map flattened index to internal index of the inode
-UINT balloc(FileSystem*, INode *, UINT);
+INT balloc(FileSystem*, INode *, UINT);
 
 #ifdef DEBUG
 // prints all the inodes for debugging

@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <time.h>
 
-UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
     #endif
@@ -172,7 +172,7 @@ UINT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     return 0;
 }
 
-UINT destroyfs(FileSystem* fs) {
+INT destroyfs(FileSystem* fs) {
     destroyDisk(fs->disk);
     return 0;
 }
@@ -180,7 +180,7 @@ UINT destroyfs(FileSystem* fs) {
 //input: none
 //output: INode id
 //function: allocate a free inode
-UINT allocINode(FileSystem* fs, INode* inode) {
+INT allocINode(FileSystem* fs, INode* inode) {
 
     if(fs->superblock.nFreeINodes == 0) {
         fprintf(stderr, "Error: no more free inodes available!\n");
@@ -238,7 +238,7 @@ UINT allocINode(FileSystem* fs, INode* inode) {
     initializeINode(inode, nextFreeINodeID);
     
     // write the inode back to disk
-    if((int)writeINode(fs, nextFreeINodeID, inode) == -1){
+    if(writeINode(fs, nextFreeINodeID, inode) == -1){
         fprintf(stderr, "error: write inode %d to disk\n", nextFreeINodeID);
         return -1;
     }
@@ -257,8 +257,8 @@ UINT allocINode(FileSystem* fs, INode* inode) {
 // input: inode number
 // output: none
 // function: free a inode, which updates the inode cache and/or inode table
-UINT freeINode(FileSystem* fs, UINT id) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
+INT freeINode(FileSystem* fs, UINT id) {
+    assert(id < fs->superblock.nINodes);
 
     // if inode cache not full, store the inode number in the list
     if (fs->superblock.pNextFreeINode < FREE_INODE_CACHE_SIZE - 1){
@@ -276,17 +276,17 @@ UINT freeINode(FileSystem* fs, UINT id) {
    
     // free all data blocks associated with this inode 
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
-        if ( (int) inode._in_directBlocks[i] != -1) {
+        if (inode._in_directBlocks[i] != -1) {
             freeDBlk(fs,inode._in_directBlocks[i]);
         }
     }
     for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
-        if ((int) inode._in_sIndirectBlocks[i] != -1) {
+        if (inode._in_sIndirectBlocks[i] != -1) {
             UINT buf[BLK_SIZE/sizeof(UINT)];
             readDBlk(fs, inode._in_sIndirectBlocks[i], (BYTE *)buf);
             for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
                 // free the actual data blocks
-                if((int) buf[j] != -1)
+                if(buf[j] != -1)
                     freeDBlk(fs, buf[j]);
             }
             // free the indirect data block
@@ -294,16 +294,16 @@ UINT freeINode(FileSystem* fs, UINT id) {
         }
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
-        if((int)inode._in_dIndirectBlocks[i] != -1) {
-            UINT buf_s[BLK_SIZE/sizeof(UINT)];
+        if(inode._in_dIndirectBlocks[i] != -1) {
+            INT buf_s[BLK_SIZE/sizeof(UINT)];
             readDBlk(fs, inode._in_dIndirectBlocks[i], (BYTE*)buf_s);
             for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
-                if((int) buf_s[j] != -1) {
+                if(buf_s[j] != -1) {
                     UINT buf_d[BLK_SIZE/sizeof(UINT)];
                     readDBlk(fs, buf_s[j], (BYTE*) buf_d);
                     for (UINT k = 0; k < (BLK_SIZE / sizeof(UINT)); k ++) {
                         // free the actual data blocks
-                        if((int) buf_d[k] != -1)
+                        if(buf_d[k] != -1)
                             freeDBlk(fs, buf_d[k]);
                     }
                     // free the single indirect blocks
@@ -334,8 +334,8 @@ UINT freeINode(FileSystem* fs, UINT id) {
 // input: inode number
 // output: the pointer to the inode
 // function: read a disk inode
-UINT readINode(FileSystem* fs, UINT id, INode* inode) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
+INT readINode(FileSystem* fs, UINT id, INode* inode) {
+    assert(id < fs->superblock.nINodes);
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
 
@@ -371,7 +371,7 @@ UINT readINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
-UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
     #ifdef DEBUG
     assert(offset < inode->_in_filesize);
     assert(offset + len <= inode->_in_filesize);
@@ -399,9 +399,9 @@ UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     UINT bytesRead = 0;
     
     //compute start block id
-    UINT dataBlkId = bmap(fs, inode, fileBlkId);
+    INT dataBlkId = bmap(fs, inode, fileBlkId);
     #ifdef DEBUG
-    assert((int) dataBlkId >= 0);
+    assert(dataBlkId >= 0);
     #endif
     
     //special case to handle offset in the middle of first block
@@ -426,7 +426,7 @@ UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
         //compute next data block id using bmap
         dataBlkId = bmap(fs, inode, fileBlkId);
         #ifdef DEBUG
-        assert((int) dataBlkId >= 0);
+        assert(dataBlkId >= 0);
         #endif
             
         //read next block into buf
@@ -455,8 +455,8 @@ UINT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
 // input: inode number id, an inode
 // output: none
 // function: write the disk inode #id in the inode table
-UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nINodes);
+INT writeINode(FileSystem* fs, UINT id, INode* inode) {
+    assert(id < fs->superblock.nINodes);
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
     
@@ -497,7 +497,7 @@ UINT writeINode(FileSystem* fs, UINT id, INode* inode) {
     return 0;
 }
 
-UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
+INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
     #ifdef DEBUG
     printf("writeINodeData on inode of size %d with offset %d for len %d\n", inode->_in_filesize, offset, len);
     #endif
@@ -516,11 +516,11 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
     
     //compute start block id
     //TODO merge this into one line by making balloc return the ID
-    UINT dataBlkId = balloc(fs, inode, fileBlkId);
+    INT dataBlkId = balloc(fs, inode, fileBlkId);
     #ifdef DEBUG
     printf("Starting data block: %d\n", dataBlkId);
     #endif
-    if((int) dataBlkId < 0) {
+    if(dataBlkId < 0) {
         printf("Warning: could not allocate more data blocks for write!\n");
         return bytesWritten;
     }
@@ -551,7 +551,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
         printf("Next data block: %d\n", dataBlkId);
         #endif
 
-        if((int) dataBlkId < 0) {
+        if(dataBlkId < 0) {
             printf("Warning: could not allocate more data blocks for write!\n");
             return bytesWritten;
         }
@@ -589,7 +589,7 @@ UINT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT l
 //      move pFreeDBlksHead to next list blk
 //3. # free blocks --
 //4. return the logical id of allocaed DBlk
-UINT allocDBlk(FileSystem* fs) {
+INT allocDBlk(FileSystem* fs) {
     //1. check full
     if (fs->superblock.nFreeDBlks == 0) {
         _err_last = _fs_DBlkOutOfNumber;
@@ -644,8 +644,8 @@ UINT allocDBlk(FileSystem* fs) {
 //  else
 //      insert to current cache
 // 3. # Free DBlks ++
-UINT freeDBlk(FileSystem* fs, UINT id) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+INT freeDBlk(FileSystem* fs, UINT id) {
+    assert(id < fs->superblock.nDBlks);
 
     // if no other blocks are free
     if (fs->superblock.nFreeDBlks == 0) {
@@ -680,8 +680,8 @@ UINT freeDBlk(FileSystem* fs, UINT id) {
 // Try to read out a block from disk
 // 1. convert logical id of DBlk to logical id of disk block
 // 2. read data
-UINT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+INT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
 
@@ -690,8 +690,8 @@ UINT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
 // writes a data block to the disk
 // dBlkId: the data block logical id (not raw logical id!)
 // buf: the buffer to write (must be exactly block-sized)
-UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+INT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return writeBlk(fs->disk, bid, buf);
 }
@@ -700,8 +700,8 @@ UINT writeDBlk(FileSystem* fs, UINT id, BYTE* buf) {
 //        bytes to read in that block
 // output: a buffer that contains len bytes
 // function: read a data block with byte offset
-UINT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+INT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
+    assert(id < fs->superblock.nDBlks);
     assert(off < BLK_SIZE);
     assert(off + len <= BLK_SIZE);
 
@@ -721,8 +721,8 @@ UINT readDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
 //        bytes to write in that block
 // output: the data block being updated
 // function: read a data block with byte offset
-UINT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
-    assert((int) id >= 0 && (int) id < fs->superblock.nDBlks);
+INT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
+    assert(id < fs->superblock.nDBlks);
     assert(off < BLK_SIZE);
     assert(off + len <= BLK_SIZE);
 
@@ -753,7 +753,7 @@ UINT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
 // 	2. check single indirect range
 // 	3. check double indirect range
 // 	4. if reach here, out of range
-UINT bmap(FileSystem* fs, INode* inode, UINT fileBlkId) 
+INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId) 
 {
     UINT DBlkID = -1;
     if (fileBlkId < INODE_NUM_DIRECT_BLKS) {
@@ -824,7 +824,7 @@ UINT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 // Errors:
 //     1. disk full (catched by allocDBlk)
 // Steps:
-UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
+INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
     UINT count = 0;
     // shortcut: check if already allocated
@@ -947,7 +947,7 @@ UINT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 // Errors:
 //     1. disk full (catched by allocDBlk)
 // Steps:
-UINT old_balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
+INT old_balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
     UINT count = 0;
     // check if already allocated

@@ -4,7 +4,6 @@
  * by Jon
  */
 
-#include "Globals.h"
 #include "Directory.h"
 #include "FileSystem.h"
 

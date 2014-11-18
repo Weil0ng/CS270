@@ -2,8 +2,6 @@
  * This is the definition of utility functions
  */
 
-#include "Globals.h"
-
 //Debugging
 typedef enum{
   _dsk_full,

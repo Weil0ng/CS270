@@ -8,7 +8,7 @@
 
 #include "SuperBlock.h"
 
-UINT blockify(SuperBlock* superblock, BYTE* buf) {
+INT blockify(SuperBlock* superblock, BYTE* buf) {
 
     DSuperBlock* dsb = (DSuperBlock*) buf;
 
@@ -25,7 +25,7 @@ UINT blockify(SuperBlock* superblock, BYTE* buf) {
     return 0;
 }
 
-UINT unblockify(BYTE* buf, SuperBlock* superblock) {
+INT unblockify(BYTE* buf, SuperBlock* superblock) {
 
     DSuperBlock* dsb = (DSuperBlock*) buf;
 
