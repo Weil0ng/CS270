@@ -4,9 +4,10 @@ LD=gcc
 
 CFLAGS=-O2 -std=gnu99 -g
 OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o OpenFileTable.o
+FUSEFLAGS=`pkg-config fuse --cflags --libs`
 SRCS=fuseDaemon.c
 
-all: main test
+all: main test fuseDaemon
 
 main: $(OBJS) TestMain
 
