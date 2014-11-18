@@ -32,13 +32,13 @@ UINT bid2Offset(UINT);
 //read a block from logical id i
 //args: device, 
 //      block id
-UINT readBlk(DiskArray *, UINT, BYTE *);
+INT readBlk(DiskArray *, UINT, BYTE *);
 
 //write to a block of logical id i
 //args: device, 
 //      block id, 
 //      content buf
-UINT writeBlk(DiskArray *, UINT, BYTE *);
+INT writeBlk(DiskArray *, UINT, BYTE *);
 
 #ifdef DEBUG
 //dump the disk to a per block file

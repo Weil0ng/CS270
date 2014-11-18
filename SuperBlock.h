@@ -10,7 +10,7 @@ typedef struct SuperBlock
   /* on disk fields */
 
   //# of total data blocks in this file system
-  UINT nDBlks;        
+  UINT nDBlks;
 
   //# of free data blocks in this file system
   UINT nFreeDBlks;
@@ -36,7 +36,7 @@ typedef struct SuperBlock
   /* in-memory fields */
 
   //SuperBlock cache of free data block list
-  UINT freeDBlkCache[FREE_DBLK_CACHE_SIZE];
+  INT freeDBlkCache[FREE_DBLK_CACHE_SIZE];
 
   //Modified bit
   BOOL modified;
@@ -55,18 +55,18 @@ typedef struct DSuperBlock
 
   UINT nINodes;
   UINT nFreeINodes;
-  UINT freeINodeCache[FREE_INODE_CACHE_SIZE];
+  INT freeINodeCache[FREE_INODE_CACHE_SIZE];
   UINT pNextFreeINode;
 
 } DSuperBlock;
 
 // writes disk fields of superblock into a block-sized buffer
 // note: exactly BLK_SIZE bytes of memory must be allocated for buf
-UINT blockify(SuperBlock*, BYTE* buf);
+INT blockify(SuperBlock*, BYTE* buf);
 
 // reads disk fields of superblock from a block-sized disk buffer to core
 // note: this will not initialize the free data block cache, that must be loaded manually
-UINT unblockify(BYTE* buf, SuperBlock*);
+INT unblockify(BYTE* buf, SuperBlock*);
 
 #ifdef DEBUG
 // prints out a superblock for debugging

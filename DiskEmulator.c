@@ -51,7 +51,7 @@ UINT bid2Offset(UINT bid)
   return bid * BLK_SIZE;
 }
 
-UINT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
+INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_readOutOfBoundry;
@@ -64,7 +64,7 @@ UINT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
   return 0;
 }
 
-UINT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
+INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_writeOutOfBoundry;

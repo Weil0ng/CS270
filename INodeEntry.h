@@ -2,7 +2,6 @@
 // Each entry is an instance/index of an inode in buffer (or on disk)
 //
 #pragma once
-#include "Globals.h"
 #include "INode.h"
 
 typedef struct INodeEntry INodeEntry;
