@@ -16,9 +16,6 @@ test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest
 fuseDaemon: $(OBJS) $(SRCS)
 	$(CC) $(CFLAGS) $(SRCS) $(FUSEFLAGS) -o $@ $(OBJS)
 
-Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
-	$(CC) $(CFLAGS) -o $@ $^
-
 TestMain: $(OBJS) TestMain.o
 	$(CC) $(CFLAGS) -o $@ $^
 
