@@ -5,7 +5,7 @@
 
 typedef struct DirEntry {
   BYTE key[FILE_NAME_LENGTH];
-  UINT INodeID;
+  INT INodeID;
 } DirEntry;
 
 
