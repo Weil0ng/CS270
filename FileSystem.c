@@ -187,7 +187,7 @@ INT allocINode(FileSystem* fs, INode* inode) {
         return -1;
     }
 
-    UINT nextFreeINodeID;
+    INT nextFreeINodeID;
 
     // the inode cache is empty
     if(fs->superblock.pNextFreeINode < 0) {
@@ -282,9 +282,9 @@ INT freeINode(FileSystem* fs, UINT id) {
     }
     for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
         if (inode._in_sIndirectBlocks[i] != -1) {
-            UINT buf[BLK_SIZE/sizeof(UINT)];
+            INT buf[BLK_SIZE/sizeof(INT)];
             readDBlk(fs, inode._in_sIndirectBlocks[i], (BYTE *)buf);
-            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
+            for (UINT j = 0; j < (BLK_SIZE / sizeof(INT)); j ++) {
                 // free the actual data blocks
                 if(buf[j] != -1)
                     freeDBlk(fs, buf[j]);
@@ -295,13 +295,13 @@ INT freeINode(FileSystem* fs, UINT id) {
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         if(inode._in_dIndirectBlocks[i] != -1) {
-            INT buf_s[BLK_SIZE/sizeof(UINT)];
+            INT buf_s[BLK_SIZE/sizeof(INT)];
             readDBlk(fs, inode._in_dIndirectBlocks[i], (BYTE*)buf_s);
-            for (UINT j = 0; j < (BLK_SIZE / sizeof(UINT)); j ++) {
+            for (UINT j = 0; j < (BLK_SIZE / sizeof(INT)); j ++) {
                 if(buf_s[j] != -1) {
-                    UINT buf_d[BLK_SIZE/sizeof(UINT)];
+                    INT buf_d[BLK_SIZE/sizeof(INT)];
                     readDBlk(fs, buf_s[j], (BYTE*) buf_d);
-                    for (UINT k = 0; k < (BLK_SIZE / sizeof(UINT)); k ++) {
+                    for (UINT k = 0; k < (BLK_SIZE / sizeof(INT)); k ++) {
                         // free the actual data blocks
                         if(buf_d[k] != -1)
                             freeDBlk(fs, buf_d[k]);
@@ -597,7 +597,7 @@ INT allocDBlk(FileSystem* fs) {
         return -1;
     }
     
-    UINT returnID = -1;
+    INT returnID = -1;
 
     //2. check pNextFreeDBlk
     if (fs->superblock.pNextFreeDBlk != 0) {
@@ -611,7 +611,7 @@ INT allocDBlk(FileSystem* fs) {
         //alloc this very block
         returnID = fs->superblock.pFreeDBlksHead;
         //retrieve next head and mark current block as allocated
-        UINT nextHead = (fs->superblock.freeDBlkCache)[0];
+        INT nextHead = (fs->superblock.freeDBlkCache)[0];
         //zero out before allocation
         for (UINT i=0; i<FREE_DBLK_CACHE_SIZE; i++) 	
           (fs->superblock.freeDBlkCache)[i] = 0;
