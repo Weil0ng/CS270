@@ -9,7 +9,7 @@
 #include "errno.h"
 
 // mounts a filesystem from a device
-UINT l2_mount(FILE* device, FileSystem* fs) {
+INT l2_mount(FILE* device, FileSystem* fs) {
     #ifdef DEBUG
     printf("Mounting filesystem...\n");
     #endif
@@ -56,15 +56,18 @@ UINT l2_mount(FILE* device, FileSystem* fs) {
 
     //load free block cache into superblock
     #ifdef DEBUG
-    printf("Loading free dblk cache into superblock......\n");
+    printf("Loading free dblk cache into superblock...\n");
     #endif
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
+    #ifdef DEBUG
+    printf("Filesystem mount complete!\n");
+    #endif
     return 0;
 }
 
 // unmounts a filesystem by syncing the superblock to disk
-UINT l2_unmount(FileSystem* fs) {
+INT l2_unmount(FileSystem* fs) {
     #ifdef DEBUG
     printf("Unmounting filesystem...\n");
     #endif
@@ -81,6 +84,9 @@ UINT l2_unmount(FileSystem* fs) {
     writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
     fs->superblock.modified = false;
 
+    #ifdef DEBUG
+    printf("Filesystem unmount complete!\n");
+    #endif
     return 0;
 }
 
