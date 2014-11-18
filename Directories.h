@@ -11,10 +11,10 @@
 #include <stdio.h>
 
 // mounts a filesystem from a device
-UINT l2_mount(FILE* device, FileSystem* fs);
+INT l2_mount(FILE* device, FileSystem* fs);
 
 // unmounts a filesystem into a device
-UINT l2_unmount(FileSystem* fs);
+INT l2_unmount(FileSystem* fs);
 
 // makes a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
