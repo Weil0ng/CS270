@@ -5,6 +5,7 @@
 *.o
 *.out
 
+fuseDaemon
 TestMain
 Layer2MountTest
 Layer1CombinedTest

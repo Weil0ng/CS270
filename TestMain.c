@@ -39,6 +39,7 @@ int main(int args, char* argv[])
     char command[1024];
     char path[1024];
     char buf[1024];
+    char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
     UINT offset;
     UINT len;
     while(!quit) {
@@ -58,13 +59,13 @@ int main(int args, char* argv[])
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            l2_mknod(&fs, path);
+            l2_mknod(&fs, path, 0, 0);
         }
         else if(strcmp(command, "readdir") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);
             
-            //l2_readdir(&fs, path);
+            l2_readdir(&fs, path, namelist);
         }
         else if(strcmp(command, "unlink") == 0) {
             //printf("Enter file path: ");

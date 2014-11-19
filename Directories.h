@@ -7,6 +7,7 @@
 #include "Directory.h"
 #include "FileSystem.h"
 #include "sys/stat.h"
+#include "sys/types.h"
  
 #include <stdio.h>
 
@@ -26,7 +27,7 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf);
 INT l2_mkdir(FileSystem* fs, char* path);
 
 // makes a new file
-INT l2_mknod(FileSystem* fs, char* path);
+INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 
 // reads directory contents
 INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]);
