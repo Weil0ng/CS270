@@ -15,6 +15,12 @@ INT l2_mount(FileSystem* fs);
 // unmounts a filesystem into a device
 INT l2_unmount(FileSystem* fs);
 
+enum FILE_FLAGS {
+        FLAG_READ = 1,
+        FLAG_WRITE = 2,
+        FLAG_READWRITE = 3
+};
+
 // makes a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
 
@@ -44,10 +50,10 @@ INT l2_chmod(FileSystem* fs, char* path, mode_t mode);
 INT l2_truncate(FileSystem* fs, char* path, INT new_length);
 
 // opens a file
-INT l2_open(FileSystem* fs, char* path);
+INT l2_open(FileSystem* fs, char* path, UINT flags);
 
 // closes a file
-INT l2_close(FileSystem* fs, char* path);
+INT l2_close(FileSystem* fs, char* path, UINT flags);
 
 // reads a file
 INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);

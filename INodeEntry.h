@@ -5,7 +5,6 @@
 #include "INode.h"
 
 typedef struct INodeEntry INodeEntry;
-
 struct INodeEntry {
 // __index property__
      

@@ -38,6 +38,7 @@ int main(int args, char* argv[])
     BOOL quit = false;
     char command[1024];
     char path[1024];
+    UINT flags;
     char buf[1024];
     char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
     UINT offset;
@@ -84,14 +85,18 @@ int main(int args, char* argv[])
         else if(strcmp(command, "open") == 0) {
             printf("Enter file path: ");
             scanf("%s", path);
+            printf("Enter open flags: ");
+            scanf("%d", flags);
             
-            l2_open(&fs, path);
+            l2_open(&fs, path, flags);
         }
         else if(strcmp(command, "close") == 0) {
             printf("Enter file path: ");
             scanf("%s", path);
+            printf("Enter close flags: ");
+            scanf("%d", flags);
             
-            l2_close(&fs, path);
+            l2_close(&fs, path, flags);
         }
         else if(strcmp(command, "read") == 0) {
             printf("Enter file path: ");

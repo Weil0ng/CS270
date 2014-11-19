@@ -978,13 +978,65 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
     return 0;
 }
 
+INT l2_open(FileSystem* fs, char* path, UINT flags) {
+    #ifdef DEBUG
+    printf("Opening file \"%s\" with flags: %d\n", path, flags);
+    #endif
 
-INT l2_open(FileSystem* fs, char* path) {
-    //addOpenFileEntry(&fs->openFileTable, path);
-    return 0;
+    //parse flags
+    enum FILE_OP fileOp;
+    
+    switch(flags) {
+        case FLAG_READ:
+            fileOp = OP_READ;
+            break;
+        case FLAG_WRITE:
+            fileOp = OP_WRITE;
+            break;
+        case FLAG_READWRITE:
+            fileOp = OP_READWRITE;
+            break;
+        default:
+            fprintf(stderr, "Error: incorrect flags specified: %d\n", flags);
+            return -1;
+    }
+
+    #ifdef DEBUG
+    printf("Open mode from flags: %d\n", fileOp);
+    #endif
+
+    INT inodeId = l2_namei(fs, path);
+    #ifdef DEBUG
+    printf("INode ID for opened file: %d\n", inodeId);
+    #endif
+    if(inodeId < 0) {
+        fprintf(stderr, "Error: tried to open invalid/nonexistent path %s", path);
+        return -1;
+    }
+
+    INodeEntry* inodeEntry = NULL;
+    if(hasINodeEntry(&fs->inodeTable, inodeId)) {
+        #ifdef DEBUG
+        printf("INode found in cache, retrieving entry...\n");
+        #endif
+        
+        inodeEntry = getINodeEntry(&fs->inodeTable, inodeId);
+    }
+    else {
+        #ifdef DEBUG
+        printf("No previous inode found in cache, inserting new entry...\n");
+        #endif
+
+        //TODO
+    }
+
+    #ifdef DEBUG
+    printf("Adding open file entry to table...\n");
+    #endif
+    addOpenFileEntry(&fs->openFileTable, path, fileOp, inodeEntry);
 }
 
-INT l2_close(FileSystem* fs, char* path) {
+INT l2_close(FileSystem* fs, char* path, UINT flags) {
     //removeOpenFileEntry(&fs->openFileTable, path);
     return 0;
 }

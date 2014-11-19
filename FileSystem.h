@@ -27,8 +27,8 @@ typedef struct FileSystem {
     //the open file table of the filesystem
     OpenFileTable openFileTable;
     
-    //in core INode Table
-    //INodeTable iTable;
+    //the inode cache of the filesystem
+    INodeTable inodeTable;
 
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array

@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=gnu99 -g
-OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o OpenFileTable.o
+OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o INodeTable.o OpenFileTable.o SuperBlock.o Utility.o
 FUSEFLAGS=`pkg-config fuse --cflags --libs`
 SRCS=fuseDaemon.c
 
