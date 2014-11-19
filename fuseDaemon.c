@@ -59,9 +59,6 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	if (numDirEntry == -1 || numDirEntry == 0)
 		return -ENOENT;
 
-	/*if (strcmp(path, "/") != 0)
-		return -ENOENT;*/
-	
 	for (UINT i=0; i<numDirEntry; i++) {
 		printf("filling %s\n", namelist[i]);
 		filler(buf, namelist[i], NULL, 0);
@@ -72,7 +69,8 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 {
-	return (int)l2_mknod(&fs, path);
+	struct fuse_context* fctx = fuse_get_context();
+	return (int)l2_mknod(&fs, path, fctx->uid, fctx->gid);
 }
 
 static int l3_mkdir(const char *path, mode_t mode)
@@ -120,6 +118,7 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
 	if ((fi->flags & 3) != O_RDONLY)
 		return -EACCES;
 	*/
+	printf("trying to open %s\n", path);
 	return (int)l2_open(&fs, path);
 }
 
@@ -140,7 +139,7 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
-
+	printf("trying to read %s\n", path);
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 

@@ -6,6 +6,7 @@
 #include "Globals.h"
 #include "time.h"
 #include "string.h"
+#include "sys/types.h"
 
 enum FILE_TYPE {
         FREE = -1,
@@ -21,6 +22,11 @@ typedef struct INode {
 	enum FILE_TYPE _in_type;
 
 	char _in_owner[INODE_OWNER_NAME_LEN];
+       
+//uncomment these will induce crash
+	//uid_t _in_uid;
+
+	//gid_t _in_gid;
 
 	UINT _in_permissions;
 

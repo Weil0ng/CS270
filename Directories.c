@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "errno.h"
+#include "pwd.h"
 
 // mounts a filesystem from a device
 INT l2_mount(FILE* device, FileSystem* fs) {
@@ -177,8 +178,8 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
     stbuf->st_ino = INodeID;
     stbuf->st_mode = inode._in_permissions;
     stbuf->st_nlink = inode._in_linkcount;
-    //stbuf->uid_t;
-    //stbuf->gid_t;
+    //stbuf->st_uid = inode._in_uid;
+    //stbuf->st_gid = inode._in_gid;
     stbuf->st_size = inode._in_filesize;
     stbuf->st_blksize = BLK_SIZE;
     stbuf->st_blocks = inode._in_filesize / BLK_SIZE;
@@ -336,7 +337,7 @@ INT l2_mkdir(FileSystem* fs, char* path) {
 }
 
 // create a new file specified by an absolute path
-INT l2_mknod(FileSystem* fs, char* path) {
+INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     printf("mknod %s\n", path);
     INT id; // the inode id associated with the new directory
     INT par_id; // the inode id of the parent directory
@@ -435,11 +436,19 @@ INT l2_mknod(FileSystem* fs, char* path) {
         writeINode(fs, par_id, &par_inode);
     }
 
+    //inode._in_uid = uid;
+
+    //inode._in_gid = gid;
+
+    struct passwd *ppwd = getpwuid(uid);
+
+    memcpy(inode._in_owner, ppwd->pw_name, INODE_OWNER_NAME_LEN);
+
     // change the inode type to directory
     inode._in_type = REGULAR;
 
     // init the mode
-    inode._in_permissions = S_IFREG | 0444;
+    inode._in_permissions = S_IFREG | 0666;
 
     // init link count
     inode._in_linkcount = 1;
@@ -447,7 +456,7 @@ INT l2_mknod(FileSystem* fs, char* path) {
     // update the disk inode
     writeINode(fs, id, &inode);
 
-    return id;
+    return 0;
 }
 
 INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
