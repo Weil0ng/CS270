@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-void initDisk(DiskArray *disk, UINT diskSize)
+/*void initDisk(DiskArray *disk, UINT diskSize)
 {
   FILE *mapFile;
   mapFile = fopen("diskFile", "w+r");
@@ -37,13 +37,31 @@ void initDisk(DiskArray *disk, UINT diskSize)
   memset(disk->_dsk_dskArray, 0, diskSize);
   disk->_dsk_size = diskSize;
   disk->_dsk_numBlk = diskSize / BLK_SIZE;
+}*/
+
+void initDisk(DiskArray *disk, UINT diskSize)
+{
+  disk->_dsk_dskArray = open("diskFile", O_RDWR | O_CREAT, 0666);
+  if (disk->_dsk_dskArray == -1)
+  {
+	_err_last = _dsk_initFail;
+	THROW(__FILE__, __LINE__, __func__);
+  	exit(1);
+  }
+  disk->_dsk_size = diskSize;
+  disk->_dsk_numBlk = diskSize / BLK_SIZE;
 }
 
-void destroyDisk(DiskArray *disk)
+/*void destroyDisk(DiskArray *disk)
 {
   //Sync operation force consistancy of the mapped file
   msync(disk->_dsk_dskArray, disk->_dsk_size, MS_SYNC);
   munmap(disk->_dsk_dskArray, disk->_dsk_size);
+}*/
+
+void destroyDisk(DiskArray *disk)
+{
+  close(disk->_dsk_dskArray);
 }
 
 UINT bid2Offset(UINT bid)
@@ -51,7 +69,7 @@ UINT bid2Offset(UINT bid)
   return bid * BLK_SIZE;
 }
 
-INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
+/*INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_readOutOfBoundry;
@@ -62,9 +80,22 @@ INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
   for (UINT i=0; i<BLK_SIZE; i++)
     *(buf + i) = *(disk->_dsk_dskArray + offset + i);
   return 0;
+}*/
+
+INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
+{
+  if (bid > disk->_dsk_numBlk - 1) {
+    _err_last = _dsk_readOutOfBoundry;
+    THROW(__FILE__, __LINE__, __func__);
+    return -1;
+  }
+  UINT offset = bid2Offset(bid);
+  lseek(disk->_dsk_dskArray, offset, SEEK_SET);
+  read(disk->_dsk_dskArray, buf, BLK_SIZE);
+  return 0;
 }
 
-INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
+/*INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_writeOutOfBoundry;
@@ -75,10 +106,23 @@ INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
   for (UINT i=0; i<BLK_SIZE; i++)
     *(disk->_dsk_dskArray + offset + i) = *(buf + i);
   return 0;
+}*/
+
+INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
+{
+  if (bid > disk->_dsk_numBlk - 1) {
+    _err_last = _dsk_writeOutOfBoundry;
+    THROW(__FILE__, __LINE__, __func__);
+    return -1;
+  }
+  UINT offset = bid2Offset(bid);
+  lseek(disk->_dsk_dskArray, offset, SEEK_SET);
+  write(disk->_dsk_dskArray, buf, BLK_SIZE);
+  return 0;
 }
 
 #ifdef DEBUG
-void dumpDisk(DiskArray *disk)
+/*void dumpDisk(DiskArray *disk)
 {
   FILE *dumpFile = fopen("diskDump", "w+r");
   if (dumpFile == NULL)
@@ -95,7 +139,7 @@ void dumpDisk(DiskArray *disk)
   }
   fclose(dumpFile);
   return;
-}
+}*/
 #endif
 
 #ifdef DEBUG

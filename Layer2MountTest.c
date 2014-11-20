@@ -51,7 +51,7 @@ int main(int args, char* argv[])
     //TODO: instead of dumping to disk and destroying the filesystem, we should unmount
 
     //dump filesystem contents to disk file and destroy old filesystem
-    dumpDisk(fs.disk);
+    //dumpDisk(fs.disk);
     destroyfs(&fs);
 
     //open disk file and try mount

@@ -5,6 +5,8 @@
  */
 
 #include "Globals.h"
+#include <sys/stat.h>
+#include <fcntl.h>
 
 typedef struct
 {
@@ -15,7 +17,7 @@ typedef struct
   UINT _dsk_numBlk;
   
   //The actual array of the disk
-  BYTE* _dsk_dskArray;
+  INT _dsk_dskArray;
 } DiskArray;
 
 //initialize a disk array in memory

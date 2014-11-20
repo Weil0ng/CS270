@@ -55,7 +55,7 @@ int main(int args, char* argv[])
     PrintBlock(readBuf);
   
   #ifdef DEBUG
-  dumpDisk(&disk);
+  //dumpDisk(&disk);
   #endif
   destroyDisk(&disk);
 

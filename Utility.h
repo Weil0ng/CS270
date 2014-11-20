@@ -4,6 +4,7 @@
 
 //Debugging
 typedef enum{
+  _dsk_initFail,
   _dsk_full,
   _dsk_readOutOfBoundry,
   _dsk_writeOutOfBoundry,

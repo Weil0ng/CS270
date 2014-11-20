@@ -12,6 +12,10 @@ void THROW(const char *fname, int lineno, const char *fxname)
 {
   printf("Error in %s, line %d, %s:\n", fname, lineno, fxname);
   switch(_err_last) {
+  case _dsk_initFail: {
+    printf("Disk init failed!\n");
+    break;
+  }
   case _dsk_full: {
     printf("Disk is full!\n");
     break;
