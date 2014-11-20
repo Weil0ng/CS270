@@ -178,8 +178,8 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
     stbuf->st_ino = INodeID;
     stbuf->st_mode = inode._in_permissions;
     stbuf->st_nlink = inode._in_linkcount;
-    //stbuf->st_uid = inode._in_uid;
-    //stbuf->st_gid = inode._in_gid;
+    stbuf->st_uid = inode._in_uid;
+    stbuf->st_gid = inode._in_gid;
     stbuf->st_size = inode._in_filesize;
     stbuf->st_blksize = BLK_SIZE;
     stbuf->st_blocks = inode._in_filesize / BLK_SIZE;
@@ -436,13 +436,15 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         writeINode(fs, par_id, &par_inode);
     }
 
-    //inode._in_uid = uid;
+    inode._in_uid = uid;
 
-    //inode._in_gid = gid;
+    inode._in_gid = gid;
 
     struct passwd *ppwd = getpwuid(uid);
 
-    memcpy(inode._in_owner, ppwd->pw_name, INODE_OWNER_NAME_LEN);
+    strcpy(inode._in_owner, ppwd->pw_name);
+
+    printf("owner: %s\n", ppwd->pw_name);
 
     // change the inode type to directory
     inode._in_type = REGULAR;

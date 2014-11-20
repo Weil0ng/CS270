@@ -24,9 +24,9 @@ typedef struct INode {
 	char _in_owner[INODE_OWNER_NAME_LEN];
        
 //uncomment these will induce crash
-	//uid_t _in_uid;
+	uid_t _in_uid;
 
-	//gid_t _in_gid;
+	gid_t _in_gid;
 
 	UINT _in_permissions;
 
