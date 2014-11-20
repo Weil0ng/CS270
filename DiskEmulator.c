@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <errno.h>
 /*void initDisk(DiskArray *disk, UINT diskSize)
 {
   FILE *mapFile;
@@ -41,12 +42,14 @@
 
 void initDisk(DiskArray *disk, UINT diskSize, char *path)
 {
+  printf("init disk to %s\n", path);
   #ifdef DEBUGV
   disk->_dsk_dskArray = open("diskFile", O_RDWR | O_CREAT, 0666);
-  printf("init disk to %s\n", path);
   #else
   disk->_dsk_dskArray = open(path, O_RDWR | O_CREAT, 0666);
   #endif
+  if (disk->_dsk_dskArray == -1)
+    printf("Disk init error %s\n", strerror(errno));
   ftruncate(disk->_dsk_dskArray, diskSize);
   if (disk->_dsk_dskArray == -1)
   {
