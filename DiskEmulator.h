@@ -22,8 +22,9 @@ typedef struct
 
 //initialize a disk array in memory
 //args: device,
-//      size
-void initDisk(DiskArray *, UINT);
+//      size,
+//	path
+void initDisk(DiskArray *, UINT, char *);
 
 //destroy the in-memory disk array
 void destroyDisk(DiskArray *);

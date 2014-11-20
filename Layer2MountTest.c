@@ -29,7 +29,7 @@ int main(int args, char* argv[])
     //initialize dummy file system
     FileSystem fs;
     printf("Initializing file system with initfs...\n");
-    UINT succ = l2_initfs(nDBlks, nINodes, &fs);
+    UINT succ = l2_initfs(nDBlks, nINodes, &fs, "diskFile");
     if(succ == 0) {
         printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
     }
@@ -58,7 +58,7 @@ int main(int args, char* argv[])
     printf("\nAttempting filesystem mount from disk file...\n");
     FILE *dumpFile = fopen("diskDump", "r");
     FileSystem fs_mounted;
-    UINT msucc = l2_mount(dumpFile, &fs_mounted);
+    UINT msucc = l2_mount(dumpFile, &fs_mounted, "diskFile");
     fclose(dumpFile);
 
     if(msucc == 0) {

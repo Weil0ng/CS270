@@ -172,8 +172,8 @@ static struct fuse_operations l3_oper = {
 
 int main(int argc, char *argv[])
 {
-	printf("Initializing file system with initfs...\n");
-    	UINT succ = l2_initfs(128, 16, &fs);
+	printf("Initializing file system with initfs in %s\n", argv[1]);
+    	UINT succ = l2_initfs(128, 16, &fs, argv[argc-1]);
     	if(succ == 0) {
         	printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
     	}
@@ -181,7 +181,5 @@ int main(int argc, char *argv[])
         	printf("Error: initfs failed with error code: %d\n", succ);
     	}
 
-	return fuse_main(argc, argv, &l3_oper, NULL);
-
-	
+	return fuse_main(argc, argv, &l3_oper, NULL);	
 }

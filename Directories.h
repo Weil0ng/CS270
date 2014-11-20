@@ -12,13 +12,13 @@
 #include <stdio.h>
 
 // mounts a filesystem from a device
-INT l2_mount(FILE* device, FileSystem* fs);
+INT l2_mount(FILE* device, FileSystem* fs, char *path);
 
 // unmounts a filesystem into a device
 INT l2_unmount(FileSystem* fs);
 
 // makes a new filesystem with a root directory
-INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
+INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs, char *path);
 
 // getattr
 INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf);

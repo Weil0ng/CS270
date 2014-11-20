@@ -10,7 +10,7 @@
 #include "pwd.h"
 
 // mounts a filesystem from a device
-INT l2_mount(FILE* device, FileSystem* fs) {
+INT l2_mount(FILE* device, FileSystem* fs, char *path) {
     #ifdef DEBUG
     printf("Mounting filesystem...\n");
     #endif
@@ -45,7 +45,7 @@ INT l2_mount(FILE* device, FileSystem* fs) {
     printf("Initializing filesystem disk array...\n");
     #endif
     fs->disk = malloc(sizeof(DiskArray));
-    initDisk(fs->disk, fs->nBytes);
+    initDisk(fs->disk, fs->nBytes, path);
 
     #ifdef DEBUG
     printf("Loading file to back the filesystem disk array...\n");
@@ -92,13 +92,13 @@ INT l2_unmount(FileSystem* fs) {
 }
 
 // make a new filesystem with a root directory
-INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs, char *path) {
     #ifdef DEBUG 
     printf("initfs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
     #endif
     
     //call layer 1 makefs
-    INT succ = makefs(nDBlks, nINodes, fs);
+    INT succ = makefs(nDBlks, nINodes, fs, path);
     if(succ != 0) {
         fprintf(stderr, "Error: internal makefs failed with error code: %d\n", succ);
         return 1;

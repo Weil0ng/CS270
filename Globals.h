@@ -8,6 +8,10 @@
 #define DEBUG
 #endif
 
+#ifndef DEBUGV
+#define DEBUGV
+#endif
+
 //Architecture specific
 #define UINT uint32_t
 #define INT  int32_t

@@ -27,7 +27,7 @@ int main(int args, char* argv[])
     
     FileSystem fs;
     printf("Initializing file system with initfs...\n");
-    UINT succ = l2_initfs(nDBlks, nINodes, &fs);
+    UINT succ = l2_initfs(nDBlks, nINodes, &fs, "diskFile");
     if(succ == 0) {
         printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
     }
