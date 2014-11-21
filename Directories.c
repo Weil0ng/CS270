@@ -190,7 +190,7 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
 }
 
 // make a new directory
-INT l2_mkdir(FileSystem* fs, char* path) {
+INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     printf("mkdir(%s)\n", path);
     
     INT id; // the inode id associated with the new directory
@@ -321,6 +321,14 @@ INT l2_mkdir(FileSystem* fs, char* path) {
     // change the inode type to directory
     inode._in_type = DIRECTORY;
     
+    inode._in_uid = uid;
+
+    inode._in_gid = gid;
+
+    struct passwd *ppwd = getpwuid(uid);
+
+    strcpy(inode._in_owner, ppwd->pw_name);
+
     // init the mode
     inode._in_permissions = S_IFDIR | 0755;
 
@@ -443,8 +451,6 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     struct passwd *ppwd = getpwuid(uid);
 
     strcpy(inode._in_owner, ppwd->pw_name);
-
-    printf("owner: %s\n", ppwd->pw_name);
 
     // change the inode type to directory
     inode._in_type = REGULAR;

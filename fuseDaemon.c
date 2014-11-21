@@ -75,7 +75,8 @@ static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 
 static int l3_mkdir(const char *path, mode_t mode)
 {
-	return ((int)l2_mkdir(&fs, path) == -1)?-1:0;
+	struct fuse_context* fctx = fuse_get_context();
+	return ((int)l2_mkdir(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
 }
 
 static int l3_unlink(const char *path)

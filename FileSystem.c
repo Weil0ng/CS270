@@ -473,12 +473,14 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
 
     // replace the inode
     inode_d->_in_type = inode->_in_type;
-    //inode_d->_in_owner = inode->_in_owner;
     strcpy(inode_d->_in_owner, inode->_in_owner);
     inode_d->_in_permissions = inode->_in_permissions;
     inode_d->_in_modtime =  inode->_in_modtime;
     inode_d->_in_accesstime = inode->_in_accesstime;
     inode_d->_in_filesize = inode->_in_filesize;
+    inode_d->_in_uid = inode->_in_uid;
+    inode_d->_in_gid = inode->_in_gid;
+
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
         inode_d->_in_directBlocks[i] = inode->_in_directBlocks[i];
     }

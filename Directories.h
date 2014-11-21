@@ -24,7 +24,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
 INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf);
 
 // makes a new directory
-INT l2_mkdir(FileSystem* fs, char* path);
+INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 
 // makes a new file
 INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid);
