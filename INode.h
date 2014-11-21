@@ -12,7 +12,10 @@ enum FILE_TYPE {
         FREE = -1,
         INIT = 1,
         REGULAR = 2,
-        DIRECTORY = 3
+        DIRECTORY = 3,
+	FIFO = 4,
+        CHAR = 5,
+	BLOCK = 6
 };
 
 typedef struct INode {

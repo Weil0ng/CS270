@@ -53,7 +53,7 @@ int main(int args, char* argv[])
             //printf("Enter directory path: ");
             scanf("%s", path);
             
-            l2_mkdir(&fs, path);
+            l2_mkdir(&fs, path, 0, 0);
         }
         else if(strcmp(command, "mknod") == 0) {
             //printf("Enter file path: ");

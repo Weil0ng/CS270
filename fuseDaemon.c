@@ -32,18 +32,6 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 	memset(stbuf, 0, sizeof(struct stat));
 
 	return l2_getattr(&fs, path, stbuf);
-
-	/*if (strcmp(path, "/") == 0) {
-		stbuf->st_mode = S_IFDIR | 0755;
-		stbuf->st_nlink = 2;
-	} else if (strcmp(path, hello_path) == 0) {
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = strlen(hello_str);
-	} else
-		res = -ENOENT;
-
-	return res;*/
 }
 
 static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
@@ -70,13 +58,13 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return (int)l2_mknod(&fs, path, fctx->uid, fctx->gid);
+	return (l2_mknod(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
 }
 
 static int l3_mkdir(const char *path, mode_t mode)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return ((int)l2_mkdir(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
+	return (l2_mkdir(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
 }
 
 static int l3_unlink(const char *path)

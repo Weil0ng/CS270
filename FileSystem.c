@@ -351,8 +351,9 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
     
     // asssign struct field from the buffer to the inode
     inode->_in_type = inode_d->_in_type;
-    //inode->_in_owner = inode_d->_in_owner;
     strcpy(inode->_in_owner, inode_d->_in_owner);
+    inode->_in_uid = inode_d->_in_uid;
+    inode->_in_gid = inode_d->_in_gid;
     inode->_in_permissions = inode_d->_in_permissions;
     inode->_in_modtime =  inode_d->_in_modtime;
     inode->_in_accesstime = inode_d->_in_accesstime;

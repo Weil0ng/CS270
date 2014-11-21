@@ -464,7 +464,7 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     // update the disk inode
     writeINode(fs, id, &inode);
 
-    return 0;
+    return id;
 }
 
 INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
@@ -579,7 +579,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
         // read the parent directory table
         readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
 
-        // find an empty directory entry and insert with the new directory
+	// weilong: erase the dir entry of current file in parent dir
         DirEntry *DEntry;
         UINT i;
         for(i = 0; i < par_inode._in_filesize/sizeof(DirEntry); i ++) {
@@ -596,7 +596,14 @@ INT l2_unlink(FileSystem* fs, char* path) {
 
         // update the parent directory table
         writeINodeData(fs, &par_inode, (BYTE*) DEntry, i*sizeof(DirEntry), sizeof(DirEntry));
-        
+       
+        //weilong: update parent dir size
+        par_inode._in_filesize -= sizeof(DirEntry);
+	if (writeINode(fs, par_id, &par_inode) == -1) {
+	    printf(stderr, "fail to write parent dir inode %d\n", par_id);
+	    return -1;
+	}
+ 
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {
             fprintf(stderr, "fail to read to-be-unlinked file inode %d\n", par_id);
@@ -626,10 +633,12 @@ INT l2_unlink(FileSystem* fs, char* path) {
 
 INT l2_open(FileSystem* fs, char* path) {
     //addOpenFileEntry(&fs->openFileTable, path);
+    return 0;
 }
 
 INT l2_close(FileSystem* fs, char* path) {
     //removeOpenFileEntry(&fs->openFileTable, path);
+    return 0;
 }
 
 // read file from offset for numBytes
