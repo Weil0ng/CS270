@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <time.h>
 
-INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs, char *path) {
+INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("makefs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
     #endif
@@ -92,7 +92,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs, char *path) {
     printf("Initializing in-memory disk emulator...\n"); 
     #endif
     fs->disk = malloc(sizeof(DiskArray));
-    initDisk(fs->disk, fs->nBytes, path);
+    initDisk(fs->disk, fs->nBytes);
 
     //create inode list on disk
     #ifdef DEBUG 

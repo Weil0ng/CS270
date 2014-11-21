@@ -40,14 +40,9 @@
   disk->_dsk_numBlk = diskSize / BLK_SIZE;
 }*/
 
-void initDisk(DiskArray *disk, UINT diskSize, char *path)
+void initDisk(DiskArray *disk, UINT diskSize)
 {
-  printf("init disk to %s\n", path);
-  #ifdef DEBUGV
-  disk->_dsk_dskArray = open("diskFile", O_RDWR | O_CREAT, 0666);
-  #else
-  disk->_dsk_dskArray = open(path, O_RDWR | O_CREAT, 0666);
-  #endif
+  disk->_dsk_dskArray = open(DISK_PATH, O_RDWR | O_CREAT, 0666);
   if (disk->_dsk_dskArray == -1)
     printf("Disk init error %s\n", strerror(errno));
   ftruncate(disk->_dsk_dskArray, diskSize);

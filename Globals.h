@@ -8,9 +8,8 @@
 #define DEBUG
 #endif
 
-#ifndef DEBUGV
-#define DEBUGV
-#endif
+//disk partition path
+#define DISK_PATH "diskFile"
 
 //Architecture specific
 #define UINT uint32_t

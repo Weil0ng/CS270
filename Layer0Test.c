@@ -33,7 +33,7 @@ int main(int args, char* argv[])
   //Declare a disk
   DiskArray disk;
   
-  initDisk(&disk, diskSize, "diskFile");
+  initDisk(&disk, diskSize);
   
   printf("Disk created with size: %d, %d block(s)\n", diskSize, disk._dsk_numBlk);
 

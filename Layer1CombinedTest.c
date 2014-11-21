@@ -60,7 +60,7 @@ void testDBlks(UINT nDBlks, UINT nINodes) {
     //test makefs
     printf("\n---- makefs ----\n");
     FileSystem fs;
-    UINT succ = makefs(nDBlks, nINodes, &fs, "diskFile");
+    UINT succ = makefs(nDBlks, nINodes, &fs);
     if(succ == 0) {
         printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
     }
@@ -279,7 +279,7 @@ void testINodes(UINT nDBlks, UINT nINodes) {
     //test makefs
     printf("\n---- makefs ----\n");
     FileSystem fs;
-    UINT succ = makefs(nDBlks, nINodes, &fs, "diskFile");
+    UINT succ = makefs(nDBlks, nINodes, &fs);
     if(succ == 0) {
         printf("makefs succeeded with filesystem size: %d\n", fs.nBytes);
     }

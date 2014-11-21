@@ -40,7 +40,7 @@ typedef struct FileSystem {
 } FileSystem;
 
 // creates the file system
-INT makefs(UINT, UINT, FileSystem*, char *);
+INT makefs(UINT, UINT, FileSystem*);
 
 // destroys a file system
 INT destroyfs(FileSystem*);
