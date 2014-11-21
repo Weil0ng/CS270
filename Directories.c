@@ -720,8 +720,8 @@ INT l2_utimens(FileSystem *fs, char *path, struct timespec tv[2])
   }
   INode curINode;
   readINode(fs, curINodeID, &curINode);
-  curINode._in_modtime = tv[0].tv_nsec;
-  curINode._in_accesstime = tv[1].tv_nsec;
+  curINode._in_modtime = tv[0].tv_sec;
+  curINode._in_accesstime = tv[1].tv_sec;
   writeINode(fs, curINodeID, &curINode);
   return 0;
 }
