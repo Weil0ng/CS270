@@ -48,5 +48,8 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 // writes to a file
 INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
 
+// updates the mod/access time of a file
+INT l2_utimens(FileSystem* fs, char* path, struct timespec tv[2]);
+
 //resolve path to inode id
 INT l2_namei(FileSystem *, char *);

@@ -703,6 +703,29 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
   return bytesWritten;
 }
 
+//update mod/access time of a file
+//1. resolve path
+//1. check permission (*)
+//2. update inode cache (*)
+//3. sync inode (*)
+//4. load inode
+//5. write inode
+INT l2_utimens(FileSystem *fs, char *path, struct timespec tv[2]) 
+{
+  INT curINodeID = l2_namei(fs, path);
+  if (curINodeID == -1) {
+    _err_last = _fs_NonExistFile;
+    THROW(__FILE__, __LINE__, __func__);
+    return -ENOENT;
+  }
+  INode curINode;
+  readINode(fs, curINodeID, &curINode);
+  curINode._in_modtime = tv[0].tv_nsec;
+  curINode._in_accesstime = tv[1].tv_nsec;
+  writeINode(fs, curINodeID, &curINode);
+  return 0;
+}
+
 //resolve a path to its corresponding inode id
 //1. parse the path
 //2. traverse along the tokens from the root, assuming root is 0
