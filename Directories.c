@@ -4,13 +4,15 @@
  */
  
 #include "Directories.h"
-#include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "errno.h"
 #include "pwd.h"
 
 // mounts a filesystem from a device
-INT l2_mount(FILE* device, FileSystem* fs) {
+INT l2_mount(FileSystem* fs) {
     #ifdef DEBUG
     printf("Mounting filesystem...\n");
     #endif
@@ -22,12 +24,16 @@ INT l2_mount(FILE* device, FileSystem* fs) {
     #ifdef DEBUG
     printf("Reading superblock from disk...\n");
     #endif
-    fseek(device, SUPERBLOCK_OFFSET, SEEK_SET);
-    UINT succ = fread(dsb, BLK_SIZE, 1, device);
-    if(succ < 1) {
-        fprintf(stderr, "Error: failed to read superblock from device!\n");
+    INT diskFile = open(DISK_PATH, O_RDWR, 0666);
+    if (diskFile == -1)
+    printf("Disk open error %s\n", strerror(errno));
+    lseek(diskFile, SUPERBLOCK_OFFSET, SEEK_SET);
+    UINT bytesRead = read(diskFile, dsb, BLK_SIZE);
+    if(bytesRead < BLK_SIZE) {
+        fprintf(stderr, "Error: failed to read superblock from disk!\n");
         return -1;
     }
+    close(diskFile);
 
     unblockify(dsb, &fs->superblock);
     #ifdef DEBUG

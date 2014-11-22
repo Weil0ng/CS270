@@ -76,17 +76,16 @@ int main(int args, char* argv[])
 
     //open disk file and try mount
     printf("\nAttempting filesystem mount from disk file...\n");
-    FILE *dumpFile = fopen(DISK_PATH, "r");
     FileSystem fs_mounted;
-    UINT msucc = l2_mount(dumpFile, &fs_mounted);
-    fclose(dumpFile);
-
+    UINT msucc = l2_mount(&fs_mounted);
     if(msucc == 0) {
         printf("Successfully mounted filesystem!\n");
     }
     else {
         printf("Error: mount failed with error code: %d\n", msucc);
     }
+    
+    printf("\n==== Filesystem state after mount ====\n");
     
     printf("\nSuperblock:\n");
     printSuperBlock(&fs_mounted.superblock);

@@ -8,11 +8,9 @@
 #include "FileSystem.h"
 #include "sys/stat.h"
 #include "sys/types.h"
- 
-#include <stdio.h>
 
 // mounts a filesystem from a device
-INT l2_mount(FILE* device, FileSystem* fs);
+INT l2_mount(FileSystem* fs);
 
 // unmounts a filesystem into a device
 INT l2_unmount(FileSystem* fs);
