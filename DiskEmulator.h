@@ -20,14 +20,16 @@ typedef struct
   INT _dsk_dskArray;
 } DiskArray;
 
+//opens a disk arrary from file
+void openDisk(DiskArray *, UINT);
+
 //initialize a disk array in memory
 //args: device,
-//      size,
-//	path
+//      size
 void initDisk(DiskArray *, UINT);
 
 //destroy the in-memory disk array
-void destroyDisk(DiskArray *);
+void closeDisk(DiskArray *);
 
 //convert block id to disk array offset
 UINT bid2Offset(UINT);

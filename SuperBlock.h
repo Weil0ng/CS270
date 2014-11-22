@@ -33,6 +33,9 @@ typedef struct SuperBlock
   //index of the next free inode in the free inode list
   INT pNextFreeINode;
 
+  //INode ID for root dir
+  UINT rootINodeID;
+
   /* in-memory fields */
 
   //SuperBlock cache of free data block list
@@ -57,6 +60,8 @@ typedef struct DSuperBlock
   UINT nFreeINodes;
   INT freeINodeCache[FREE_INODE_CACHE_SIZE];
   UINT pNextFreeINode;
+  
+  UINT rootINodeID;
 
 } DSuperBlock;
 

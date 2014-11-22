@@ -57,7 +57,7 @@ int main(int args, char* argv[])
   #ifdef DEBUG
   //dumpDisk(&disk);
   #endif
-  destroyDisk(&disk);
+  closeDisk(&disk);
 
   return 0;
 }            

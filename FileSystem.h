@@ -30,9 +30,6 @@ typedef struct FileSystem {
     //in core INode Table
     //INodeTable iTable;
 
-    //INode ID for root dir
-    UINT rootINodeID;
-
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array
     DiskArray* disk;
@@ -43,7 +40,7 @@ typedef struct FileSystem {
 INT makefs(UINT, UINT, FileSystem*);
 
 // destroys a file system
-INT destroyfs(FileSystem*);
+INT closefs(FileSystem*);
 
 // allocate a free inode
 INT allocINode(FileSystem*, INode*);

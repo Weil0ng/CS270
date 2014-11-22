@@ -266,8 +266,8 @@ void testDBlks(UINT nDBlks, UINT nINodes) {
         }
     }
     
-    printf("\n---- destroyfs ----\n");
-    succ = destroyfs(&fs);
+    printf("\n---- closefs ----\n");
+    succ = closefs(&fs);
     assert(succ == 0);
 
     printf("\n==== dblk test complete ====\n");
@@ -462,8 +462,8 @@ void testINodes(UINT nDBlks, UINT nINodes) {
         assert(testINode2._in_filesize = inodes[i]._in_filesize);
     }
     
-    printf("\n---- destroyfs ----\n");
-    succ = destroyfs(&fs);
+    printf("\n---- closefs ----\n");
+    succ = closefs(&fs);
     assert(succ == 0);
 
     printf("\n==== inode test complete ====\n");

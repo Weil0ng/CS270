@@ -87,9 +87,9 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         }
     }
     
-    //initialize the in-memory disk
+    //initialize the disk
     #ifdef DEBUG 
-    printf("Initializing in-memory disk emulator...\n"); 
+    printf("Initializing disk emulator...\n"); 
     #endif
     fs->disk = malloc(sizeof(DiskArray));
     initDisk(fs->disk, fs->nBytes);
@@ -172,8 +172,8 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     return 0;
 }
 
-INT destroyfs(FileSystem* fs) {
-    destroyDisk(fs->disk);
+INT closefs(FileSystem* fs) {
+    closeDisk(fs->disk);
     free(fs->disk);
     return 0;
 }

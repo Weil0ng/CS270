@@ -21,6 +21,8 @@ INT blockify(SuperBlock* superblock, BYTE* buf) {
     dsb->nFreeINodes = superblock->nFreeINodes;
     memcpy(dsb->freeINodeCache, superblock->freeINodeCache, FREE_INODE_CACHE_SIZE * sizeof(UINT));
     dsb->pNextFreeINode = superblock->pNextFreeINode;
+    
+    dsb->rootINodeID = superblock->rootINodeID;
 
     return 0;
 }
@@ -38,6 +40,8 @@ INT unblockify(BYTE* buf, SuperBlock* superblock) {
     superblock->nFreeINodes = dsb->nFreeINodes;
     memcpy(superblock->freeINodeCache, dsb->freeINodeCache, FREE_INODE_CACHE_SIZE * sizeof(UINT));
     superblock->pNextFreeINode = dsb->pNextFreeINode;
+    
+    superblock->rootINodeID = dsb->rootINodeID;
 
     superblock->modified = false;
 
@@ -46,8 +50,8 @@ INT unblockify(BYTE* buf, SuperBlock* superblock) {
 
 #ifdef DEBUG
 void printSuperBlock(SuperBlock* sb) {
-    printf("[Superblock: nDBLks = %d, nFreeDBlks = %d, pFreeDBlksHead = %d, pNextFreeDBlk = %d, nINodes = %d, nFreeINodes = %d, pNextFreeINode = %d, modified = %d]\n", 
-        sb->nDBlks, sb->nFreeDBlks, sb->pFreeDBlksHead, sb->pNextFreeDBlk, sb->nINodes, sb->nFreeINodes, sb->pNextFreeINode, sb->modified);
+    printf("[Superblock: nDBLks = %d, nFreeDBlks = %d, pFreeDBlksHead = %d, pNextFreeDBlk = %d, nINodes = %d, nFreeINodes = %d, pNextFreeINode = %d, rootINodeID = %d, modified = %d]\n", 
+        sb->nDBlks, sb->nFreeDBlks, sb->pFreeDBlksHead, sb->pNextFreeDBlk, sb->nINodes, sb->nFreeINodes, sb->pNextFreeINode, sb->rootINodeID, sb->modified);
 }
 #endif
 

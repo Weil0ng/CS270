@@ -36,7 +36,30 @@ int main(int args, char* argv[])
     else {
         printf("Error: initfs failed with error code: %d\n", succ);
     }
+    
+    printf("\n==== Filesystem initial state ====\n");
+    printf("\nSuperblock:\n");
+    printSuperBlock(&fs.superblock);
+    printf("\nINodes:\n");
+    printINodes(&fs);
+    printf("\nData blocks:\n");
+    printDBlks(&fs);
+    printf("\nFree inode cache:\n");
+    printFreeINodeCache(&fs.superblock);
+    printf("\nFree dblk cache:\n");
+    printFreeDBlkCache(&fs.superblock);
+    
+    //allocate everything in filesystem
+    for(int i = 0; i < nDBlks; i++) {
+        allocDBlk(&fs);
+    }
+    
+    for(int i = 0; i < nINodes - 1; i++) {
+        INode testINode;
+        allocINode(&fs, &testINode);
+    }
 
+    printf("\n==== Filesystem state before unmount ====\n");
     printf("\nSuperblock:\n");
     printSuperBlock(&fs.superblock);
     printf("\nINodes:\n");
@@ -48,15 +71,12 @@ int main(int args, char* argv[])
     printf("\nFree dblk cache:\n");
     printFreeDBlkCache(&fs.superblock);
 
-    //TODO: instead of dumping to disk and destroying the filesystem, we should unmount
-
-    //dump filesystem contents to disk file and destroy old filesystem
-    //dumpDisk(fs.disk);
-    destroyfs(&fs);
+    //unmount the current file system to disk
+    l2_unmount(&fs);
 
     //open disk file and try mount
     printf("\nAttempting filesystem mount from disk file...\n");
-    FILE *dumpFile = fopen("diskDump", "r");
+    FILE *dumpFile = fopen(DISK_PATH, "r");
     FileSystem fs_mounted;
     UINT msucc = l2_mount(dumpFile, &fs_mounted);
     fclose(dumpFile);
@@ -78,7 +98,13 @@ int main(int args, char* argv[])
     printFreeINodeCache(&fs_mounted.superblock);
     printf("\nFree dblk cache:\n");
     printFreeDBlkCache(&fs_mounted.superblock);
-
+    
+    assert(fs_mounted.nBytes == fs.nBytes);
+    assert(fs_mounted.diskINodeBlkOffset == fs.diskINodeBlkOffset);
+    assert(fs_mounted.diskDBlkOffset == fs.diskDBlkOffset);
+    
+    assert(memcmp(&fs_mounted.superblock, &fs.superblock, sizeof(SuperBlock)) == 0);
+    
     #endif
     return 0;
 }

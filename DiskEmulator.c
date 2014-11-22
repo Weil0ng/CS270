@@ -11,6 +11,16 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <errno.h>
+
+void openDisk(DiskArray *disk, UINT diskSize)
+{
+  disk->_dsk_dskArray = open(DISK_PATH, O_RDWR, 0666);
+  if (disk->_dsk_dskArray == -1)
+    printf("Disk open error %s\n", strerror(errno));
+  disk->_dsk_size = diskSize;
+  disk->_dsk_numBlk = diskSize / BLK_SIZE;
+}
+
 /*void initDisk(DiskArray *disk, UINT diskSize)
 {
   FILE *mapFile;
@@ -63,7 +73,7 @@ void initDisk(DiskArray *disk, UINT diskSize)
   munmap(disk->_dsk_dskArray, disk->_dsk_size);
 }*/
 
-void destroyDisk(DiskArray *disk)
+void closeDisk(DiskArray *disk)
 {
   close(disk->_dsk_dskArray);
 }

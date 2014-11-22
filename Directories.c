@@ -39,21 +39,12 @@ INT l2_mount(FILE* device, FileSystem* fs) {
     fs->nBytes = (BLK_SIZE + fs->superblock.nINodes * INODE_SIZE + fs->superblock.nDBlks * BLK_SIZE);
     fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + fs->superblock.nINodes / INODES_PER_BLK;
-
-    //TODO: remove this code, which loads the entire file into the disk array in memory
+    
     #ifdef DEBUG
-    printf("Initializing filesystem disk array...\n");
+    printf("Opening disk device...\n");
     #endif
     fs->disk = malloc(sizeof(DiskArray));
-    initDisk(fs->disk, fs->nBytes);
-
-    #ifdef DEBUG
-    printf("Loading file to back the filesystem disk array...\n");
-    #endif
-    fseek(device, 0, SEEK_SET);
-    succ = fread(fs->disk, fs->nBytes, 1, device);
-    assert(succ == 1);
-    //TODO: remove up to here
+    openDisk(fs->disk, fs->nBytes);
 
     //load free block cache into superblock
     #ifdef DEBUG
@@ -84,6 +75,9 @@ INT l2_unmount(FileSystem* fs) {
     blockify(&fs->superblock, superblockBuf);
     writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
     fs->superblock.modified = false;
+    
+    //close disk to prevent future writes
+    closefs(fs);
 
     #ifdef DEBUG
     printf("Filesystem unmount complete!\n");
@@ -117,7 +111,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     }
     
     // mark this as rootINodeID
-    fs->rootINodeID = id;
+    fs->superblock.rootINodeID = id;
 
     // init directory table for root directory
     DirEntry dirBuf[2];
@@ -601,7 +595,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
         //weilong: update parent dir size
         par_inode._in_filesize -= sizeof(DirEntry);
 	if (writeINode(fs, par_id, &par_inode) == -1) {
-	    printf(stderr, "fail to write parent dir inode %d\n", par_id);
+	    fprintf(stderr, "fail to write parent dir inode %d\n", par_id);
 	    return -1;
 	}
  
@@ -741,7 +735,7 @@ INT l2_namei(FileSystem *fs, char *path)
   strcpy(local_path, path);
 
   // current inode ID in traversal
-  UINT curID = fs->rootINodeID; //root
+  UINT curID = fs->superblock.rootINodeID; //root
   // memory for INode
   INode curINode;
   // pointer to dir entry
