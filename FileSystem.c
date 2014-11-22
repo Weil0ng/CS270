@@ -375,7 +375,7 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
 
 INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
     #ifdef DEBUG
-    assert(offset < inode->_in_filesize);
+    assert(offset <= inode->_in_filesize);
     assert(offset + len <= inode->_in_filesize);
     #else
     if(offset >= inode->_in_filesize || offset + len > inode->_in_filesize) {
@@ -505,7 +505,7 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     #ifdef DEBUG
     printf("writeINodeData on inode of size %d with offset %d for len %d\n", inode->_in_filesize, offset, len);
     #endif
-    assert(offset < MAX_FILE_SIZE);
+    assert(offset <= MAX_FILE_SIZE);
     assert(offset + len <= MAX_FILE_SIZE);
     
     //convert byte offset to logical id + block offset

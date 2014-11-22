@@ -590,7 +590,8 @@ INT l2_unlink(FileSystem* fs, char* path) {
                 #endif
                 strcpy(DEntry->key, "");
                 DEntry->INodeID = -1;
-                break;
+		//weilong: why break?
+                //break;
             }
         }
 
@@ -679,6 +680,7 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //4. call writeINodeData
 //5. modify inode if necessary
 INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+  printf("writing to %s\n", path);
   INode curINode;
   INT bytesWritten = 0;
   //1. resolve path
