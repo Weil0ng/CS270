@@ -202,7 +202,13 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         fprintf(stderr, "Error: cannot create root directory outside of initfs!\n");
         return -1;
     }
-    else if (l2_namei(fs, path) != -1) {
+    INT rRes = l2_namei(fs, path);
+    if (rRes == -2) {
+        _err_last = _fs_NonDirInPath;
+        THROW(__FILE__, __LINE__, __func__);
+        return -1;
+    }
+    if (rRes != -1) {
         fprintf(stderr, "Error: file or directory %s already exists!\n", path);
         return -1;
     }
@@ -362,7 +368,13 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         fprintf(stderr, "Error: cannot create root directory outside of initfs!\n");
         return -1;
     }
-    else if (l2_namei(fs, path) != -1) {
+    INT rRes = l2_namei(fs, path);
+    if (rRes == -2) {
+        _err_last = _fs_NonDirInPath;
+        THROW(__FILE__, __LINE__, __func__);
+        return -1;
+    }
+    if (rRes != -1) {
         fprintf(stderr, "Error: file or directory %s already exists!\n", path);
         return -1;
     }
@@ -768,7 +780,7 @@ INT l2_namei(FileSystem *fs, char *path)
     if (curINode._in_type != DIRECTORY) {
       _err_last = _fs_NonDirInPath;
       THROW(__FILE__, __LINE__, __func__);
-      return -1;
+      return -2;
     }
     // alloc space for curDir
     curDir = (BYTE *)malloc(curINode._in_filesize);
