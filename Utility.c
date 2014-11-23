@@ -52,6 +52,10 @@ void THROW(const char *fname, int lineno, const char *fxname)
     printf("INode indexing out of range!\n");
     break;
   }
+  case _in_fileNameTooLong: {
+    printf("File name too long!\n");
+    break;
+  }
   default: break;
   }
   return;

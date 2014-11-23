@@ -39,5 +39,5 @@ Layer2MountTest: $(OBJS) Layer2MountTest.o
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest TestMain fuseDaemon diskFile diskDump
+	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest TestMain fuseDaemon InitFS diskFile diskDump
 

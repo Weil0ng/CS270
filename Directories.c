@@ -247,7 +247,13 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         fprintf(stderr, "fail to read parent directory inode %d\n", par_id);
         return -1;
     }
-   
+  
+    if (strlen(dir_name) > FILE_NAME_LENGTH) {
+	_err_last = _in_fileNameTooLong;
+	THROW(__FILE__, __LINE__, __func__);
+	return -ENAMETOOLONG;
+    }
+ 
     // allocate a free inode for the new directory 
     id = allocINode(fs, &inode); 
     #ifdef DEBUG

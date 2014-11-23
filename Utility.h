@@ -14,6 +14,7 @@ typedef enum{
   _in_NonAllocDBlk,
   _in_NonAllocIndirectBlk,
   _in_IndexOutOfRange,
+  _in_fileNameTooLong
 } ERROR;
 
 extern ERROR _err_last;    
