@@ -4,6 +4,13 @@
 #include "Utility.h"
 #include "INodeTable.h"
 
+void initializeINodeTable(INodeTable* iTable)
+{
+  for(UINT bin = 0; bin < INODE_TABLE_LENGTH; bin++) {
+    iTable->hashQ[bin] = NULL;
+  }
+}
+
 BOOL putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
 {
   if(hasINodeEntry(iTable, id))
@@ -16,11 +23,13 @@ BOOL putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
   INodeEntry *newEntry;
   newEntry = malloc(sizeof(INodeEntry));
   newEntry->_in_id = id;
+  newEntry->_in_node = inode;
   newEntry->_in_ref = 1;
 
   //insert to table
   newEntry->next = iTable->hashQ[bin];
   iTable->hashQ[bin] = newEntry;
+  iTable->nINodes++;
   
   return true;
 }
@@ -79,3 +88,24 @@ BOOL hasINodeEntry(INodeTable *iTable, UINT id)
   }
   return false;
 }
+
+#ifdef DEBUG
+#include <stdio.h>
+void printINodeEntry(INodeEntry *entry)
+{
+  printf("[INodeEntry: id = %d, ref = %d, node = %x, next = %x]\n",
+    entry->_in_id, entry->_in_ref, entry->_in_node, entry->next);
+}
+
+void printINodeTable(INodeTable *iTable)
+{
+  printf("[INodeTable: nINodes = %d]\n", iTable->nINodes);
+  for(INT bin = 0; bin < INODE_TABLE_LENGTH; bin++) {
+    INodeEntry *curEntry = iTable->hashQ[bin];
+    while (curEntry != NULL) {
+      printINodeEntry(curEntry);
+      curEntry = curEntry->next;
+    }
+  }
+}
+#endif

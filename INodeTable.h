@@ -5,8 +5,13 @@
 #include "INodeEntry.h"
 
 typedef struct {
+  UINT nINodes;
   INodeEntry* hashQ[INODE_TABLE_LENGTH];
 } INodeTable;
+
+//initializes all the bin entries to null
+//MUST be called at filesystem init time since arrays do not default to NULL
+void initializeINodeTable(INodeTable*);
 
 //adds an inode to the table
 //returns true if it was added, false if it already existed
@@ -18,3 +23,9 @@ INodeEntry* getINodeEntry(INodeTable *iTable, UINT id);
 
 //check if a certain entry is already loaded
 BOOL hasINodeEntry(INodeTable *, UINT);
+
+#ifdef DEBUG
+void printINodeEntry(INodeEntry *);
+
+void printINodeTable(INodeTable *);
+#endif

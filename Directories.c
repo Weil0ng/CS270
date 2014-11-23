@@ -1027,7 +1027,11 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         printf("No previous inode found in cache, inserting new entry...\n");
         #endif
 
-        //TODO
+        INode* inode = malloc(sizeof(INode));
+        INT readSucc = readINode(fs, inodeId, inode);
+        assert(readSucc == 0);
+        BOOL putSucc = putINodeEntry(&fs->inodeTable, inodeId, inode);
+        assert(putSucc);
     }
 
     #ifdef DEBUG

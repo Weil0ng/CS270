@@ -15,3 +15,9 @@ BOOL addOpenFileEntry(OpenFileTable*, char*, enum FILE_OP, INodeEntry*);
 OpenFileEntry* getOpenFileEntry(OpenFileTable*, char*, enum FILE_OP);
 
 BOOL removeOpenFileEntry(OpenFileTable*, char*, enum FILE_OP);
+
+#ifdef DEBUG
+void printOpenFileEntry(OpenFileEntry *);
+
+void printOpenFileTable(OpenFileTable *);
+#endif

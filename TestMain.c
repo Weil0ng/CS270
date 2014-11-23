@@ -86,7 +86,7 @@ int main(int args, char* argv[])
             printf("Enter file path: ");
             scanf("%s", path);
             printf("Enter open flags: ");
-            scanf("%d", flags);
+            scanf("%d", &flags);
             
             l2_open(&fs, path, flags);
         }
@@ -94,7 +94,7 @@ int main(int args, char* argv[])
             printf("Enter file path: ");
             scanf("%s", path);
             printf("Enter close flags: ");
-            scanf("%d", flags);
+            scanf("%d", &flags);
             
             l2_close(&fs, path, flags);
         }
@@ -120,7 +120,23 @@ int main(int args, char* argv[])
             len = strlen(buf);
             l2_write(&fs, path, offset, buf, len);
         }
-        else if(strcmp(command, "stats") == 0) {
+        else if(strcmp(command, "corestats") == 0) {
+            #ifdef DEBUG
+            printf("\nSuperblock:\n");
+            printSuperBlock(&fs.superblock);
+            printf("\nFree inode cache:\n");
+            printFreeINodeCache(&fs.superblock);
+            printf("\nFree dblk cache:\n");
+            printFreeDBlkCache(&fs.superblock);
+            printf("\nOpen file table:\n");
+            printOpenFileTable(&fs.openFileTable);
+            printf("\nINode table:\n");
+            printINodeTable(&fs.inodeTable);
+            #else
+            printf("Stats only available in DEBUG mode!\n");
+            #endif
+        }
+        else if(strcmp(command, "diskstats") == 0) {
             #ifdef DEBUG
             printf("\nSuperblock:\n");
             printSuperBlock(&fs.superblock);
@@ -128,10 +144,6 @@ int main(int args, char* argv[])
             printINodes(&fs);
             printf("\nData blocks:\n");
             printDBlks(&fs);
-            printf("\nFree inode cache:\n");
-            printFreeINodeCache(&fs.superblock);
-            printf("\nFree dblk cache:\n");
-            printFreeDBlkCache(&fs.superblock);
             #else
             printf("Stats only available in DEBUG mode!\n");
             #endif
@@ -161,7 +173,8 @@ void printMenu() {
     printf(" read /path/to/file_or_dir\n");
     printf(" write /path/to/file_or_dir\n");
     printf("--------------------\n");
-    printf(" stats\n");
+    printf(" corestats\n");
+    printf(" diskstats\n");
     printf(" quit\n");
     printf("====================\n");
 }

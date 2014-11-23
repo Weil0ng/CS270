@@ -160,9 +160,6 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         nextListBlk += FREE_DBLK_CACHE_SIZE;
     }
     
-    //load free block cache into superblock
-    readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
-
     //write superblock to disk
     #ifdef DEBUG 
     printf("Writing superblock to disk...\n"); 
@@ -171,7 +168,13 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     blockify(&fs->superblock, superblockBuf);
     writeBlk(fs->disk, SUPERBLOCK_OFFSET, superblockBuf);
     fs->superblock.modified = false;
+    
+    //load free block cache into superblock
+    readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
+    //initialize inode table cache
+    initializeINodeTable(&fs->inodeTable);
+    
     return 0;
 }
 
