@@ -173,7 +173,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
     //initialize inode table cache
-    initializeINodeTable(&fs->inodeTable);
+    initINodeTable(&fs->inodeTable);
     
     return 0;
 }

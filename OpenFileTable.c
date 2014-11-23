@@ -3,16 +3,36 @@
 
 #include "OpenFileTable.h"
 
-BOOL addOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op, INodeEntry* inode) {
-    //phase 1 doesn't keep the inodes in memory, so we stub this off
+BOOL addOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op, INodeEntry* inode)
+{
+    //initialize new entry
+    OpenFileEntry* newEntry = malloc(sizeof(OpenFileEntry));
+    strcpy(newEntry->filePath, path);
+    newEntry->fileOp = op;
+    newEntry->inodeEntry = inode;
+    
+    //stack insert at linked list head
+    newEntry->next = table->head;
+    table->head = newEntry;
+    table->nOpenFiles++;
+    
     return true;
 }
 
-OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op) {
+OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
+{
+    OpenFileEntry* curEntry = table->head;
+    while(curEntry != NULL) {
+        if(strcmp(curEntry->filePath, path) == 0 && curEntry->fileOp == op)
+            return curEntry;
+        curEntry = curEntry->next;
+    }
+    
     return NULL;
 }
 
-BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op) {
+BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
+{
     //phase 1 doesn't keep the inodes in memory, so we stub this off
     return true;
 }
@@ -21,8 +41,8 @@ BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op) {
 #include <stdio.h>
 void printOpenFileEntry(OpenFileEntry *entry)
 {
-    printf("[OpenFileEntry: filePath = %s, fileOp = %d, inodeEntry = %x, next = %x]\n",
-        entry->filePath, entry->fileOp, entry->inodeEntry, entry->next);
+    printf("[OpenFileEntry: filePath = %s, fileOp = %d, inodeEntry = %x, inodeId = %d, next = %x]\n",
+        entry->filePath, entry->fileOp, entry->inodeEntry, entry->inodeEntry->_in_id, entry->next);
 }
 
 void printOpenFileTable(OpenFileTable *openFileTable)

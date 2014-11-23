@@ -4,17 +4,23 @@
 #include "Utility.h"
 #include "INodeTable.h"
 
-void initializeINodeTable(INodeTable* iTable)
+#ifdef DEBUG
+#include <assert.h>
+#endif
+
+void initINodeTable(INodeTable* iTable)
 {
+  iTable->nINodes = 0;
   for(UINT bin = 0; bin < INODE_TABLE_LENGTH; bin++) {
     iTable->hashQ[bin] = NULL;
   }
 }
 
-BOOL putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
+INodeEntry* putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
 {
-  if(hasINodeEntry(iTable, id))
-    return false;
+  #ifdef DEBUG
+  assert(!hasINodeEntry(iTable, id));
+  #endif
 
   //hash id to bin
   UINT bin = id % INODE_TABLE_LENGTH;
@@ -31,11 +37,15 @@ BOOL putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
   iTable->hashQ[bin] = newEntry;
   iTable->nINodes++;
   
-  return true;
+  return newEntry;
 }
 
 INodeEntry* getINodeEntry(INodeTable *iTable, UINT id)
 {
+  #ifdef DEBUG
+  assert(hasINodeEntry(iTable, id));
+  #endif
+
   //hash id to bin
   UINT bin = id % INODE_TABLE_LENGTH;
   
@@ -51,27 +61,6 @@ INodeEntry* getINodeEntry(INodeTable *iTable, UINT id)
   }
   
   return NULL;
-/*
-  //if not in table, instantiate an entry
-  INode iNode;
-  readINode(iTable->fs, id, &iNode);
-  INodeEntry *newEntry;
-  newEntry = malloc(sizeof(INodeEntry));
-  newEntry->_in_id = id;
-  newEntry->_in_ref = 1;
-  newEntry->next = NULL;
-
-  //insert to table
-  if (tailEntry != NULL)
-    tailEntry->next = newEntry;
-  else
-    iTable->hashQ[bin] = newEntry;
-
-  //return entry
-  iEntry = newEntry;
-
-  return iEntry;
-*/
 }
 
 BOOL hasINodeEntry(INodeTable *iTable, UINT id)

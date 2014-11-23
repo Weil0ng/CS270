@@ -59,6 +59,9 @@ INT l2_mount(FileSystem* fs) {
     #endif
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
+    //initialize inode table cache
+    initINodeTable(&fs->inodeTable);
+    
     #ifdef DEBUG
     printf("Filesystem mount complete!\n");
     #endif
@@ -1021,6 +1024,8 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         #endif
         
         inodeEntry = getINodeEntry(&fs->inodeTable, inodeId);
+        assert(inodeEntry != NULL);
+        inodeEntry->_in_ref++;
     }
     else {
         #ifdef DEBUG
@@ -1030,8 +1035,8 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         INode* inode = malloc(sizeof(INode));
         INT readSucc = readINode(fs, inodeId, inode);
         assert(readSucc == 0);
-        BOOL putSucc = putINodeEntry(&fs->inodeTable, inodeId, inode);
-        assert(putSucc);
+        inodeEntry = putINodeEntry(&fs->inodeTable, inodeId, inode);
+        assert(inodeEntry != NULL);
     }
 
     #ifdef DEBUG

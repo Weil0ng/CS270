@@ -11,11 +11,11 @@ typedef struct {
 
 //initializes all the bin entries to null
 //MUST be called at filesystem init time since arrays do not default to NULL
-void initializeINodeTable(INodeTable*);
+void initINodeTable(INodeTable*);
 
 //adds an inode to the table
-//returns true if it was added, false if it already existed
-BOOL putINodeEntry(INodeTable *iTable, UINT id, INode *inode);
+//returns the entry that was added (or returns the existing entry)
+INodeEntry* putINodeEntry(INodeTable *iTable, UINT id, INode *inode);
 
 //interface to layer2 funcs, return the pointer to an INodeEntry
 //args: table, inode id, return pointer to entry
