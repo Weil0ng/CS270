@@ -167,14 +167,14 @@ static struct fuse_operations l3_oper = {
 
 int main(int argc, char *argv[])
 {
-	printf("Initializing file system with initfs...\n");
+	/*printf("Initializing file system with initfs...\n");
     	UINT succ = l2_initfs(128, 16, &fs);
     	if(succ == 0) {
         	printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
     	}
     	else {
         	printf("Error: initfs failed with error code: %d\n", succ);
-    	}
-
+    	}*/
+	UINT succ = l2_mount(&fs);
 	return fuse_main(argc, argv, &l3_oper, NULL);	
 }

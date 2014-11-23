@@ -7,13 +7,18 @@ OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o SuperBlock.o Utility.o Op
 FUSEFLAGS=`pkg-config fuse --cflags --libs`
 SRCS=fuseDaemon.c
 
-all: fuse main test
+all: fuse main test init
+
+init: $(OBJS) InitFS
 
 fuse: $(OBJS) fuseDaemon
 
 main: $(OBJS) TestMain
 
 test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest
+
+InitFS: $(OBJS) InitFS.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 fuseDaemon: $(OBJS) $(SRCS)
 	$(CC) $(CFLAGS) $(SRCS) $(FUSEFLAGS) -o $@ $(OBJS)
