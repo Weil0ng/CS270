@@ -274,6 +274,8 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     BYTE parBuf[par_inode._in_filesize];
     readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
 
+    //weilong: check for max_file_in_dir
+
     // insert new directory entry into parent directory list
     DirEntry newEntry;
     strcpy(newEntry.key, dir_name);
@@ -525,9 +527,9 @@ INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
 		    memcpy(namelist[i], (char *)DEntry->key, FILE_NAME_LENGTH);
                 }
             }
+	    printf("l2_readdir finish reading\n");
         }
     }
-
     return numDirEntry;
 
 }

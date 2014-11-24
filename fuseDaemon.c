@@ -47,11 +47,19 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	if (numDirEntry == -1 || numDirEntry == 0)
 		return -ENOENT;
 
+	INT off, nextoff = 0;
 	for (UINT i=0; i<numDirEntry; i++) {
+		off = nextoff;
+		nextoff += ((24 + strlen(namelist[i]) + 7)&~7);
+		if (off < offset)
+			continue;
 		printf("filling %s\n", namelist[i]);
-		filler(buf, namelist[i], NULL, 0);
+		if (filler(buf, namelist[i], NULL, nextoff) == 1) {
+			printf("fuse_filler buf full!\n");
+			break;
+		}
 	}
-	
+	printf("l3_readdir finished!\n");
 	return 0;
 }
 
@@ -147,6 +155,30 @@ static int l3_statfs(const char *path, struct statvfs *stat)
 	;
 }
 
+void * l3_mount(struct fuse_conn_info *conn)
+{
+	UINT succ = l2_mount(&fs);
+	if(succ == 0) {
+                printf("File System Mounted!");
+        }
+        else {
+                printf("Error in mounting file system!");
+        }
+	return; 
+}
+
+void * l3_unmount(void *conn)
+{
+	UINT succ = l2_unmount(&fs);
+	if(succ == 0) {
+                printf("File System Unounted!");
+        }
+        else {
+                printf("Error in unmounting file system!");
+        }
+        return;
+}
+
 static struct fuse_operations l3_oper = {
 	.getattr	= l3_getattr,
 	.readdir	= l3_readdir,
@@ -163,6 +195,8 @@ static struct fuse_operations l3_oper = {
 	.write		= l3_write,
 	.utimens	= l3_utimens,
 	.statfs		= l3_statfs,
+	.init		= l3_mount,
+	.destroy	= l3_unmount
 };
 
 int main(int argc, char *argv[])
