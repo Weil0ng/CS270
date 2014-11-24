@@ -3,6 +3,8 @@
 
 #include "OpenFileTable.h"
 
+#include <stdlib.h>
+
 BOOL addOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op, INodeEntry* inode)
 {
     //initialize new entry
@@ -33,8 +35,24 @@ OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP o
 
 BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
 {
-    //phase 1 doesn't keep the inodes in memory, so we stub this off
-    return true;
+    OpenFileEntry* prevEntry = NULL;
+    OpenFileEntry* curEntry = table->head;
+    while(curEntry != NULL) {
+        if(strcmp(curEntry->filePath, path) == 0 && curEntry->fileOp == op) {
+            //linked list remove
+            if(prevEntry == NULL)
+                table->head = curEntry->next;
+            else
+                prevEntry->next = curEntry->next;
+                
+            free(curEntry);
+            table->nOpenFiles--;
+            return true;
+        }
+        prevEntry = curEntry;
+        curEntry = curEntry->next;
+    }
+    return false;
 }
 
 #ifdef DEBUG

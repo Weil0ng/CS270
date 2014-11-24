@@ -1,7 +1,6 @@
 // This is the in core INodeTable
 
 #pragma once
-#include "Globals.h"
 #include "INodeEntry.h"
 
 typedef struct {
@@ -23,6 +22,9 @@ INodeEntry* getINodeEntry(INodeTable *iTable, UINT id);
 
 //check if a certain entry is already loaded
 BOOL hasINodeEntry(INodeTable *, UINT);
+
+//removes an inode entry, returning true if successful
+BOOL removeINodeEntry(INodeTable *, UINT);
 
 #ifdef DEBUG
 void printINodeEntry(INodeEntry *);

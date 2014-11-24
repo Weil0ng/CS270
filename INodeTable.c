@@ -1,8 +1,9 @@
 // This is the implementation of in core INodeTable
 // by Weil0ng
 
-#include "Utility.h"
 #include "INodeTable.h"
+
+#include <stdlib.h>
 
 #ifdef DEBUG
 #include <assert.h>
@@ -73,6 +74,33 @@ BOOL hasINodeEntry(INodeTable *iTable, UINT id)
   while (curEntry != NULL) {
     if (curEntry->_in_id == id)
       return true;
+    curEntry = curEntry->next;
+  }
+  return false;
+}
+
+BOOL removeINodeEntry(INodeTable *iTable, UINT id)
+{
+  //hash id to bin
+  UINT bin = id % INODE_TABLE_LENGTH;
+
+  //search bin
+  INodeEntry *prevEntry = NULL;
+  INodeEntry *curEntry = iTable->hashQ[bin];
+  while (curEntry != NULL) {
+    if (curEntry->_in_id == id) {
+      //linked list remove
+      if(prevEntry == NULL) 
+        iTable->hashQ[bin] = curEntry->next;
+      else
+        prevEntry->next = curEntry->next;
+        
+      free(curEntry);
+      iTable->nINodes--;
+      return true;
+    }
+    
+    prevEntry = curEntry;
     curEntry = curEntry->next;
   }
   return false;

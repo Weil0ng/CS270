@@ -988,7 +988,6 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
 
     //parse flags
     enum FILE_OP fileOp;
-    
     switch(flags) {
         case FLAG_READ:
             fileOp = OP_READ;
@@ -1005,7 +1004,7 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
     }
 
     #ifdef DEBUG
-    printf("Open mode from flags: %d\n", fileOp);
+    printf("File mode from flags: %d\n", fileOp);
     #endif
 
     INT inodeId = l2_namei(fs, path);
@@ -1046,7 +1045,52 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
 }
 
 INT l2_close(FileSystem* fs, char* path, UINT flags) {
-    //removeOpenFileEntry(&fs->openFileTable, path);
+    #ifdef DEBUG
+    printf("Closing file \"%s\" with flags: %d\n", path, flags);
+    #endif
+
+    //parse flags
+    enum FILE_OP fileOp;
+    switch(flags) {
+        case FLAG_READ:
+            fileOp = OP_READ;
+            break;
+        case FLAG_WRITE:
+            fileOp = OP_WRITE;
+            break;
+        case FLAG_READWRITE:
+            fileOp = OP_READWRITE;
+            break;
+        default:
+            fprintf(stderr, "Error: incorrect flags specified: %d\n", flags);
+            return -1;
+    }
+
+    #ifdef DEBUG
+    printf("File mode from flags: %d\n", fileOp);
+    #endif
+
+    INT inodeId = l2_namei(fs, path);
+    #ifdef DEBUG
+    printf("INode ID for closed file: %d\n", inodeId);
+    #endif
+    
+    OpenFileEntry* oEntry = getOpenFileEntry(&fs->openFileTable, path, fileOp);
+    if(oEntry == NULL) {
+        fprintf(stderr, "Error: no matching open file found for close operation!\n");
+        return 1;
+    }
+    
+    //update inode table and remove entry if refcount reaches 0
+    INodeEntry* iEntry = oEntry->inodeEntry;
+    iEntry->_in_ref--;
+    if(iEntry->_in_ref == 0) {
+        removeINodeEntry(&fs->inodeTable, iEntry->_in_id);
+    }
+    
+    BOOL succ = removeOpenFileEntry(&fs->openFileTable, path, fileOp);
+    assert(succ);
+    
     return 0;
 }
 
