@@ -278,11 +278,6 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         return -1;
     }
 
-    // read the parent directory table
-    BYTE parBuf[par_inode._in_filesize];
-    readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
-
-
     // insert new directory entry into parent directory list
     DirEntry newEntry;
     strcpy(newEntry.key, dir_name);
@@ -290,9 +285,12 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
 
     UINT offset;
     for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
-        DirEntry *DEntry = (DirEntry *) (parBuf + offset);
+        // search parent directory table
+        DirEntry parEntry;
+        readINodeData(fs, &par_inode, (BYTE*) &parEntry, offset, sizeof(DirEntry));
+        
         // empty directory entry found, overwrite it
-        if (DEntry->INodeID == -1){
+        if (parEntry.INodeID == -1){
             break;
         }
     }
@@ -440,10 +438,6 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         return -1;
     }
 
-    // read the parent directory table
-    BYTE parBuf[par_inode._in_filesize];
-    readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
-
     // insert new directory entry into parent directory list
     DirEntry newEntry;
     strcpy(newEntry.key, dir_name);
@@ -451,9 +445,12 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
 
     UINT offset;
     for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
-        DirEntry *DEntry = (DirEntry *) (parBuf + offset);
+        // search parent directory table
+        DirEntry parEntry;
+        readINodeData(fs, &par_inode, (BYTE*) &parEntry, offset, sizeof(DirEntry));
+        
         // empty directory entry found, overwrite it
-        if (DEntry->INodeID == -1){
+        if (parEntry.INodeID == -1){
             break;
         }
     }
