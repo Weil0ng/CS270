@@ -554,7 +554,9 @@ INT l2_unlink(FileSystem* fs, char* path) {
     // 3. write the parent inode back to disk
     // 4. decrement file inode link count, write to disk
     // 5. if file link count = 0, release the inode and the data blocks (free)
-    
+    #ifdef DEBUG
+    printf("Unlinking file path: %s\n", path);
+    #endif
     if (strcmp(path, "/") == 0) {
         fprintf(stderr, "Error: cannot unlink root directory!\n");
         return -1;
@@ -577,9 +579,12 @@ INT l2_unlink(FileSystem* fs, char* path) {
     
     // special case for root
     if(strcmp(par_path, "") == 0) {
-        printf("Its parent is root\n");
         strcpy(par_path, "/");
     }
+    
+    #ifdef DEBUG
+    printf("Resolved file name \"%s\" in parent directory: %s\n", node_name, par_path);
+    #endif
    
     // find the inode id of the parent directory 
     par_id = l2_namei(fs, par_path);
@@ -594,47 +599,41 @@ INT l2_unlink(FileSystem* fs, char* path) {
         
         id = l2_namei(fs, path);
         if(id == -1) { // file does not exist
-            fprintf(stderr, "file %s not found!\n", path);
+            fprintf(stderr, "Error: file \"%s\" not found!\n", path);
             return -1;
         }
 
         // read the parent inode
         if(readINode(fs, par_id, &par_inode) == -1) {
-            fprintf(stderr, "fail to read parent director inode %d\n", par_id);
+            fprintf(stderr, "Error: fail to read parent directory inode %d\n", par_id);
             return -1;
         }
 
-        /* allocate one entry in the directory table: (ptr, id)*/
-        BYTE parBuf[MAX_FILE_NUM_IN_DIR * sizeof(DirEntry)];
-        
-        // read the parent directory table
-        readINodeData(fs, &par_inode, parBuf, 0, par_inode._in_filesize);
-
-	// weilong: erase the dir entry of current file in parent dir
-        DirEntry *DEntry;
-        UINT i;
-        for(i = 0; i < par_inode._in_filesize/sizeof(DirEntry); i ++) {
-            DEntry = (DirEntry *) (parBuf + i*sizeof(DirEntry));
-            if (strcmp(DEntry->key, node_name) == 0){
+        UINT offset;
+        for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
+            // search parent directory table
+            DirEntry entry;
+            readINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
+            
+            // directory entry found, mark it as removed
+            if (strcmp(entry.key, node_name) == 0){
                 #ifdef DEBUG
-                printf("zero out the to-be-unlinked entry in the parent directory table\n");
+                printf("File to be unlinked found at offset: %d\n", offset);
                 #endif
-                strcpy(DEntry->key, "");
-                DEntry->INodeID = -1;
-		//weilong: why break?
-                //break;
+                //strcpy(DEntry->key, "");
+                entry.INodeID = -1;
+                
+                // update the parent directory table
+                writeINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
             }
         }
-
-        // update the parent directory table
-        writeINodeData(fs, &par_inode, (BYTE*) DEntry, i*sizeof(DirEntry), sizeof(DirEntry));
        
         //weilong: update parent dir size
-        par_inode._in_filesize -= sizeof(DirEntry);
+        /*par_inode._in_filesize -= sizeof(DirEntry);
 	if (writeINode(fs, par_id, &par_inode) == -1) {
 	    fprintf(stderr, "fail to write parent dir inode %d\n", par_id);
 	    return -1;
-	}
+	}*/
  
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {
