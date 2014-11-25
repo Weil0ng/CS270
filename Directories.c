@@ -498,7 +498,7 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     return id;
 }
 
-INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
+INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry) {
     INT id; // the inode of the dir
     UINT numDirEntry = 0;
 
@@ -506,7 +506,7 @@ INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
     
     if(id == -1) { // directory does not exist
         fprintf(stderr, "Directory %s not found!\n", path);
-        return -1;
+        return -ENOENT;
     }
     else {
         INode inode;
@@ -518,31 +518,24 @@ INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]) {
 
         if(inode._in_type != DIRECTORY) {
             fprintf(stderr, "NOT a directory\n");
-            return -1;
+            return -ENOTDIR;
         }
-        else {
-            numDirEntry = (inode._in_filesize)/sizeof(DirEntry);
-            BYTE dirBuf[inode._in_filesize];
-            
-            // read the directory table
-            readINodeData(fs, &inode, dirBuf, 0, inode._in_filesize);
-            
-	    #ifdef DEBUG
-	    printf("%d entries in cur dir %s\n", numDirEntry, path);
-	    #endif
- 
-            for(UINT i=0; i < numDirEntry; i ++){
-                DirEntry *DEntry = (DirEntry *) (dirBuf + i*sizeof(DirEntry));
-                if (DEntry->INodeID >= 0){
-                    printf("%s, %d\n", (char *)DEntry->key, DEntry->INodeID);
-		    memcpy(namelist[i], (char *)DEntry->key, FILE_NAME_LENGTH);
-                }
-            }
-	    printf("l2_readdir finish reading\n");
-        }
-    }
-    return numDirEntry;
 
+        numDirEntry = (inode._in_filesize)/sizeof(DirEntry);
+
+	if (numDirEntry - 1 < offset) {
+	    _err_last = _fs_EndOfDirEntry;
+	    THROW(__FILE__, __LINE__, __func__);
+	    return -1;		
+	}
+
+	#ifdef DEBUG
+	printf("%d entries in cur dir %s, readding %u\n", numDirEntry, path, offset);
+	#endif
+        // read the directory table
+        readINodeData(fs, &inode, curEntry, offset * sizeof(DirEntry), sizeof(DirEntry));
+    }
+    return 0; 
 }
 
 // remove a file
@@ -630,11 +623,11 @@ INT l2_unlink(FileSystem* fs, char* path) {
         writeINodeData(fs, &par_inode, (BYTE*) DEntry, i*sizeof(DirEntry), sizeof(DirEntry));
        
         //weilong: update parent dir size
-        par_inode._in_filesize -= sizeof(DirEntry);
+        /*par_inode._in_filesize -= sizeof(DirEntry);
 	if (writeINode(fs, par_id, &par_inode) == -1) {
 	    fprintf(stderr, "fail to write parent dir inode %d\n", par_id);
 	    return -1;
-	}
+	}*/
  
         // read the file inode
         if(readINode(fs, id, &inode) == -1) {

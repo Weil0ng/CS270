@@ -36,6 +36,10 @@ void THROW(const char *fname, int lineno, const char *fxname)
     printf("Wrong path, containing non-dir type file!\n");
     break;
   }
+  case _fs_EndOfDirEntry: {
+    printf("Reaching end of cur dir!\n");
+    break;
+  }
   case _fs_NonExistFile: {
     printf("File/Directory does not exist!\n");
     break;

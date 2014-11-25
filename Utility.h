@@ -10,6 +10,7 @@ typedef enum{
   _dsk_writeOutOfBoundry,
   _fs_DBlkOutOfNumber,
   _fs_NonDirInPath,
+  _fs_EndOfDirEntry,
   _fs_NonExistFile,
   _in_NonAllocDBlk,
   _in_NonAllocIndirectBlk,

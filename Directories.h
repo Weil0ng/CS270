@@ -28,7 +28,7 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 
 // reads directory contents
-INT l2_readdir(FileSystem* fs, char* path, char namelist[][FILE_NAME_LENGTH]);
+INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory

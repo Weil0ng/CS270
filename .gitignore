@@ -5,6 +5,7 @@
 *.o
 *.out
 
+InitFS
 fuseDaemon
 TestMain
 Layer2MountTest

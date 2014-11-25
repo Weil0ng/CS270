@@ -37,29 +37,28 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			 off_t offset, struct fuse_file_info *fi)
 {
-	(void) offset;
+	printf("offset: %u\n", offset);
 	(void) fi;
-        char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
-	memset(namelist, NULL, sizeof(namelist));
-	
-	UINT numDirEntry = l2_readdir(&fs, path, namelist);
-	printf("l2_readdir %s, %u enties\n", path, numDirEntry);
-	if (numDirEntry == -1 || numDirEntry == 0)
-		return -ENOENT;
+ 	DirEntry curEntry;
+	UINT entryL = (24 + FILE_NAME_LENGTH + 7) & (~7);
 
-	INT off, nextoff = 0;
-	for (UINT i=0; i<numDirEntry; i++) {
-		off = nextoff;
-		nextoff += ((24 + strlen(namelist[i]) + 7)&~7);
-		if (off < offset)
-			continue;
-		printf("filling %s\n", namelist[i]);
-		if (filler(buf, namelist[i], NULL, nextoff) == 1) {
-			printf("fuse_filler buf full!\n");
-			break;
+	INT res = l2_readdir(&fs, path, offset / entryL, &curEntry);
+	while (res == 0) {
+		if (curEntry.INodeID != -1) {
+			printf("filling %s\n", curEntry.key);
+			offset += entryL;
+			if (filler(buf, curEntry.key, NULL, offset) == 1) {
+				printf("fuse_filler buf full!\n");
+				break;
+			}
+			printf("%s\n", (char *)buf);
+			return 0;
 		}
+		offset += entryL;
+		res = l2_readdir(&fs, path, offset / entryL, &curEntry);
 	}
-	printf("l3_readdir finished!\n");
+	if (res == -1)
+		return -ENOENT;
 	return 0;
 }
 
