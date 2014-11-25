@@ -40,13 +40,13 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	printf("offset: %u\n", offset);
 	(void) fi;
  	DirEntry curEntry;
-	UINT entryL = (24 + FILE_NAME_LENGTH + 7) & (~7);
-
-	INT res = l2_readdir(&fs, path, offset / entryL, &curEntry);
+	//UINT entryL = (24 + FILE_NAME_LENGTH + 7) & (~7);
+	
+	INT res = l2_readdir(&fs, path, offset, &curEntry);
 	while (res == 0) {
 		if (curEntry.INodeID != -1) {
 			printf("filling %s\n", curEntry.key);
-			offset += entryL;
+			offset ++;
 			if (filler(buf, curEntry.key, NULL, offset) == 1) {
 				printf("fuse_filler buf full!\n");
 				break;
@@ -54,8 +54,8 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			printf("%s\n", (char *)buf);
 			return 0;
 		}
-		offset += entryL;
-		res = l2_readdir(&fs, path, offset / entryL, &curEntry);
+		offset ++;
+		res = l2_readdir(&fs, path, offset, &curEntry);
 	}
 	if (res == -1)
 		return -ENOENT;
