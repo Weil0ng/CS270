@@ -376,9 +376,8 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
 INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len) {
     #ifdef DEBUG
     assert(offset <= inode->_in_filesize);
-    assert(offset + len <= inode->_in_filesize);
     #else
-    if(offset >= inode->_in_filesize || offset + len > inode->_in_filesize) {
+    if(offset >= inode->_in_filesize) {
         fprintf(stderr, "Error: readINodeData offset %d with length %d exceeds file size %d!\n", offset, len, inode->_in_filesize);
         return -1;
     }
@@ -402,9 +401,10 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     //compute start block id
     INT dataBlkId = bmap(fs, inode, fileBlkId);
-    #ifdef DEBUG
-    assert(dataBlkId >= 0);
-    #endif
+    if (dataBlkId < 0) {
+	printf("reading from 0 length file!\n");
+	return 0;
+    }
     
     //special case to handle offset in the middle of first block
     if(offset > 0) {
@@ -434,7 +434,8 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         //read next block into buf
         if(len <= BLK_SIZE) {
             //end of read falls within block
-            readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len);
+	    UINT res = inode->_in_filesize % BLK_SIZE;
+            readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len<res?len:res);
             
             //update len (end of read)
             bytesRead += len;

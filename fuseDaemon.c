@@ -92,17 +92,17 @@ static int l3_rename(const char *path, const char *new_path)
 
 static int l3_chmod(const char *path, mode_t mode)
 {
-	;
+	return 0;
 }
 
 static int l3_chown(const char *path, uid_t uid, gid_t gid)
 {
-	;
+	return 0;
 }
 
 static int l3_truncate(const char *path, off_t offset)
 {
-	;
+	return 0;;
 }
 
 static int l3_open(const char *path, struct fuse_file_info *fi)
@@ -135,7 +135,7 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
-	printf("trying to read %s\n", path);
+	printf("trying to read %s, offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 

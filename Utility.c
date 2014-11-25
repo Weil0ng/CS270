@@ -10,7 +10,7 @@ ERROR _err_last;
 
 void THROW(const char *fname, int lineno, const char *fxname)
 {
-  printf("Error in %s, line %d, %s:\n", fname, lineno, fxname);
+  /*printf("Error in %s, line %d, %s:\n", fname, lineno, fxname);
   switch(_err_last) {
   case _dsk_initFail: {
     printf("Disk init failed!\n");
@@ -62,7 +62,7 @@ void THROW(const char *fname, int lineno, const char *fxname)
   }
   default: break;
   }
-  return;
+  return;*/
 }
 
 void shuffle(int* array, int n) {
