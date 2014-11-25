@@ -695,63 +695,118 @@ INT l2_unlink(FileSystem* fs, char* path) {
 
 INT l2_rename(FileSystem* fs, char* path, char* new_path) {
 
-    INT par_id; // the inode id of the parent directory
+    printf("Enter l2_rename, move from %s to %s\n", path, new_path);
+
+    INT par_id, new_par_id;
     char par_path[MAX_PATH_LEN];
-   
+    char new_par_path[MAX_PATH_LEN];
     char *ptr;
     char *new_ptr;
     int ch = '/';
 
-    // find the last recurrence of '/'
+    // find the old parent path
     ptr = strrchr(path, ch);
     strncpy(par_path, path, strlen(path) - strlen(ptr));
     par_path[strlen(path) - strlen(ptr)] = '\0';
-   
-    // ptr = "/node_name"
-    char *node_name = strtok(ptr, "/");
-
-    // new_ptr = "/new_node_name"
-    new_ptr = strrchr(new_path, ch);
-    char *new_node_name = strtok(new_ptr, "/");
-   
     // special case for root
     if(strcmp(par_path, "") == 0) {
         strcpy(par_path, "/");
     }
-
-    // find the inode id of the parent directory
+    // ptr = "/node_name"
+    char *node_name = strtok(ptr, "/");
+   
     par_id = l2_namei(fs, par_path);
-    if(par_id < 0) { // parent directory does not exist
+    if(par_id == -1) { // parent directory does not exist
         fprintf(stderr, "Directory %s not found!\n", par_path);
-        return par_id;
+        return -1;
     }
-    else {
-        INode par_inode;
+    
+    INode par_inode;
 
-        // read the parent inode
-        if(readINode(fs, par_id, &par_inode) == -1) {
-            fprintf(stderr, "Error: fail to read parent directory inode %d\n", par_id);
-            return -1;
-        }
+    // read the parent inode
+    if(readINode(fs, par_id, &par_inode) == -1) {
+        fprintf(stderr, "Error: fail to read old parent directory inode %d\n", par_id);
+        return -1;
+    }
+    
+    
+    INT node_id;
+    for(UINT i = 0; i < par_inode._in_filesize; i += sizeof(DirEntry)) {
+        // search parent directory table
+        DirEntry entry;
+        readINodeData(fs, &par_inode, (BYTE*) &entry, i, sizeof(DirEntry));
 
-        UINT offset;
-        for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
-            // search parent directory table
-            DirEntry entry;
-            readINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
+        // directory entry found, mark it as removed
+        if (strcmp(entry.key, node_name) == 0){
+            #ifdef DEBUG
+            printf("File/Dir to be moved found at offset: %d\n", i);
+            #endif
+            node_id = entry.INodeID;
+            strcpy(entry.key, "");
+            entry.INodeID = -1;
 
-            // directory entry found, mark it as removed
-            if (strcmp(entry.key, node_name) == 0){
-                #ifdef DEBUG
-                printf("File to be renamed found at offset: %d\n", offset);
-                #endif
-                strcpy(entry.key, new_node_name);
-
-                // update the parent directory table
-                writeINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
-            }
+            // update the parent directory table
+            writeINodeData(fs, &par_inode, (BYTE*) &entry, i, sizeof(DirEntry));
         }
     }
+
+    // find the new parent path
+    new_ptr = strrchr(new_path, ch);
+    strncpy(new_par_path, new_path, strlen(new_path) - strlen(new_ptr));
+    new_par_path[strlen(new_path) - strlen(new_ptr)] = '\0';
+
+    printf("new path = %s, new parent path = %s\n", new_path, new_par_path);
+
+    // new_ptr = "/new_node_name"
+    char *new_node_name = strtok(new_ptr, "/");
+   
+    // special case for root
+    if(strcmp(new_par_path, "") == 0) {
+        strcpy(new_par_path, "/");
+    }
+
+    new_par_id = l2_namei(fs, new_par_path);
+    
+    INode new_par_inode;
+    if(readINode(fs, new_par_id, &new_par_inode) == -1) {
+        fprintf(stderr, "Error: fail to read new parent directory inode %d\n", new_par_id);
+        return -1;
+    }
+
+    // insert new directory entry into parent directory list
+    DirEntry newEntry;
+    strcpy(newEntry.key, new_node_name);
+    newEntry.INodeID = node_id;
+    printf("node name = %s, node_id = %d\n", newEntry.key, newEntry.INodeID);
+
+    UINT j;
+    for(j = 0; j < new_par_inode._in_filesize; j += sizeof(DirEntry)) {
+        // search parent directory table
+        DirEntry parEntry;
+        readINodeData(fs, &new_par_inode, (BYTE*) &parEntry, j, sizeof(DirEntry));
+        
+        // empty directory entry found, overwrite it
+        if (parEntry.INodeID == -1){
+            break;
+        }
+    }
+    
+    INT bytesWritten = writeINodeData(fs, &new_par_inode, (BYTE*) &newEntry, j, sizeof(DirEntry));
+    
+    printf("byteswritten = %d, and afterwards inode table size = %d\n", bytesWritten, new_par_inode._in_filesize);
+    if(bytesWritten != sizeof(DirEntry)) {
+        fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
+        return -1;
+    }
+
+    // update parent directory file size, if it changed
+    if(j + bytesWritten > new_par_inode._in_filesize) {
+        new_par_inode._in_filesize = j + bytesWritten;
+        writeINode(fs, new_par_id, &new_par_inode);
+    }
+
+    // update the disk inode
+    writeINode(fs, new_par_id, &new_par_inode);
 	
     return 0;
 }
