@@ -88,6 +88,7 @@ static int l3_rename(const char *path, const char *new_path)
 {
 	printf("old name: %s\n", path);
 	printf("new name: %s\n", new_path);
+	return l2_rename(&fs, path, new_path);
 }
 
 static int l3_chmod(const char *path, mode_t mode)

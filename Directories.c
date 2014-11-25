@@ -655,6 +655,11 @@ INT l2_unlink(FileSystem* fs, char* path) {
     return 0;
 }
 
+INT l2_rename(FileSystem* fs, char* path, char* new_path) {
+	
+    return 0;
+}
+
 INT l2_open(FileSystem* fs, char* path) {
     //addOpenFileEntry(&fs->openFileTable, path);
     return 0;

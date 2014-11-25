@@ -34,6 +34,9 @@ INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry);
 // deletes a file or directory
 INT l2_unlink(FileSystem* fs, char* path);
 
+// mv
+INT l2_rename(FileSystem* fs, char* path);
+
 // opens a file
 INT l2_open(FileSystem* fs, char* path);
 
