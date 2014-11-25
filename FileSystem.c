@@ -482,6 +482,7 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
     inode_d->_in_filesize = inode->_in_filesize;
     inode_d->_in_uid = inode->_in_uid;
     inode_d->_in_gid = inode->_in_gid;
+    inode_d->_in_linkcount = inode->_in_linkcount;
 
     for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
         inode_d->_in_directBlocks[i] = inode->_in_directBlocks[i];
