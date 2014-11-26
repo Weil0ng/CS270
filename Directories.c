@@ -927,7 +927,7 @@ INT l2_namei(FileSystem *fs, char *path)
     //  while (strcmp((curDir[curDirEntry]).key, "") != 0) 
     for (curDirEntry = 0; curDirEntry < (curINode._in_filesize / sizeof(DirEntry)) && !entryFound; curDirEntry ++) {
       DirEntry *DEntry = (DirEntry *) (curDir + curDirEntry*sizeof(DirEntry));
-      if (strcmp(tok, DEntry->key) == 0) {
+      if (strcmp(tok, DEntry->key) == 0 && DEntry->INodeID != -1) {
         entryFound = true;
         curID = DEntry->INodeID; // move pointer to the next inode of dir or file
         //printf("find the inode for %s, its inode id = %d\n", tok, curID);

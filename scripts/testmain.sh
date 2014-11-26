@@ -6,6 +6,7 @@ usage() {
 
 numDir=100
 numFile=100
+bigFileSize=5
 unset opt
 
 getopts ":c:" opt
@@ -23,5 +24,10 @@ case $OPTARG in
   touch)
     echo "test touch"
     sh ./touch.sh $numFile
+    ;;
+  big)
+    echo "test bigFile"
+    sh ./bigFile.sh $bigFileSize
+    ;;
 esac
 
