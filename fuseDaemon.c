@@ -65,13 +65,15 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return l2_mknod(&fs, path, fctx->uid, fctx->gid);
+	INT res = l2_mknod(&fs, path, fctx->uid, fctx->gid);
+	return res>0?0:res;
 }
 
 static int l3_mkdir(const char *path, mode_t mode)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return l2_mkdir(&fs, path, fctx->uid, fctx->gid);
+	INT res = l2_mkdir(&fs, path, fctx->uid, fctx->gid);
+	return res>0?0:res;
 }
 
 static int l3_unlink(const char *path)
