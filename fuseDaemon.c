@@ -136,7 +136,7 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
-	printf("trying to read %s, offset: %u for size: %u\n", path, offset, size);
+	printf("Calling l2_read for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 

@@ -736,6 +736,9 @@ INT l2_close(FileSystem* fs, char* path) {
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 // 6. write back inode
 INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+  #ifdef DEBUG
+  printf("l2_read received with numBytes %d\n", numBytes);
+  #endif
   INT returnSize = 0;
   INode curINode;
   //1. resolve path
