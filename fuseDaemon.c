@@ -139,12 +139,14 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
-	printf("trying to read %s, offset: %u for size: %u\n", path, offset, size);
+	printf("Calling l2_read for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 
 static int l3_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+    printf("l3_write received buffer to write: %s\n", buf);
+	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_write(&fs, path, offset, buf, size);
 }
 

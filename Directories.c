@@ -819,6 +819,9 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //6. write back INode
     writeINode(fs, curINodeID, &curINode);
   }
+  #ifdef DEBUG
+  printf("l2_read successfully read %d bytes\n", returnSize);
+  #endif
   return returnSize; 
 }
 
@@ -829,7 +832,6 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //4. call writeINodeData
 //5. modify inode if necessary
 INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
-  printf("writing %d bytes to %s with offset %d\n", numBytes, path, offset);
   INode curINode;
   INT bytesWritten = 0;
   //1. resolve path
@@ -847,12 +849,17 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
     bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
     printf("bytesWritten: %d\n", bytesWritten);
     //5. modify inode
-    curINode._in_filesize += bytesWritten;
-    printf("update filesize to be %d\n", curINode._in_filesize);
+    if(offset + bytesWritten > curINode._in_filesize) {
+        curINode._in_filesize = offset + bytesWritten;
+        printf("update filesize to be %d\n", curINode._in_filesize);
+    }
     curINode._in_modtime = time(NULL);
     //update INode
     writeINode(fs, curINodeID, &curINode);
   }
+  #ifdef DEBUG
+  printf("l2_write successfully wrote %d bytes\n", bytesWritten);
+  #endif
   return bytesWritten;
 }
 
@@ -888,6 +895,9 @@ INT l2_utimens(FileSystem *fs, char *path, struct timespec tv[2])
 // 3. scan through to find next tok's id
 INT l2_namei(FileSystem *fs, char *path)
 {
+  #ifdef DEBUG
+  printf("Resolving path \"%s\" using namei...\n", path);
+  #endif
   char local_path[MAX_PATH_LEN]; // cannot use "path" directly, namei will truncate it
   strcpy(local_path, path);
 
@@ -945,6 +955,9 @@ INT l2_namei(FileSystem *fs, char *path)
     //1. advance in traversal
     tok = strtok(NULL, "/");
   }
+  #ifdef DEBUG
+  printf("Namei succeeded with id: %d\n", curID);
+  #endif
   return curID;
 }
 
