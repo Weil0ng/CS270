@@ -827,6 +827,9 @@ INT l2_utimens(FileSystem *fs, char *path, struct timespec tv[2])
 // 3. scan through to find next tok's id
 INT l2_namei(FileSystem *fs, char *path)
 {
+  #ifdef DEBUG
+  printf("Resolving path \"%s\" using namei...\n", path);
+  #endif
   char local_path[MAX_PATH_LEN]; // cannot use "path" directly, namei will truncate it
   strcpy(local_path, path);
 
@@ -884,6 +887,9 @@ INT l2_namei(FileSystem *fs, char *path)
     //1. advance in traversal
     tok = strtok(NULL, "/");
   }
+  #ifdef DEBUG
+  printf("Namei succeeded with id: %d\n", curID);
+  #endif
   return curID;
 }
 
