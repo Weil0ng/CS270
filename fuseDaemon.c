@@ -76,12 +76,12 @@ static int l3_mkdir(const char *path, mode_t mode)
 
 static int l3_unlink(const char *path)
 {
-	return (int)l2_unlink(&fs, path);
+	return l2_unlink(&fs, path);
 }
 
 static int l3_rmdir(const char *path)
 {
-	;
+	return l2_unlink(&fs, path);
 }
 
 static int l3_rename(const char *path, const char *new_path)

@@ -538,15 +538,17 @@ INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry) {
     return 0; 
 }
 
-// remove a file
+// remove a file/remove dir
 INT l2_unlink(FileSystem* fs, char* path) {
 
     // 1. get the inode of the parent directory using l2_namei
     // 2. clears the corresponding entry in the parent directory table, write
-    // inode number to 0 (or -1)
+    // inode number to -1
     // 3. write the parent inode back to disk
     // 4. decrement file inode link count, write to disk
-    // 5. if file link count = 0, release the inode and the data blocks (free)
+    // 5. if file link count = 0, 
+    //   5.1 if file is reg file, release the inode and the data blocks
+    //   5.2 if file is dir, recursively release all the concerned inodes and DBlks
     #ifdef DEBUG
     printf("Unlinking file path: %s\n", path);
     #endif
@@ -602,25 +604,6 @@ INT l2_unlink(FileSystem* fs, char* path) {
             return -1;
         }
 
-        UINT offset;
-        for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
-            // search parent directory table
-            DirEntry entry;
-            readINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
-            
-            // directory entry found, mark it as removed
-            if (strcmp(entry.key, node_name) == 0){
-                #ifdef DEBUG
-                printf("File to be unlinked found at offset: %d\n", offset);
-                #endif
-                //strcpy(DEntry->key, "");
-                entry.INodeID = -1;
-                
-                // update the parent directory table
-                writeINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
-            }
-        }
-       
         //weilong: update parent dir size
         /*par_inode._in_filesize -= sizeof(DirEntry);
 	if (writeINode(fs, par_id, &par_inode) == -1) {
@@ -638,8 +621,8 @@ INT l2_unlink(FileSystem* fs, char* path) {
         // TODO: does mkdir/mknod increment the linkcount? otherwise this goes
         // to -1
         inode._in_linkcount --;
-        printf("update the link count to this file/directory\n");
 
+	UINT offset = 0;
         // write the file inode to disk
         if (inode._in_linkcount != 0) {
             writeINode(fs, id, &inode);
@@ -647,8 +630,55 @@ INT l2_unlink(FileSystem* fs, char* path) {
         else {
             // free file inode when its link count is 0, which also frees the
             // associated data blocks.
+	    //weilong: remove dir
+	    if (inode._in_type == DIRECTORY) {
+          	// search parent directory table
+		#ifdef DEBUG
+		    printf("rm -r\n");
+		#endif
+		//skip . and ..
+		for(offset = 2*sizeof(DirEntry); offset < inode._in_filesize; offset += sizeof(DirEntry)) {
+            	    DirEntry entry;
+                    readINodeData(fs, &inode, (BYTE*) &entry, offset, sizeof(DirEntry));
+	 	    if (entry.INodeID != -1) {
+			//call unlink
+			char *recur_path = (char *)malloc(strlen(path) + 1 + strlen(entry.key));
+			strcat(recur_path, path);
+			strcat(recur_path, "/");
+			strcat(recur_path, entry.key);
+			#ifdef DEBUG
+			    printf("recursively rm -r %s\n", entry.key);
+			#endif
+			if (l2_unlink(fs, recur_path) != 0) {
+			    _err_last = _fs_recursiveUnlinkFail;
+			    THROW(__FILE__, __LINE__, __func__);
+		            return -1;
+			}
+		    }
+        	}
+	    }
             freeINode(fs, id);
+	    #ifdef DEBUG
             printf("free the inode %d associated with this file/dir\n", id);
+	    #endif
+        }
+	//remove this inode last because we might use it in namei to recurse
+        for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
+            // search parent directory table
+            DirEntry entry;
+            readINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
+            
+            // directory entry found, mark it as removed
+            if (strcmp(entry.key, node_name) == 0){
+                #ifdef DEBUG
+                printf("File to be unlinked found at offset: %d\n", offset);
+                #endif
+                //strcpy(DEntry->key, "");
+                entry.INodeID = -1;
+                
+                // update the parent directory table
+                writeINodeData(fs, &par_inode, (BYTE*) &entry, offset, sizeof(DirEntry));
+            }
         }
     }
 
@@ -724,6 +754,7 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
     readINode(fs, curINodeID, &curINode);
     //4. writeINodeData
     bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
+    printf("bytesWritten: %d\n", bytesWritten);
     //5. modify inode
     curINode._in_filesize += bytesWritten;
     curINode._in_modtime = time(NULL);
