@@ -461,6 +461,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     #ifdef DEBUG
     printf("readINodeData successfully read %d bytes\n", bytesRead);
     printf("Returning buf: %s\n", buf);
+    #endif
     return bytesRead;
 }
 
