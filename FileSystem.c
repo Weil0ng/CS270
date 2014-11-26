@@ -387,7 +387,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     UINT fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
     #ifdef DEBUG
-    printf("readINodeData starting at file block %d with offset %d\n", fileBlkId, offset);
+    printf("readINodeData for len %d at file block %d with offset %d\n", len, fileBlkId, offset);
     #endif
     
     //compute the number of file blocks allocated based on the file size
@@ -434,7 +434,10 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         //read next block into buf
         if(len <= BLK_SIZE) {
             //end of read falls within block
-	    UINT res = inode->_in_filesize % BLK_SIZE;
+            UINT res = inode->_in_filesize % BLK_SIZE;
+            #ifdef DEBUG
+            printf("Reached last dblk, calling readDBlkOffset on id %d with offset %d for len %d\n", dataBlkId, 0, len<res?len:res);
+            #endif
             readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len<res?len:res);
             
             //update len (end of read)
@@ -443,6 +446,9 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         }
         else {
             //read is larger than current block
+            #ifdef DEBUG
+            printf("Not last dblk, calling readDBlk on id %d\n", dataBlkId);
+            #endif
             readDBlk(fs, dataBlkId, buf + bytesRead);
            
             //update len and file block for remaining read
@@ -452,6 +458,9 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         }
     }
     
+    #ifdef DEBUG
+    printf("readINodeData successfully read %d bytes\n", bytesRead);
+    printf("Returning buf: %s\n", buf);
     return bytesRead;
 }
 
