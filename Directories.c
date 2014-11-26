@@ -785,8 +785,10 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
     //4. writeINodeData
     bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
     //5. modify inode
-    curINode._in_filesize += bytesWritten;
-    printf("update filesize to be %d\n", curINode._in_filesize);
+    if(offset + bytesWritten > curINode._in_filesize) {
+        curINode._in_filesize = offset + bytesWritten;
+        printf("update filesize to be %d\n", curINode._in_filesize);
+    }
     curINode._in_modtime = time(NULL);
     //update INode
     writeINode(fs, curINodeID, &curINode);
