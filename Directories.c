@@ -736,9 +736,6 @@ INT l2_close(FileSystem* fs, char* path) {
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 // 6. write back inode
 INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
-  #ifdef DEBUG
-  printf("l2_read received with numBytes %d\n", numBytes);
-  #endif
   INT returnSize = 0;
   INode curINode;
   //1. resolve path
@@ -759,6 +756,9 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //6. write back INode
     writeINode(fs, curINodeID, &curINode);
   }
+  #ifdef DEBUG
+  printf("l2_read successfully read %d bytes\n", returnSize);
+  #endif
   return returnSize; 
 }
 
@@ -769,7 +769,6 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //4. call writeINodeData
 //5. modify inode if necessary
 INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
-  printf("writing %d bytes to %s with offset %d\n", numBytes, path, offset);
   INode curINode;
   INT bytesWritten = 0;
   //1. resolve path
@@ -792,6 +791,9 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
     //update INode
     writeINode(fs, curINodeID, &curINode);
   }
+  #ifdef DEBUG
+  printf("l2_write successfully wrote %d bytes\n", bytesWritten);
+  #endif
   return bytesWritten;
 }
 
