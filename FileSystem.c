@@ -761,7 +761,7 @@ INT writeDBlkOffset(FileSystem* fs, UINT id, BYTE* buf, UINT off, UINT len) {
 // 	4. if reach here, out of range
 INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId) 
 {
-    UINT DBlkID = -1;
+    INT DBlkID = -1;
     if (fileBlkId < INODE_NUM_DIRECT_BLKS) {
         DBlkID = inode->_in_directBlocks[fileBlkId];
         if (DBlkID == -1) {
@@ -834,14 +834,14 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
     UINT count = 0;
     // shortcut: check if already allocated
-    UINT DBlkID = bmap(fs, inode, fileBlkId);
+    INT DBlkID = bmap(fs, inode, fileBlkId);
     if (DBlkID !=  -1 )
         return DBlkID;
     
     UINT cur_internal_index = 0;
     for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) != -1 && cur_internal_index < fileBlkId; cur_internal_index ++);
     
-    UINT newDBlkID = -1;
+    INT newDBlkID = -1;
     BYTE blkBuf[BLK_SIZE];
     UINT entryNum = BLK_SIZE / sizeof(UINT);
     UINT entryNumS = entryNum * entryNum;
