@@ -37,6 +37,9 @@ INT l2_unlink(FileSystem* fs, char* path);
 // mv
 INT l2_rename(FileSystem* fs, char* path, char* new_path);
 
+// chmod
+INT l2_chmod(FileSystem* fs, char* path, mode_t mode);
+
 // opens a file
 INT l2_open(FileSystem* fs, char* path);
 

@@ -387,13 +387,13 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     UINT fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
     #ifdef DEBUG
-    printf("readINodeData starting at file block %d with offset %d\n", fileBlkId, offset);
+    //printf("readINodeData starting at file block %d with offset %d\n", fileBlkId, offset);
     #endif
     
     //compute the number of file blocks allocated based on the file size
     UINT nFileBlks = (inode->_in_filesize + BLK_SIZE - 1) / BLK_SIZE;
     #ifdef DEBUG
-    printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
+    //printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
     #endif
     
     //return bytes read upon completion
