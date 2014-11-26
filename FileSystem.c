@@ -393,6 +393,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     //compute the number of file blocks allocated based on the file size
     UINT nFileBlks = (inode->_in_filesize + BLK_SIZE - 1) / BLK_SIZE;
     #ifdef DEBUG
+    printf("Current file size of inode: %d\n", inode->_in_filesize);
     printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
     #endif
     
