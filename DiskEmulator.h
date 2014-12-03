@@ -11,7 +11,7 @@
 typedef struct
 {
   //# of total disk space in bytes
-  UINT _dsk_size;
+  LONG _dsk_size;
 
   //# of total blocks on this disk
   UINT _dsk_numBlk;

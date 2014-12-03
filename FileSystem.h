@@ -16,7 +16,7 @@ typedef struct FileSystem {
     SuperBlock superblock;
 
     //the size, in bytes, of the whole filesystem
-    UINT nBytes;
+    LONG nBytes;
 
     //logical id of the first inode block
     UINT diskINodeBlkOffset;

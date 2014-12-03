@@ -36,7 +36,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
 
     //compute file system size 
-    UINT nBytes = BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE;
+    LONG nBytes = BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE;
     #ifdef DEBUG 
     printf("Computing file system size...nBytes = %d\n", nBytes); 
     #endif
@@ -44,8 +44,9 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
         fprintf(stderr, "Error: file system size %d exceeds max allowed size %d!\n", nBytes, MAX_FS_SIZE);
         return 1;
     }
-    fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
+    //fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
     
+    fs->nBytes = nBytes;
     //compute offsets for inode/data blocks
     fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + nINodes / INODES_PER_BLK;
