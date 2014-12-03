@@ -12,6 +12,7 @@ typedef enum{
   _fs_NonDirInPath,
   _fs_EndOfDirEntry,
   _fs_NonExistFile,
+  _fs_recursiveUnlinkFail,
   _in_NonAllocDBlk,
   _in_NonAllocIndirectBlk,
   _in_NonAllocDIndirectBlk,

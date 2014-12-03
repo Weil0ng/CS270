@@ -65,23 +65,25 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int l3_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return (l2_mknod(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
+	INT res = l2_mknod(&fs, path, fctx->uid, fctx->gid);
+	return res>0?0:res;
 }
 
 static int l3_mkdir(const char *path, mode_t mode)
 {
 	struct fuse_context* fctx = fuse_get_context();
-	return (l2_mkdir(&fs, path, fctx->uid, fctx->gid) == -1)?-1:0;
+	INT res = l2_mkdir(&fs, path, fctx->uid, fctx->gid);
+	return res>0?0:res;
 }
 
 static int l3_unlink(const char *path)
 {
-	return (int)l2_unlink(&fs, path);
+	return l2_unlink(&fs, path);
 }
 
 static int l3_rmdir(const char *path)
 {
-	;
+	return l2_unlink(&fs, path);
 }
 
 static int l3_rename(const char *path, const char *new_path)
@@ -93,7 +95,8 @@ static int l3_rename(const char *path, const char *new_path)
 
 static int l3_chmod(const char *path, mode_t mode)
 {
-	return 0;
+	printf("l3_chmod with mode: %x\n", mode);
+	return l2_chmod(&fs, path, mode);
 }
 
 static int l3_chown(const char *path, uid_t uid, gid_t gid)
@@ -136,12 +139,14 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
-	printf("trying to read %s, offset: %u for size: %u\n", path, offset, size);
+	printf("Calling l2_read for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 
 static int l3_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+    printf("l3_write received buffer to write: %s\n", buf);
+	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_write(&fs, path, offset, buf, size);
 }
 
@@ -164,7 +169,6 @@ void * l3_mount(struct fuse_conn_info *conn)
         else {
                 printf("Error in mounting file system!");
         }
-	return; 
 }
 
 void * l3_unmount(void *conn)
@@ -176,7 +180,6 @@ void * l3_unmount(void *conn)
         else {
                 printf("Error in unmounting file system!");
         }
-        return;
 }
 
 static struct fuse_operations l3_oper = {

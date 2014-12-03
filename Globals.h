@@ -38,7 +38,7 @@
 
 #define OPEN_FILE_TABLE_LENGTH (1024)   //length of open file table
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
-#define FILE_NAME_LENGTH (16)      //number of bytes in the file name in bytes
+#define FILE_NAME_LENGTH (32)      //number of bytes in the file name in bytes
 
 #define MAX_PATH_LEN (100) //maximum length of the path
 #define MAX_FILE_SIZE (BLK_SIZE * INODE_NUM_DIRECT_BLKS + BLK_SIZE * INODE_NUM_S_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) + BLK_SIZE * INODE_NUM_D_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) * (BLK_SIZE / sizeof(UINT)) + BLK_SIZE * INODE_NUM_T_INDIRECT_BLKS * (BLK_SIZE / sizeof(UINT)) * (BLK_SIZE / sizeof(UINT)) * (BLK_SIZE / sizeof(UINT))) 

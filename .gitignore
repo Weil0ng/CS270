@@ -8,6 +8,7 @@
 InitFS
 fuseDaemon
 TestMain
+Layer2Test
 Layer2MountTest
 Layer1CombinedTest
 Layer0Test

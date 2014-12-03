@@ -44,6 +44,10 @@ void THROW(const char *fname, int lineno, const char *fxname)
     printf("File/Directory does not exist!\n");
     break;
   }
+  case _fs_recursiveUnlinkFail: {
+    printf("Fail to remove file inside folder!\n");
+    break;
+  }
   case _in_NonAllocDBlk: {
     printf("Trying to access block that is not allocated!\n");
     break;
