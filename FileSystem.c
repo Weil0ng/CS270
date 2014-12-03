@@ -695,6 +695,9 @@ INT allocDBlk(FileSystem* fs) {
     }
 
     fs->superblock.nFreeDBlks --;
+    INT initBlk[FREE_DBLK_CACHE_SIZE];
+    memset(initBlk, -1, sizeof(initBlk));
+    writeDBlk(fs, returnID, (BYTE *)initBlk);
     return returnID;
 }
 

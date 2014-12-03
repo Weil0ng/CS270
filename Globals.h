@@ -27,7 +27,7 @@
 
 #define SUPERBLOCK_OFFSET (0) //superblock id, default 0
 
-#define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(UINT)) //In-memory free block cache size, 1 block of ints
+#define FREE_DBLK_CACHE_SIZE (BLK_SIZE / sizeof(INT)) //In-memory free block cache size, 1 block of ints
 #define FREE_INODE_CACHE_SIZE (4) //In-memory inode cache size, 100 = 400 bytes of superblock
 
 #define INODE_OWNER_NAME_LEN (10) // number of characters of the owner name 
