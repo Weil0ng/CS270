@@ -296,23 +296,53 @@ INT freeINode(FileSystem* fs, UINT id) {
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         if(inode._in_dIndirectBlocks[i] != -1) {
-            INT buf_s[BLK_SIZE/sizeof(INT)];
-            readDBlk(fs, inode._in_dIndirectBlocks[i], (BYTE*)buf_s);
+            INT buf_d[BLK_SIZE/sizeof(INT)];
+            readDBlk(fs, inode._in_dIndirectBlocks[i], (BYTE*)buf_d);
             for (UINT j = 0; j < (BLK_SIZE / sizeof(INT)); j ++) {
-                if(buf_s[j] != -1) {
-                    INT buf_d[BLK_SIZE/sizeof(INT)];
-                    readDBlk(fs, buf_s[j], (BYTE*) buf_d);
+                if(buf_d[j] != -1) {
+                    INT buf_s[BLK_SIZE/sizeof(INT)];
+                    readDBlk(fs, buf_d[j], (BYTE*) buf_s);
                     for (UINT k = 0; k < (BLK_SIZE / sizeof(INT)); k ++) {
                         // free the actual data blocks
-                        if(buf_d[k] != -1)
-                            freeDBlk(fs, buf_d[k]);
+                        if(buf_s[k] != -1)
+                            freeDBlk(fs, buf_s[k]);
                     }
                     // free the single indirect blocks
-                    freeDBlk(fs, buf_s[j]);
+                    freeDBlk(fs, buf_d[j]);
                 }
             }
             // free the double indirect blocks
             freeDBlk(fs, inode._in_dIndirectBlocks[i]);
+        }
+    }
+    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
+        if(inode._in_tIndirectBlocks[i] != -1) {
+            INT buf_t[BLK_SIZE/sizeof(INT)];
+            readDBlk(fs, inode._in_tIndirectBlocks[i], (BYTE*)buf_t);
+            for (UINT j = 0; j < (BLK_SIZE / sizeof(INT)); j ++) {
+                if(buf_t[j] != -1) {
+                    INT buf_d[BLK_SIZE/sizeof(INT)];
+                    readDBlk(fs, buf_t[j], (BYTE*) buf_d);
+                    for (UINT k = 0; k < (BLK_SIZE / sizeof(INT)); k ++) {
+                        // free the actual data blocks
+                        if(buf_d[k] != -1) {
+                            INT buf_s[BLK_SIZE/sizeof(INT)];
+                            readDBlk(fs, buf_d[k], (BYTE*) buf_s);
+                            for (UINT m = 0; m < (BLK_SIZE / sizeof(INT)); m ++) {
+                                // free the actual data blocks
+                                if(buf_s[m] != -1)
+                                    freeDBlk(fs, buf_s[m]);
+                            }
+                            // free the single indirect block
+                            freeDBlk(fs, buf_d[k]);
+                        }
+                    }
+                    // free the double indirect blocks
+                    freeDBlk(fs, buf_t[j]);
+                }
+            }
+            // free the triple indirect blocks
+            freeDBlk(fs, inode._in_tIndirectBlocks[i]);
         }
     }
 
@@ -368,6 +398,9 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode->_in_dIndirectBlocks[i] = inode_d->_in_dIndirectBlocks[i];
+    }
+    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
+        inode->_in_tIndirectBlocks[i] = inode_d->_in_tIndirectBlocks[i];
     }
 
     return 0;
@@ -492,6 +525,9 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
     }
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode_d->_in_dIndirectBlocks[i] = inode->_in_dIndirectBlocks[i];
+    }
+    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
+        inode_d->_in_tIndirectBlocks[i] = inode->_in_tIndirectBlocks[i];
     }
 
     // write the entire inode block back to disk
@@ -800,7 +836,7 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 	UINT S_offset = fileBlkId % entryNum;
         UINT D_BlkID = inode -> _in_dIndirectBlocks[D_index];
         if (D_BlkID == -1) {
-            _err_last = _in_NonAllocIndirectBlk;
+            _err_last = _in_NonAllocDIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
         }
@@ -820,6 +856,45 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 	}
 	return *((UINT *)blkBuf + S_offset);
     }
+    UINT entryNumD = entryNumS * entryNum;
+    fileBlkId -= (INODE_NUM_D_INDIRECT_BLKS * entryNumS);
+    if (fileBlkId < INODE_NUM_T_INDIRECT_BLKS * entryNumD) {
+        UINT T_index = fileBlkId / entryNumD;
+        fileBlkId -= T_index * entryNumD;
+        UINT D_index = fileBlkId / entryNumS;
+	fileBlkId -= D_index * entryNumS;
+	UINT S_index = fileBlkId / entryNum;
+	UINT S_offset = fileBlkId % entryNum;
+        UINT T_BlkID = inode -> _in_tIndirectBlocks[T_index];
+        if (T_BlkID == -1) {
+            _err_last = _in_NonAllocTIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+        }
+	BYTE blkBuf[BLK_SIZE];
+	readDBlk(fs, T_BlkID, blkBuf);
+	if (blkBuf[D_index] == -1) {
+	    _err_last = _in_NonAllocDIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+	}
+        UINT D_BlkID = *((UINT *)blkBuf + D_index);
+	readDBlk(fs, D_BlkID, blkBuf);
+	if (blkBuf[S_index] == -1) {
+	    _err_last = _in_NonAllocIndirectBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+	}
+        UINT S_BlkID = *((UINT *)blkBuf + S_index);
+	readDBlk(fs, S_BlkID, blkBuf);
+	if (blkBuf[S_offset] == -1) {
+	     _err_last = _in_NonAllocDBlk;
+            THROW(__FILE__, __LINE__, __func__);
+            return -1;
+	}
+	return *((UINT *)blkBuf + S_offset);
+    }
+
      _err_last = _in_IndexOutOfRange;
      THROW(__FILE__, __LINE__, __func__);
      return -1;
@@ -845,6 +920,7 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     BYTE blkBuf[BLK_SIZE];
     UINT entryNum = BLK_SIZE / sizeof(UINT);
     UINT entryNumS = entryNum * entryNum;
+    UINT entryNumD = entryNumS * entryNum;
 
     // now, cur_internal_index holds the first unallocated entry
     while (cur_internal_index <= fileBlkId) {
@@ -898,7 +974,7 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	}
 	else if ((cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum) < (INODE_NUM_D_INDIRECT_BLKS * entryNumS)) {
 	    UINT D_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum) / entryNumS;
-	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum) / entryNum;
+	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
 	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum) % entryNum;
 	    if (inode->_in_dIndirectBlocks[D_index] == -1) {
 		newDBlkID = allocDBlk(fs);
@@ -910,6 +986,69 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
 	    }
 	    UINT D_BlkID = inode->_in_dIndirectBlocks[D_index];
+	    readDBlk(fs, D_BlkID, blkBuf);
+	    if (*((UINT *)blkBuf + S_index) == -1) {
+	        newDBlkID = allocDBlk(fs);
+                if (newDBlkID == -1) {
+                    _err_last = _fs_DBlkOutOfNumber;
+                    THROW(__FILE__, __LINE__, __func__);
+                    return newDBlkID;
+                }
+		*((UINT *)blkBuf + S_index) = newDBlkID;
+		writeDBlk(fs, D_BlkID, blkBuf);
+	    }
+            //now, alloc the DBlk
+	    if (cur_internal_index == fileBlkId) {
+	        newDBlkID = allocDBlk(fs);
+                if (newDBlkID == -1) {
+                    _err_last = _fs_DBlkOutOfNumber;
+                    THROW(__FILE__, __LINE__, __func__);
+                    return newDBlkID;
+                }
+	    }
+	    else
+		newDBlkID = -1;
+	    UINT S_DBlkID = *((UINT *)blkBuf + S_index);
+	    readDBlk(fs, S_DBlkID, blkBuf);
+	    *((UINT *)blkBuf + S_offset) = newDBlkID;
+	    writeDBlk(fs, S_DBlkID, blkBuf);
+	    count ++;
+	    cur_internal_index ++;
+	}
+	else if ((cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - INODE_NUM_D_INDIRECT_BLKS * entryNumS) 
+                < (INODE_NUM_T_INDIRECT_BLKS * entryNumD)) {
+            UINT T_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                    - INODE_NUM_D_INDIRECT_BLKS * entryNumS) / entryNumD;
+	    UINT D_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                    - INODE_NUM_D_INDIRECT_BLKS * entryNumS - T_index * entryNumD) / entryNumS;
+            assert(D_index < entryNum);
+	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                    - INODE_NUM_D_INDIRECT_BLKS * entryNumS - T_index * entryNumD - D_index * entryNumS) / entryNum;
+            assert(S_index < entryNum);
+	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+	    
+            if (inode->_in_tIndirectBlocks[T_index] == -1) {
+		newDBlkID = allocDBlk(fs);
+                if (newDBlkID == -1) {
+                    _err_last = _fs_DBlkOutOfNumber;
+                    THROW(__FILE__, __LINE__, __func__);
+                    return newDBlkID;
+                }
+		inode->_in_tIndirectBlocks[T_index] = newDBlkID;
+	    }
+	    UINT T_BlkID = inode->_in_tIndirectBlocks[T_index];
+	    readDBlk(fs, T_BlkID, blkBuf);
+	    if (*((UINT *)blkBuf + D_index) == -1) {
+		newDBlkID = allocDBlk(fs);
+                if (newDBlkID == -1) {
+                    _err_last = _fs_DBlkOutOfNumber;
+                    THROW(__FILE__, __LINE__, __func__);
+                    return newDBlkID;
+                }
+		*((UINT *)blkBuf + D_index) = newDBlkID;
+		writeDBlk(fs, T_BlkID, blkBuf);
+	    }
+	    UINT D_BlkID = *((UINT *)blkBuf + D_index);
 	    readDBlk(fs, D_BlkID, blkBuf);
 	    if (*((UINT *)blkBuf + S_index) == -1) {
 	        newDBlkID = allocDBlk(fs);

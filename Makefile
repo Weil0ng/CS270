@@ -15,7 +15,7 @@ fuse: $(OBJS) fuseDaemon
 
 main: $(OBJS) TestMain
 
-test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest
+test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test
 
 InitFS: $(OBJS) InitFS.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -35,9 +35,12 @@ Layer1CombinedTest: $(OBJS) Layer1CombinedTest.o
 Layer2MountTest: $(OBJS) Layer2MountTest.o
 	$(CC) $(CFLAGS) -o $@ $^
 
+Layer2Test: $(OBJS) Layer2Test.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest TestMain fuseDaemon InitFS diskFile diskDump
+	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test TestMain fuseDaemon InitFS diskFile diskDump
 

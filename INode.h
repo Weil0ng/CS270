@@ -47,6 +47,8 @@ typedef struct INode {
 
 	UINT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
 
+        UINT _in_tIndirectBlocks[INODE_NUM_T_INDIRECT_BLKS];
+
 } INode;
 
 UINT initializeINode(INode*, UINT);

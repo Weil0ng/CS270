@@ -25,6 +25,9 @@ UINT initializeINode(INode *inode, UINT id) {
     for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
         inode->_in_dIndirectBlocks[i] = -1;
     }
+    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
+        inode->_in_tIndirectBlocks[i] = -1;
+    }
 
     return 0;
 }

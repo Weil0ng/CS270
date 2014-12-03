@@ -14,6 +14,8 @@ typedef enum{
   _fs_NonExistFile,
   _in_NonAllocDBlk,
   _in_NonAllocIndirectBlk,
+  _in_NonAllocDIndirectBlk,
+  _in_NonAllocTIndirectBlk,
   _in_IndexOutOfRange,
   _in_fileNameTooLong,
   _in_tooManyEntriesInDir,
