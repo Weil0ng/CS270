@@ -1001,6 +1001,7 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
 	    //weilong: mathimatically, since mod, it does not matter if we substract N*entryNum
 	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+            printf("D_Index: %u, S_Index: %u, S_offset: %u\n", D_index, S_index, S_offset);
 	    if (inode->_in_dIndirectBlocks[D_index] == -1) {
 		newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {
