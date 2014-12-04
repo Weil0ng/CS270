@@ -747,6 +747,7 @@ INT freeDBlk(FileSystem* fs, UINT id) {
 // 1. convert logical id of DBlk to logical id of disk block
 // 2. read data
 INT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    printf("readDBlk id: %u\n", id);
     assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
@@ -836,20 +837,20 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
     if (fileBlkId < INODE_NUM_S_INDIRECT_BLKS * entryNum) {
 	UINT S_index = fileBlkId / entryNum;
 	UINT S_offset = fileBlkId % entryNum;
-        UINT S_BlkID = inode -> _in_sIndirectBlocks[S_index];
+        INT S_BlkID = inode -> _in_sIndirectBlocks[S_index];
 	if (S_BlkID == -1) {
 	    _err_last = _in_NonAllocIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
 	    return -1;
 	}
-        BYTE blkBuf[BLK_SIZE];
-	readDBlk(fs, S_BlkID, blkBuf);
+        INT blkBuf[entryNum];
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[S_offset] == -1) {
 	    _err_last = _in_NonAllocDBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
         }
-        return *((UINT *)blkBuf + S_offset);
+        return *(blkBuf + S_offset);
     }
     UINT entryNumS = entryNum * entryNum;
     fileBlkId -= (INODE_NUM_S_INDIRECT_BLKS * entryNum);
@@ -858,27 +859,27 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 	fileBlkId -= D_index * entryNumS;
 	UINT S_Index = fileBlkId / entryNum;
 	UINT S_offset = fileBlkId % entryNum;
-        UINT D_BlkID = inode -> _in_dIndirectBlocks[D_index];
+        INT D_BlkID = inode -> _in_dIndirectBlocks[D_index];
         if (D_BlkID == -1) {
             _err_last = _in_NonAllocDIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
         }
-	BYTE blkBuf[BLK_SIZE];
-	readDBlk(fs, D_BlkID, blkBuf);
+	INT blkBuf[entryNum];
+	readDBlk(fs, D_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[S_Index] == -1) {
 	    _err_last = _in_NonAllocIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
 	}
-        UINT S_BlkID = *((UINT *)blkBuf + S_Index);
-	readDBlk(fs, S_BlkID, blkBuf);
+        INT S_BlkID = *(blkBuf + S_Index);
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[S_offset] == -1) {
 	     _err_last = _in_NonAllocDBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
 	}
-	return *((UINT *)blkBuf + S_offset);
+	return *(blkBuf + S_offset);
     }
     UINT entryNumD = entryNumS * entryNum;
     fileBlkId -= (INODE_NUM_D_INDIRECT_BLKS * entryNumS);
@@ -889,34 +890,34 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 	fileBlkId -= D_index * entryNumS;
 	UINT S_index = fileBlkId / entryNum;
 	UINT S_offset = fileBlkId % entryNum;
-        UINT T_BlkID = inode -> _in_tIndirectBlocks[T_index];
+        INT T_BlkID = inode -> _in_tIndirectBlocks[T_index];
         if (T_BlkID == -1) {
             _err_last = _in_NonAllocTIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
         }
-	BYTE blkBuf[BLK_SIZE];
-	readDBlk(fs, T_BlkID, blkBuf);
+	INT blkBuf[entryNum];
+	readDBlk(fs, T_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[D_index] == -1) {
 	    _err_last = _in_NonAllocDIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
 	}
-        UINT D_BlkID = *((UINT *)blkBuf + D_index);
-	readDBlk(fs, D_BlkID, blkBuf);
+        INT D_BlkID = *(blkBuf + D_index);
+	readDBlk(fs, D_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[S_index] == -1) {
 	    _err_last = _in_NonAllocIndirectBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
 	}
-        UINT S_BlkID = *((UINT *)blkBuf + S_index);
-	readDBlk(fs, S_BlkID, blkBuf);
+        INT S_BlkID = *(blkBuf + S_index);
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf);
 	if (blkBuf[S_offset] == -1) {
 	     _err_last = _in_NonAllocDBlk;
             THROW(__FILE__, __LINE__, __func__);
             return -1;
 	}
-	return *((UINT *)blkBuf + S_offset);
+	return *(blkBuf + S_offset);
     }
 
      _err_last = _in_IndexOutOfRange;
@@ -931,15 +932,17 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 // Steps:
 INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
+    printf("balloc called with %u\n", fileBlkId);
     UINT count = 0;
     // shortcut: check if already allocated
     INT DBlkID = bmap(fs, inode, fileBlkId);
     if (DBlkID !=  -1 )
         return DBlkID;
-    
-    UINT cur_internal_index = 0;
-    for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) != -1 && cur_internal_index < fileBlkId; cur_internal_index ++);
-    
+    printf("bmap done with %d\n", DBlkID);
+    //UINT cur_internal_index = 0;
+    //for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) != -1 && cur_internal_index < fileBlkId; cur_internal_index ++);
+    UINT cur_internal_index = fileBlkId;    
+
     INT newDBlkID = -1;
     BYTE blkBuf[BLK_SIZE];
     UINT entryNum = BLK_SIZE / sizeof(UINT);
@@ -1001,7 +1004,7 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
 	    //weilong: mathimatically, since mod, it does not matter if we substract N*entryNum
 	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
-            printf("D_Index: %u, S_Index: %u, S_offset: %u\n", D_index, S_index, S_offset);
+            printf("D_Index: %u, S_Index: %u, S_offset: %u, cur_internal_index: %u\n", D_index, S_index, S_offset, cur_internal_index);
 	    if (inode->_in_dIndirectBlocks[D_index] == -1) {
 		newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {
