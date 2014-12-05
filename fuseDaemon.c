@@ -88,14 +88,23 @@ static int l3_rmdir(const char *path)
 
 static int l3_rename(const char *path, const char *new_path)
 {
+<<<<<<< HEAD
 	//printf("old name: %s\n", path);
 	//printf("new name: %s\n", new_path);
+=======
+	#ifdef DEBUG
+	printf("old name: %s\n", path);
+	printf("new name: %s\n", new_path);
+	#endif
+>>>>>>> fix fuse interface to l2_open and l2_close
 	return l2_rename(&fs, path, new_path);
 }
 
 static int l3_chmod(const char *path, mode_t mode)
 {
+	#ifdef DEBUG
 	printf("l3_chmod with mode: %x\n", mode);
+	#endif
 	return l2_chmod(&fs, path, mode);
 }
 
@@ -121,7 +130,12 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
 		return -EACCES;
 	*/
 	printf("trying to open %s\n", path);
-	return (int)l2_open(&fs, path);
+	return (int)l2_open(&fs, path, fi->flags);
+}
+
+static int l3_release(const char *path, struct fuse_file_info *fi)
+{
+	return (int)l2_close(&fs, path, fi->flags);
 }
 
 static int l3_read(const char *path, char *buf, size_t size, off_t offset,
@@ -141,7 +155,9 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 	} else
 		size = 0;
 	*/
+	#ifdef DEBUG
 	printf("Calling l2_read for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
+	#endif
 	return (int)l2_read(&fs, path, offset, buf, size);
 }
 
@@ -186,6 +202,7 @@ static struct fuse_operations l3_oper = {
 	.chown		= l3_chown,
 	.truncate	= l3_truncate,
 	.open		= l3_open,
+	.release	= l3_release,
 	.read		= l3_read,
 	.write		= l3_write,
 	.utimens	= l3_utimens,
