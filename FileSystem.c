@@ -1113,7 +1113,12 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    return -1;
 	}
     }
+
+#ifdef TRUNCATE_DEBUG
+    printf("balloc allocated datablk %d\n", newDBlkID);
+#endif 
     return newDBlkID;
+
 }
 
 // Functionality:
@@ -1226,6 +1231,143 @@ INT old_balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     return newDBlkID;
 }
 
+INT bfree(FileSystem *fs, INode* inode, UINT fileBlkId) {
+    printf("bfree called with %u\n", fileBlkId);
+    INT DBlkID = bmap(fs, inode, fileBlkId);
+    if (DBlkID ==  -1 ) {
+        fprintf(stderr, "Cannot free an unallocated fileBlkId %d\n", fileBlkId);
+        return -1;
+    }
+    printf("bmap done with %d\n", DBlkID);
+
+    UINT cur_internal_index = fileBlkId;    
+    
+    UINT entryNum = BLK_SIZE / sizeof(UINT);
+    UINT entryNumS = entryNum * entryNum;
+    UINT entryNumD = entryNumS * entryNum;
+    UINT blkBuf_t[entryNum];
+    UINT blkBuf_d[entryNum];
+    UINT blkBuf_s[entryNum];
+
+    if(cur_internal_index >= INODE_NUM_DIRECT_BLKS + INODE_NUM_S_INDIRECT_BLKS * entryNum + INODE_NUM_D_INDIRECT_BLKS * entryNumS) {
+    
+        UINT T_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                - INODE_NUM_D_INDIRECT_BLKS * entryNumS) / entryNumD;
+        assert(T_index < INODE_NUM_T_INDIRECT_BLKS);
+        UINT D_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                - INODE_NUM_D_INDIRECT_BLKS * entryNumS - T_index * entryNumD) / entryNumS;
+        assert(D_index < entryNum);
+        UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum
+                - INODE_NUM_D_INDIRECT_BLKS * entryNumS - T_index * entryNumD - D_index * entryNumS) / entryNum;
+        assert(S_index < entryNum);
+        UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+	    
+        UINT T_BlkID = inode->_in_tIndirectBlocks[T_index];
+	readDBlk(fs, T_BlkID, (BYTE*) blkBuf_t);
+        if (blkBuf_t[D_index] == -1) {
+            fprintf(stderr, "ERROR: unallocated triple indirect block\n");
+            return -1;
+        }
+        UINT D_BlkID = blkBuf_t[D_index];
+	readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+        if (blkBuf_d[S_index] == -1) {
+            fprintf(stderr, "ERROR: unallocated double indirect block\n");
+            return -1;
+        }
+        UINT S_BlkID = blkBuf_d[S_index];
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        // free the data block
+        freeDBlk(fs, blkBuf_s[S_offset]);
+        // mark the corresponding entry in the S_indirecct blk as -1
+        blkBuf_s[S_offset] = -1;
+        writeDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        if(S_offset == 0) {
+            freeDBlk(fs, S_BlkID);
+            blkBuf_d[S_index] = -1;
+            writeDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+            if (S_index == 0) {
+                freeDBlk(fs, D_BlkID);
+                blkBuf_t[D_index] = -1;
+                writeDBlk(fs, T_BlkID, (BYTE *)blkBuf_t);
+                if(D_index == 0) {
+                    freeDBlk(fs, T_BlkID);
+                    inode->_in_tIndirectBlocks[T_index] = -1;
+                }
+
+            }
+
+        }
+    }
+    else if (cur_internal_index >= INODE_NUM_DIRECT_BLKS + INODE_NUM_S_INDIRECT_BLKS * entryNum) {
+        UINT D_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum) / entryNumS;
+        UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
+        UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+        
+        UINT D_BlkID = inode->_in_dIndirectBlocks[D_index];
+	readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+        if (blkBuf_d[S_index] == -1) {
+            fprintf(stderr, "ERROR: unallocated double indirect block\n");
+            return -1;
+        }
+        UINT S_BlkID = blkBuf_d[S_index];
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        // free the data block
+        freeDBlk(fs, blkBuf_s[S_offset]);
+        // mark the corresponding entry in the S_indirecct blk as -1
+        blkBuf_s[S_offset] = -1;
+        writeDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        if(S_offset == 0) {
+            freeDBlk(fs, S_BlkID);
+            blkBuf_d[S_index] = -1;
+            writeDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+            if (S_index == 0) {
+                freeDBlk(fs, D_BlkID);
+                inode->_in_dIndirectBlocks[D_index] = -1;
+            }
+
+        }
+    }
+    else if (cur_internal_index >= INODE_NUM_DIRECT_BLKS) {
+        UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS) / entryNum;
+        UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+
+#ifdef TRUNCATE_DEBUG
+        printf("In the range of Single indirect block, S_index = %u, S_offset = %u\n", S_index, S_offset);
+#endif
+        UINT S_BlkID = inode->_in_sIndirectBlocks[S_index];
+	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        // free the data block
+        freeDBlk(fs, blkBuf_s[S_offset]);
+#ifdef TRUNCATE_DEBUG
+        printf("free data block %u\n", blkBuf_s[S_offset]);
+#endif
+        // mark the corresponding entry in the S_indirecct blk as -1
+        blkBuf_s[S_offset] = -1;
+        writeDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+
+        if(S_offset == 0) {
+#ifdef TRUNCATE_DEBUG
+            printf("free data block %u\n", S_BlkID);
+#endif
+            freeDBlk(fs, S_BlkID);
+            inode->_in_sIndirectBlocks[S_index] = -1;
+        }
+    }
+    else {
+        freeDBlk(fs, inode->_in_directBlocks[cur_internal_index]);
+#ifdef TRUNCATE_DEBUG
+        printf("free datablock %d\n",inode->_in_directBlocks[cur_internal_index]);
+#endif
+        inode->_in_directBlocks[cur_internal_index] = -1;
+    }
+
+    return 0;
+}
 #ifdef DEBUG
 void printINodes(FileSystem* fs) {
     for(UINT i = 0; i < fs->superblock.nINodes; i++) {

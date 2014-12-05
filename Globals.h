@@ -8,6 +8,10 @@
 #define DEBUG
 #endif
 
+#ifndef TRUNCATE_DEBUG
+#define TRUNCATE_DEBUG
+#endif
+
 //disk partition path
 #define DISK_PATH "diskFile"
 

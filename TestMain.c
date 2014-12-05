@@ -61,6 +61,14 @@ int main(int args, char* argv[])
             
             l2_mknod(&fs, path, 0, 0);
         }
+        else if (strcmp(command, "truncate") == 0) {
+            printf("Enter file path: ");
+            scanf("%s", path);
+            printf("Enter file offset: ");
+            scanf("%d", &offset);
+            
+            l2_truncate(&fs, path, offset);
+        }
         else if(strcmp(command, "readdir") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);

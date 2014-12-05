@@ -40,6 +40,9 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path);
 // chmod
 INT l2_chmod(FileSystem* fs, char* path, mode_t mode);
 
+// truncate
+INT l2_truncate(FileSystem* fs, char* path, INT new_length);
+
 // opens a file
 INT l2_open(FileSystem* fs, char* path);
 

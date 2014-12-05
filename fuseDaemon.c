@@ -106,7 +106,8 @@ static int l3_chown(const char *path, uid_t uid, gid_t gid)
 
 static int l3_truncate(const char *path, off_t offset)
 {
-	return 0;;
+        printf("truncate %s to be length %u\n", path, offset);
+	return l2_truncate(&fs, path, offset);;
 }
 
 static int l3_open(const char *path, struct fuse_file_info *fi)

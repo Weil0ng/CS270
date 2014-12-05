@@ -836,6 +836,125 @@ INT l2_chmod(FileSystem* fs, char* path, UINT mode)
     return 0;
 }
 
+// truncate a file
+INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
+    // namei to find the inode
+    // compare the filesize with new-length
+    // if new_length > filesize, extend the file, balloc
+    // else if they are equal, do nothing
+    // else, truncate the file, free the data blocks and blocks in the inodes
+#ifdef TRUNCATE_DEBUG
+        printf("Enter l2_truncate, new file to size %d\n", new_length);
+#endif
+    
+    UINT INodeID = l2_namei(fs, path);
+    if (INodeID< 0) {
+	_err_last = _fs_NonExistFile;
+	THROW(__FILE__, __LINE__, __func__);
+	return INodeID;
+    }
+    INode curINode;
+    if(readINode(fs, INodeID, &curINode) == -1) {
+        fprintf(stderr, "Error: fail to read inode for file %s\n", path);
+        return -1;
+    }
+
+    if (new_length > curINode._in_filesize) {
+#ifdef TRUNCATE_DEBUG
+        printf("in l2_truncate, start extend the file to size %d\n", new_length);
+#endif
+        // extend the file
+        // len of bytes to be extended
+        INT len = new_length - curINode._in_filesize;
+        // next file blk to be allocated
+        UINT fileBlkId = (curINode._in_filesize - 1 + BLK_SIZE) / BLK_SIZE;
+
+        // special case, extend the filelength without allocating a new blk
+        if ((new_length - 1 + BLK_SIZE) / BLK_SIZE == (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE) {
+        //    curINode._in_filesize = new_length;
+            len = 0;
+        }
+        else {
+            len -= fileBlkId * BLK_SIZE - curINode._in_filesize;
+        //    fileBlkId ++;
+        }
+
+        INT dataBlkId;
+        while (len > 0 && fileBlkId < MAX_FILE_BLKS)  {
+            dataBlkId = balloc(fs, &curINode, fileBlkId);
+#ifdef TRUNCATE_DEBUG
+            printf("fileblk %d is extended! \n", fileBlkId);
+#endif
+            if(dataBlkId < 0) {
+                printf("Warning: could not allocate more data blocks for truncate!\n");
+                return -1;
+            }
+
+            if(len <= BLK_SIZE) {
+                len = 0;
+            }
+            else {
+
+                len -= BLK_SIZE;
+                fileBlkId ++;
+            }
+        }
+    }
+    else if (new_length == curINode._in_filesize) {
+        // do nothing
+        ;
+    }
+    else {
+#ifdef TRUNCATE_DEBUG
+        printf("in l2_truncate, start truncate the file to size %d\n", new_length);
+#endif
+        // truncate it
+        // len of bytes to be truncated
+        INT len = curINode._in_filesize - new_length;
+        // next file blk to be truncated
+        UINT fileBlkId = (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE - 1;
+#ifdef TRUNCATE_DEBUG
+        printf("the first fileblk to be truncated: %d\n", fileBlkId);
+#endif
+        if ((new_length - 1 + BLK_SIZE) / BLK_SIZE == (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE) {
+        //    curINode._in_filesize = new_length;
+            len = 0;
+        }
+        else {
+            len -= curINode._in_filesize - fileBlkId * BLK_SIZE;
+            bfree(fs, &curINode, fileBlkId);
+#ifdef TRUNCATE_DEBUG
+            printf("fileblk %d is truncated! \n", fileBlkId);
+#endif
+            fileBlkId --;
+        }
+        
+        while (len > 0 && fileBlkId >= 0)  {
+
+            if(len <BLK_SIZE) {
+                len = 0;
+            }
+            else {
+                bfree(fs, &curINode, fileBlkId);
+#ifdef TRUNCATE_DEBUG
+                printf("fileblk %d is truncated! \n", fileBlkId);
+#endif
+                len -= BLK_SIZE;
+                fileBlkId --;
+            }
+        }
+    }
+
+    curINode._in_filesize = new_length;
+    if(writeINode(fs, INodeID, &curINode) == -1) {
+        fprintf(stderr, "Error: fail to write inode for file %s\n", path);
+        return -1;
+    }
+
+    return 0;
+}
+
+
 INT l2_open(FileSystem* fs, char* path) {
     //addOpenFileEntry(&fs->openFileTable, path);
     return 0;

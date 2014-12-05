@@ -88,6 +88,9 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId);
 // map flattened index to internal index of the inode
 INT balloc(FileSystem*, INode *, UINT);
 
+// free file blk in an inode
+INT bfree(FileSystem*, INode *, UINT);
+
 #ifdef DEBUG
 // prints all the inodes for debugging
 void printINodes(FileSystem*);
