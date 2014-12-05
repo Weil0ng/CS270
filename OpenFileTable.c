@@ -3,29 +3,38 @@
 
 #include "OpenFileTable.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
-BOOL addOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op, INodeEntry* inode)
+OpenFileEntry* addOpenFileEntry(OpenFileTable* table, char* path, INodeEntry* inode)
 {
     //initialize new entry
     OpenFileEntry* newEntry = malloc(sizeof(OpenFileEntry));
     strcpy(newEntry->filePath, path);
-    newEntry->fileOp = op;
     newEntry->inodeEntry = inode;
+    for(UINT i = 0; i < 3; i++) {
+        newEntry->fileOp[i] = 0;
+    }
     
     //stack insert at linked list head
     newEntry->next = table->head;
     table->head = newEntry;
     table->nOpenFiles++;
     
-    return true;
+    return newEntry;
 }
 
-OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
+UINT addOpenFileOperation(OpenFileEntry* entry, enum FILE_OP op)
+{
+    entry->fileOp[op]++;
+    return entry->fileOp[OP_READ] + entry->fileOp[OP_WRITE] + entry->fileOp[OP_READWRITE];
+}
+
+OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path)
 {
     OpenFileEntry* curEntry = table->head;
     while(curEntry != NULL) {
-        if(strcmp(curEntry->filePath, path) == 0 && curEntry->fileOp == op)
+        if(strcmp(curEntry->filePath, path) == 0)
             return curEntry;
         curEntry = curEntry->next;
     }
@@ -33,12 +42,19 @@ OpenFileEntry* getOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP o
     return NULL;
 }
 
-BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
+UINT removeOpenFileOperation(OpenFileEntry* entry, enum FILE_OP op)
+{
+    assert(entry->fileOp[op] > 0);
+    entry->fileOp[op]--;
+    return entry->fileOp[OP_READ] + entry->fileOp[OP_WRITE] + entry->fileOp[OP_READWRITE];
+}
+
+BOOL removeOpenFileEntry(OpenFileTable* table, char* path)
 {
     OpenFileEntry* prevEntry = NULL;
     OpenFileEntry* curEntry = table->head;
     while(curEntry != NULL) {
-        if(strcmp(curEntry->filePath, path) == 0 && curEntry->fileOp == op) {
+        if(strcmp(curEntry->filePath, path) == 0) {
             //linked list remove
             if(prevEntry == NULL)
                 table->head = curEntry->next;
@@ -59,8 +75,8 @@ BOOL removeOpenFileEntry(OpenFileTable* table, char* path, enum FILE_OP op)
 #include <stdio.h>
 void printOpenFileEntry(OpenFileEntry *entry)
 {
-    printf("[OpenFileEntry: filePath = %s, fileOp = %d, inodeEntry = %x, inodeId = %d, next = %x]\n",
-        entry->filePath, entry->fileOp, entry->inodeEntry, entry->inodeEntry->_in_id, entry->next);
+    printf("[OpenFileEntry: filePath = %s, fileOp = %d %d %d, inodeEntry = %x, inodeId = %d, next = %x]\n",
+        entry->filePath, entry->fileOp[OP_READ], entry->fileOp[OP_WRITE], entry->fileOp[OP_READWRITE], entry->inodeEntry, entry->inodeEntry->_in_id, entry->next);
 }
 
 void printOpenFileTable(OpenFileTable *openFileTable)

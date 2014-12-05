@@ -1007,6 +1007,22 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
     printf("File mode from flags: %d\n", fileOp);
     #endif
 
+    //retrieve open file entry if already opened
+    OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
+    if(fileEntry != NULL) {
+        //update open file opcount
+        UINT opcount = addOpenFileOperation(fileEntry, fileOp);
+        //update inode refcount
+        fileEntry->inodeEntry->_in_ref++;
+        #ifdef DEBUG
+        printf("Updated open file table with new opcount %d and inode refcount %d\n", opcount, fileEntry->inodeEntry->_in_ref);
+        #endif
+
+        assert(opcount == fileEntry->inodeEntry->_in_ref);
+        return 0;
+    }
+
+    //otherwise, update inode table in preparation for new entry
     INT inodeId = l2_namei(fs, path);
     #ifdef DEBUG
     printf("INode ID for opened file: %d\n", inodeId);
@@ -1016,6 +1032,7 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         return -1;
     }
 
+    //update or insert inode entry into table
     INodeEntry* inodeEntry = NULL;
     if(hasINodeEntry(&fs->inodeTable, inodeId)) {
         #ifdef DEBUG
@@ -1038,10 +1055,21 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         assert(inodeEntry != NULL);
     }
 
+    //initialize new open file entry and link to inode entry
     #ifdef DEBUG
-    printf("Adding open file entry to table...\n");
+    printf("Adding new open file entry to table...\n");
     #endif
-    addOpenFileEntry(&fs->openFileTable, path, fileOp, inodeEntry);
+    fileEntry = addOpenFileEntry(&fs->openFileTable, path, inodeEntry);
+    assert(fileEntry != NULL);
+
+    //update open file opcount
+    UINT opcount = addOpenFileOperation(fileEntry, fileOp);
+    #ifdef DEBUG
+    printf("Updated open file table with new opcount %d and inode refcount %d\n", opcount, fileEntry->inodeEntry->_in_ref);
+    #endif
+
+    assert(opcount == fileEntry->inodeEntry->_in_ref);
+    return 0;
 }
 
 INT l2_close(FileSystem* fs, char* path, UINT flags) {
@@ -1070,58 +1098,73 @@ INT l2_close(FileSystem* fs, char* path, UINT flags) {
     printf("File mode from flags: %d\n", fileOp);
     #endif
 
-    INT inodeId = l2_namei(fs, path);
-    #ifdef DEBUG
-    printf("INode ID for closed file: %d\n", inodeId);
-    #endif
-    
-    OpenFileEntry* oEntry = getOpenFileEntry(&fs->openFileTable, path, fileOp);
-    if(oEntry == NULL) {
-        fprintf(stderr, "Error: no matching open file found for close operation!\n");
+    //retrieve open file entry
+    OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
+    if(fileEntry == NULL) {
+        fprintf(stderr, "Error: no open file %s found in table!\n", path);
         return 1;
+    }
+    else if(fileEntry->fileOp[fileOp] == 0) {
+        fprintf(stderr, "Error: file %s was never opened with operation %d!\n", path, fileOp);
+        return -1;
     }
     
     //update inode table and remove entry if refcount reaches 0
-    INodeEntry* iEntry = oEntry->inodeEntry;
+    INodeEntry* iEntry = fileEntry->inodeEntry;
     iEntry->_in_ref--;
+    #ifdef DEBUG
+    printf("Updated inode table with new refcount: %d\n", iEntry->_in_ref);
+    #endif
     if(iEntry->_in_ref == 0) {
         removeINodeEntry(&fs->inodeTable, iEntry->_in_id);
     }
-    
-    BOOL succ = removeOpenFileEntry(&fs->openFileTable, path, fileOp);
-    assert(succ);
+
+    //remove file operation and possibly remove entry
+    UINT opcount = removeOpenFileOperation(fileEntry, fileOp);
+    #ifdef DEBUG
+    printf("Updated open file table with new opcount: %d\n", opcount);
+    #endif
+    if(opcount == 0) {
+        #ifdef DEBUG
+        printf("All operations on file %s closed, removing open file entry...\n", path);
+        #endif
+        BOOL succ = removeOpenFileEntry(&fs->openFileTable, path);
+        assert(succ);
+    }
+    else {
+        assert(opcount == iEntry->_in_ref);
+    }
     
     return 0;
 }
 
 // read file from offset for numBytes
-// 1. resolve path
-// 2. get INodeTable Entry (ommitted for now)
-// 3. load inode
+// 1/2/3. look in open file table for entry
 // 4. modify modtime
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 // 6. write back inode
 INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
-  INT returnSize = 0;
-  INode curINode;
-  //1. resolve path
-  INT curINodeID = l2_namei(fs, path);
-  if (curINodeID < 0) {
-    _err_last = _fs_NonExistFile;
-    THROW(__FILE__, __LINE__, __func__);
-    return curINodeID;
+  //look in open file table for entry
+  OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
+  if(fileEntry == NULL || (fileEntry->fileOp[OP_READ] == 0 && fileEntry->fileOp[OP_READWRITE] == 0)) {
+    fprintf(stderr, "Error: file %s was never opened with read permission!\n", path);
+    return -1;
   }
-  else {
-    //2. TODO: get INodeTable Entry
-    //3. load inode
-    readINode(fs, curINodeID, &curINode);
-    //4. curINode._in_modtime
-    curINode._in_modtime = time(NULL);
-    //5. readINodeData
-    returnSize = readINodeData(fs, &curINode, buf, offset, numBytes);
-    //6. write back INode
-    writeINode(fs, curINodeID, &curINode);
-  }
+
+  //retrieve inode from inode table
+  UINT curINodeID = fileEntry->inodeEntry->_in_id;
+  INode* curINode = fileEntry->inodeEntry->_in_node;
+
+  //4. curINode._in_modtime
+  curINode->_in_modtime = time(NULL);
+  //5. readINodeData
+  INT returnSize = readINodeData(fs, curINode, buf, offset, numBytes);
+  //6. write back INode
+  writeINode(fs, curINodeID, curINode);
+
+  #ifdef DEBUG
+  printf("l2_read successfully read %d bytes\n", returnSize);
+  #endif
   return returnSize; 
 }
 
@@ -1132,31 +1175,34 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //4. call writeINodeData
 //5. modify inode if necessary
 INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
-  INode curINode;
-  INT bytesWritten = 0;
-  //1. resolve path
-  INT curINodeID = l2_namei(fs, path);
-  if (curINodeID < 0) {
-    _err_last = _fs_NonExistFile;
-    THROW(__FILE__, __LINE__, __func__);
-    return curINodeID;
+  //look in open file table for entry
+  OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
+  if(fileEntry == NULL || (fileEntry->fileOp[OP_WRITE] == 0 && fileEntry->fileOp[OP_READWRITE] == 0)) {
+    fprintf(stderr, "Error: file %s was never opened with write permission!\n", path);
+    return -1;
   }
-  else {
-    //2. TODO: get INodeTable Entry
-    //3. load inode
-    readINode(fs, curINodeID, &curINode);
-    //4. writeINodeData
-    bytesWritten = writeINodeData(fs, &curINode, buf, offset, numBytes);
-    printf("bytesWritten: %d\n", bytesWritten);
-    //5. modify inode
-    if(offset + bytesWritten > curINode._in_filesize) {
-        curINode._in_filesize = offset + bytesWritten;
-        printf("update filesize to be %d\n", curINode._in_filesize);
-    }
-    curINode._in_modtime = time(NULL);
-    //update INode
-    writeINode(fs, curINodeID, &curINode);
+
+  //retrieve inode from inode table
+  UINT curINodeID = fileEntry->inodeEntry->_in_id;
+  INode* curINode = fileEntry->inodeEntry->_in_node;
+
+  //4. writeINodeData
+  INT bytesWritten = writeINodeData(fs, curINode, buf, offset, numBytes);
+  //5. modify inode
+  if(offset + bytesWritten > curINode->_in_filesize) {
+    #ifdef DEBUG
+    printf("Updating filesize from %d to %d\n", curINode->_in_filesize, offset + bytesWritten);
+    #endif
+    curINode->_in_filesize = offset + bytesWritten;
   }
+  
+  curINode->_in_modtime = time(NULL);
+  //update INode
+  writeINode(fs, curINodeID, curINode);
+
+  #ifdef DEBUG
+  printf("l2_write successfully wrote %d bytes\n", bytesWritten);
+  #endif
   return bytesWritten;
 }
 

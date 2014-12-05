@@ -9,17 +9,17 @@
 #include "sys/stat.h"
 #include "sys/types.h"
 
+enum FILE_FLAGS {
+        FLAG_READ = 0,
+        FLAG_WRITE = 1,
+        FLAG_READWRITE = 2
+};
+
 // mounts a filesystem from a device
 INT l2_mount(FileSystem* fs);
 
 // unmounts a filesystem into a device
 INT l2_unmount(FileSystem* fs);
-
-enum FILE_FLAGS {
-        FLAG_READ = 1,
-        FLAG_WRITE = 2,
-        FLAG_READWRITE = 3
-};
 
 // makes a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);

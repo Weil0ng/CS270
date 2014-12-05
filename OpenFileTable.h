@@ -10,11 +10,15 @@ typedef struct OpenFileTable {
 
 } OpenFileTable;
 
-BOOL addOpenFileEntry(OpenFileTable*, char*, enum FILE_OP, INodeEntry*);
+OpenFileEntry* addOpenFileEntry(OpenFileTable*, char*, INodeEntry*);
 
-OpenFileEntry* getOpenFileEntry(OpenFileTable*, char*, enum FILE_OP);
+UINT addOpenFileOperation(OpenFileEntry*, enum FILE_OP op);
 
-BOOL removeOpenFileEntry(OpenFileTable*, char*, enum FILE_OP);
+OpenFileEntry* getOpenFileEntry(OpenFileTable*, char*);
+
+UINT removeOpenFileOperation(OpenFileEntry*, enum FILE_OP op);
+
+BOOL removeOpenFileEntry(OpenFileTable*, char*);
 
 #ifdef DEBUG
 void printOpenFileEntry(OpenFileEntry *);

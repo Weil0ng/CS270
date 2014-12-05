@@ -6,9 +6,9 @@
 #pragma once
 
 enum FILE_OP {
-        OP_READ = 1,
-        OP_WRITE = 2,
-        OP_READWRITE = 3
+        OP_READ = 0,
+        OP_WRITE = 1,
+        OP_READWRITE = 2
 };
 
 typedef struct OpenFileEntry OpenFileEntry;
@@ -17,8 +17,8 @@ struct OpenFileEntry {
     // path of open file
     char filePath[MAX_PATH_LEN];
     
-    // file operation opened under
-    enum FILE_OP fileOp;
+    // file operations
+    UINT fileOp[3];
 
     // the inode cached for the file
     INodeEntry* inodeEntry;
