@@ -7,17 +7,15 @@
 void testBlockify();
 
 LONG GIGA = 1024 * 1024 * 1024;
+UINT MEGA = 1024 * 1024;
 
 int main(int args, char* argv[])
 {
     FileSystem fs;
 
     printf("Initializing file system with initfs...\n");
-    UINT succ = l2_initfs(15*GIGA/BLK_SIZE, 16, &fs);
-    if(succ == 0) {
-        printf("initfs succeeded with filesystem size: %d\n", fs.nBytes);
-    }
-    else {
+    UINT succ = l2_initfs(15*GIGA/BLK_SIZE, MEGA, &fs);
+    if (succ != 0) {
         printf("Error: initfs failed with error code: %d\n", succ);
     }
     l2_unmount(&fs);

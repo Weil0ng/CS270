@@ -609,7 +609,9 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     
     //continue while more bytes to write AND max filesize not reached
     while(len > 0 && fileBlkId < MAX_FILE_BLKS) {
+	#ifdef DEBUG
         printf("allocate data block for fileblkid %d\n", fileBlkId);
+	#endif
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
         #ifdef DEBUG
@@ -749,7 +751,9 @@ INT freeDBlk(FileSystem* fs, UINT id) {
 // 1. convert logical id of DBlk to logical id of disk block
 // 2. read data
 INT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
+    #ifdef DEBUG
     printf("readDBlk id: %u\n", id);
+    #endif
     assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
@@ -933,13 +937,17 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 // Steps:
 INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
+    #ifdef DEBUG
     printf("balloc called with %u\n", fileBlkId);
+    #endif
     UINT count = 0;
     // shortcut: check if already allocated
     INT DBlkID = bmap(fs, inode, fileBlkId);
     if (DBlkID !=  -1 )
         return DBlkID;
+    #ifdef DEBUG
     printf("bmap done with %d\n", DBlkID);
+    #endif
     //UINT cur_internal_index = 0;
     //for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) != -1 && cur_internal_index < fileBlkId; cur_internal_index ++);
     UINT cur_internal_index = fileBlkId;    
@@ -1005,7 +1013,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
 	    //weilong: mathimatically, since mod, it does not matter if we substract N*entryNum
 	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
+	    #ifdef DEBUG
             printf("D_Index: %u, S_Index: %u, S_offset: %u, cur_internal_index: %u\n", D_index, S_index, S_offset, cur_internal_index);
+	    #endif
 	    if (inode->_in_dIndirectBlocks[D_index] == -1) {
 		newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {

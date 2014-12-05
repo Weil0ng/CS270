@@ -109,6 +109,7 @@ int main(int args, char* argv[])
 }
 
 void testBlockify() {
+    #ifdef DEBUG
     SuperBlock sb;
 
     sb.nDBlks = 10000;
@@ -147,4 +148,5 @@ void testBlockify() {
     for(UINT i = 0; i < FREE_INODE_CACHE_SIZE; i++) {
         assert(sb_unblockified.freeINodeCache[i] == sb.freeINodeCache[i]);
     }
+    #endif
 }
