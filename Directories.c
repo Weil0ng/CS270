@@ -860,6 +860,7 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
     }
 
     if (new_length > curINode._in_filesize) {
+        /*
 #ifdef TRUNCATE_DEBUG
         printf("in l2_truncate, start extend the file to size %d\n", new_length);
 #endif
@@ -899,6 +900,7 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
                 fileBlkId ++;
             }
         }
+        */
     }
     else if (new_length == curINode._in_filesize) {
         // do nothing
