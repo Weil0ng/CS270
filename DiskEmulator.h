@@ -21,18 +21,18 @@ typedef struct
 } DiskArray;
 
 //opens a disk arrary from file
-void openDisk(DiskArray *, UINT);
+void openDisk(DiskArray *, LONG);
 
 //initialize a disk array in memory
 //args: device,
 //      size
-void initDisk(DiskArray *, UINT);
+void initDisk(DiskArray *, LONG);
 
 //destroy the in-memory disk array
 void closeDisk(DiskArray *);
 
 //convert block id to disk array offset
-UINT bid2Offset(UINT);
+LONG bid2Offset(UINT);
 
 //read a block from logical id i
 //args: device, 

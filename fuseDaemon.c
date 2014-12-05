@@ -146,7 +146,9 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 
 static int l3_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    printf("l3_write received buffer to write: %s\n", buf);
+	#ifdef DEBUG
+    	printf("l3_write received buffer to write: %s\n", buf);
+	#endif
 	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
 	return (int)l2_write(&fs, path, offset, buf, size);
 }
