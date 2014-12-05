@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <inttypes.h>
 
 INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
@@ -36,12 +37,13 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #endif
 
     //compute file system size 
-    LONG nBytes = BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE;
+    LONG nBytes = BLK_SIZE + nINodes * INODE_SIZE + ((LONG)nDBlks * BLK_SIZE);
     #ifdef DEBUG 
-    printf("Computing file system size...nBytes = %d\n", nBytes); 
+    printf("BLK_SIZE: %d, INODE_SIZE: %d, nINodes: %d, nDBlks: %d\n", BLK_SIZE, INODE_SIZE, nINodes, nDBlks);
+    printf("Computing file system size...nBytes = %" PRIu64 "\n", nBytes); 
     #endif
     if(nBytes > MAX_FS_SIZE) {
-        fprintf(stderr, "Error: file system size %d exceeds max allowed size %d!\n", nBytes, MAX_FS_SIZE);
+        fprintf(stderr, "Error: file system size %" PRIu64 " exceeds max allowed size %d!\n", nBytes, MAX_FS_SIZE);
         return 1;
     }
     //fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
@@ -120,7 +122,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("Creating disk free block list...\n"); 
     #endif
-    UINT nextListBlk = 0;
+    LONG nextListBlk = 0;
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
     
     while(nextListBlk < fs->superblock.nDBlks) {
@@ -832,7 +834,7 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
         }
 	return DBlkID;
     }
-    UINT entryNum = BLK_SIZE / sizeof (UINT);
+    UINT entryNum = BLK_SIZE / sizeof (INT);
     fileBlkId -= (INODE_NUM_DIRECT_BLKS);
     if (fileBlkId < INODE_NUM_S_INDIRECT_BLKS * entryNum) {
 	UINT S_index = fileBlkId / entryNum;
@@ -944,10 +946,10 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
     UINT cur_internal_index = fileBlkId;    
 
     INT newDBlkID = -1;
-    BYTE blkBuf[BLK_SIZE];
-    UINT entryNum = BLK_SIZE / sizeof(UINT);
+    UINT entryNum = BLK_SIZE / sizeof(INT);
     UINT entryNumS = entryNum * entryNum;
     UINT entryNumD = entryNumS * entryNum;
+    INT blkBuf[entryNum];
 
     // now, cur_internal_index holds the first unallocated entry
     while (cur_internal_index <= fileBlkId) {
@@ -991,9 +993,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    }
 	    else
 		newDBlkID = -1;
-	    UINT S_DBlkID = inode->_in_sIndirectBlocks[S_index];
+	    INT S_DBlkID = inode->_in_sIndirectBlocks[S_index];
 	    readDBlk(fs, S_DBlkID, blkBuf);
-	    *((UINT *)blkBuf + S_offset) = newDBlkID;
+	    *(blkBuf + S_offset) = newDBlkID;
 	    writeDBlk(fs, S_DBlkID, blkBuf);
 	    count ++;
 	    cur_internal_index ++;
@@ -1014,16 +1016,16 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
 	    }
-	    UINT D_BlkID = inode->_in_dIndirectBlocks[D_index];
+	    INT D_BlkID = inode->_in_dIndirectBlocks[D_index];
 	    readDBlk(fs, D_BlkID, blkBuf);
-	    if (*((UINT *)blkBuf + S_index) == -1) {
+	    if (*(blkBuf + S_index) == -1) {
 	        newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
                     return newDBlkID;
                 }
-		*((UINT *)blkBuf + S_index) = newDBlkID;
+		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
 	    }
             //now, alloc the DBlk
@@ -1037,9 +1039,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    }
 	    else
 		newDBlkID = -1;
-	    UINT S_DBlkID = *((UINT *)blkBuf + S_index);
+	    INT S_DBlkID = *(blkBuf + S_index);
 	    readDBlk(fs, S_DBlkID, blkBuf);
-	    *((UINT *)blkBuf + S_offset) = newDBlkID;
+	    *(blkBuf + S_offset) = newDBlkID;
 	    writeDBlk(fs, S_DBlkID, blkBuf);
 	    count ++;
 	    cur_internal_index ++;
@@ -1065,28 +1067,28 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		inode->_in_tIndirectBlocks[T_index] = newDBlkID;
 	    }
-	    UINT T_BlkID = inode->_in_tIndirectBlocks[T_index];
+	    INT T_BlkID = inode->_in_tIndirectBlocks[T_index];
 	    readDBlk(fs, T_BlkID, blkBuf);
-	    if (*((UINT *)blkBuf + D_index) == -1) {
+	    if (*(blkBuf + D_index) == -1) {
 		newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
                     return newDBlkID;
                 }
-		*((UINT *)blkBuf + D_index) = newDBlkID;
+		*(blkBuf + D_index) = newDBlkID;
 		writeDBlk(fs, T_BlkID, blkBuf);
 	    }
-	    UINT D_BlkID = *((UINT *)blkBuf + D_index);
+	    INT D_BlkID = *((UINT *)blkBuf + D_index);
 	    readDBlk(fs, D_BlkID, blkBuf);
-	    if (*((UINT *)blkBuf + S_index) == -1) {
+	    if (*(blkBuf + S_index) == -1) {
 	        newDBlkID = allocDBlk(fs);
                 if (newDBlkID == -1) {
                     _err_last = _fs_DBlkOutOfNumber;
                     THROW(__FILE__, __LINE__, __func__);
                     return newDBlkID;
                 }
-		*((UINT *)blkBuf + S_index) = newDBlkID;
+		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
 	    }
             //now, alloc the DBlk
@@ -1100,9 +1102,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    }
 	    else
 		newDBlkID = -1;
-	    UINT S_DBlkID = *((UINT *)blkBuf + S_index);
+	    INT S_DBlkID = *(blkBuf + S_index);
 	    readDBlk(fs, S_DBlkID, blkBuf);
-	    *((UINT *)blkBuf + S_offset) = newDBlkID;
+	    *(blkBuf + S_offset) = newDBlkID;
 	    writeDBlk(fs, S_DBlkID, blkBuf);
 	    count ++;
 	    cur_internal_index ++;

@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-void openDisk(DiskArray *disk, UINT diskSize)
+void openDisk(DiskArray *disk, LONG diskSize)
 {
   disk->_dsk_dskArray = open(DISK_PATH, O_RDWR, 0666);
   if (disk->_dsk_dskArray == -1)
@@ -50,7 +50,7 @@ void openDisk(DiskArray *disk, UINT diskSize)
   disk->_dsk_numBlk = diskSize / BLK_SIZE;
 }*/
 
-void initDisk(DiskArray *disk, UINT diskSize)
+void initDisk(DiskArray *disk, LONG diskSize)
 {
   disk->_dsk_dskArray = open(DISK_PATH, O_RDWR | O_CREAT, 0666);
   if (disk->_dsk_dskArray == -1)

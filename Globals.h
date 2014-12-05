@@ -19,9 +19,9 @@
 #define BYTE uint8_t
 
 //File system specific
-#define MAX_FS_SIZE (4294967296) //Maximum supported filesystem size (2^32 bytes)
+#define MAX_FS_SIZE (1099511627776) //Maximum supported filesystem size (1TB)
 
-#define BLK_SIZE (512) //Block size in bytes
+#define BLK_SIZE (2048) //Block size in bytes
 #define INODE_SIZE (256) //INode size in bytes
 #define INODES_PER_BLK (BLK_SIZE / INODE_SIZE) //INodes per block (computed)
 
