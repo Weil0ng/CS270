@@ -32,7 +32,7 @@ void initDisk(DiskArray *, LONG);
 void closeDisk(DiskArray *);
 
 //convert block id to disk array offset
-UINT bid2Offset(UINT);
+LONG bid2Offset(UINT);
 
 //read a block from logical id i
 //args: device, 

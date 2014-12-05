@@ -78,9 +78,9 @@ void closeDisk(DiskArray *disk)
   close(disk->_dsk_dskArray);
 }
 
-UINT bid2Offset(UINT bid)
+LONG bid2Offset(UINT bid)
 {
-  return bid * BLK_SIZE;
+  return ((LONG)bid * BLK_SIZE);
 }
 
 /*INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
@@ -103,7 +103,7 @@ INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
     THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
-  UINT offset = bid2Offset(bid);
+  LONG offset = bid2Offset(bid);
   lseek(disk->_dsk_dskArray, offset, SEEK_SET);
   read(disk->_dsk_dskArray, buf, BLK_SIZE);
   return 0;
@@ -129,7 +129,7 @@ INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
     THROW(__FILE__, __LINE__, __func__);
     return -1;
   }
-  UINT offset = bid2Offset(bid);
+  LONG offset = bid2Offset(bid);
   lseek(disk->_dsk_dskArray, offset, SEEK_SET);
   write(disk->_dsk_dskArray, buf, BLK_SIZE);
   return 0;

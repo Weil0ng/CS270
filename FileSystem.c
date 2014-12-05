@@ -43,7 +43,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     printf("Computing file system size...nBytes = %" PRIu64 "\n", nBytes); 
     #endif
     if(nBytes > MAX_FS_SIZE) {
-        fprintf(stderr, "Error: file system size %" PRIu64 " exceeds max allowed size %d!\n", nBytes, MAX_FS_SIZE);
+        fprintf(stderr, "Error: file system size %" PRIu64 " exceeds max allowed size %" PRIu64 "!\n", nBytes, MAX_FS_SIZE);
         return 1;
     }
     //fs->nBytes = (BLK_SIZE + nINodes * INODE_SIZE + nDBlks * BLK_SIZE);
@@ -122,7 +122,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("Creating disk free block list...\n"); 
     #endif
-    LONG nextListBlk = 0;
+    UINT nextListBlk = 0;
     UINT freeDBlkList[FREE_DBLK_CACHE_SIZE];
     
     while(nextListBlk < fs->superblock.nDBlks) {
@@ -753,7 +753,6 @@ INT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
     assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
-
 }
 
 // writes a data block to the disk
