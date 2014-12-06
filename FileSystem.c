@@ -414,14 +414,12 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     printf("readINodeData on inode %d for len %d at offset %d\n", inode->_in_filesize, len, offset);
     #endif
     
-    #ifdef DEBUG
-    assert(offset <= inode->_in_filesize);
-    #else
     if(offset >= inode->_in_filesize) {
-        fprintf(stderr, "Error: readINodeData offset %d with length %d exceeds file size %d!\n", offset, len, inode->_in_filesize);
-        return -1;
+	#ifdef DEBUG
+	printf("Reading from 0 length file! Or reading from beyond filesize!\n");
+	#endif
+        return 0;
     }
-    #endif
     
     //truncate len if the read goes beyond the filesize
     if(offset + len > inode->_in_filesize) {
@@ -448,22 +446,24 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     //compute start block id
     INT dataBlkId = bmap(fs, inode, fileBlkId);
-    if (dataBlkId < 0) {
-	printf("reading from 0 length file!\n");
-	return 0;
-    }
     
     //special case to handle offset in the middle of first block
     if(offset > 0) {
         if(offset + len <= BLK_SIZE) {
             //entire read falls within first block
-            readDBlkOffset(fs, dataBlkId, buf, offset, len);
+	    if (dataBlkId < 0)
+	        memset(buf, 0, len);
+	    else
+                readDBlkOffset(fs, dataBlkId, buf, offset, len);
             bytesRead = len;
             len = 0;
         }
         else {
             //read is larger than first block
-            readDBlkOffset(fs, dataBlkId, buf, offset, BLK_SIZE - offset);
+	    if (dataBlkId < 0)
+		memset(buf, 0, BLK_SIZE - offset);
+	    else
+                readDBlkOffset(fs, dataBlkId, buf, offset, BLK_SIZE - offset);
             bytesRead = BLK_SIZE - offset;
             len -= bytesRead;
             fileBlkId++;
@@ -474,9 +474,6 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     while(len > 0 && fileBlkId < nFileBlks) {
         //compute next data block id using bmap
         dataBlkId = bmap(fs, inode, fileBlkId);
-        #ifdef DEBUG
-        assert(dataBlkId >= 0);
-        #endif
             
         //read next block into buf
         if(len <= BLK_SIZE) {
@@ -484,7 +481,10 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
             #ifdef DEBUG
             printf("Reached last dblk, calling readDBlkOffset on id %d with offset %d for len %d\n", dataBlkId, 0, len);
             #endif
-            readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len);
+	    if (dataBlkId < 0)
+		memset(buf + bytesRead, 0, len);
+	    else
+                readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len);
             
             //update len (end of read)
             bytesRead += len;
@@ -495,7 +495,10 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
             #ifdef DEBUG
             printf("Not last dblk, calling readDBlk on id %d\n", dataBlkId);
             #endif
-            readDBlk(fs, dataBlkId, buf + bytesRead);
+	    if (dataBlkId < 0)
+		memset(buf + bytesRead, 0, BLK_SIZE);
+	    else
+                readDBlk(fs, dataBlkId, buf + bytesRead);
            
             //update len and file block for remaining read
             bytesRead += BLK_SIZE;
@@ -700,9 +703,6 @@ INT allocDBlk(FileSystem* fs) {
     }
 
     fs->superblock.nFreeDBlks --;
-    INT initBlk[FREE_DBLK_CACHE_SIZE];
-    memset(initBlk, -1, sizeof(initBlk));
-    writeDBlk(fs, returnID, (BYTE *)initBlk);
     return returnID;
 }
 
@@ -988,6 +988,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                     return newDBlkID;
         	}
 		inode->_in_sIndirectBlocks[S_index] = newDBlkID;
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+    		memset(initBlk, -1, sizeof(initBlk));
+    		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    // now, alloc the DBlk
 	    if (cur_internal_index ==fileBlkId) {
@@ -1024,6 +1027,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                     return newDBlkID;
                 }
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+    		memset(initBlk, -1, sizeof(initBlk));
+    		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    INT D_BlkID = inode->_in_dIndirectBlocks[D_index];
 	    readDBlk(fs, D_BlkID, blkBuf);
@@ -1036,6 +1042,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+                memset(initBlk, -1, sizeof(initBlk));
+                writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
 	    if (cur_internal_index == fileBlkId) {
@@ -1075,6 +1084,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                     return newDBlkID;
                 }
 		inode->_in_tIndirectBlocks[T_index] = newDBlkID;
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+                memset(initBlk, -1, sizeof(initBlk));
+                writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    INT T_BlkID = inode->_in_tIndirectBlocks[T_index];
 	    readDBlk(fs, T_BlkID, blkBuf);
@@ -1087,6 +1099,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		*(blkBuf + D_index) = newDBlkID;
 		writeDBlk(fs, T_BlkID, blkBuf);
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+                memset(initBlk, -1, sizeof(initBlk));
+                writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    INT D_BlkID = *((UINT *)blkBuf + D_index);
 	    readDBlk(fs, D_BlkID, blkBuf);
@@ -1099,6 +1114,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
+		INT initBlk[FREE_DBLK_CACHE_SIZE];
+                memset(initBlk, -1, sizeof(initBlk));
+                writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
 	    if (cur_internal_index == fileBlkId) {
