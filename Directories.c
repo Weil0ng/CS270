@@ -813,11 +813,36 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
 
 //1. resolve path and read inode
 //2. check uid/gid
+//3. set uid/gid and write inode
+INT l2_chown(FileSystem *fs, char *path, uid_t uid, gid_t gid)
+{
+    //1. resolve path
+    INT INodeID = l2_namei(fs, path);
+    if (INodeID < 0) {
+        _err_last = _fs_NonExistFile;
+        THROW(__FILE__, __LINE__, __func__);
+        return INodeID;
+    }
+    INode curINode;
+    if(readINode(fs, INodeID, &curINode) == -1) {
+        fprintf(stderr, "Error: fail to read inode for file %s\n", path);
+        return -1;
+    }
+    //2. check uid/gid
+    //3. set owner
+    curINode._in_uid = uid;
+    curINode._in_gid = gid;
+    writeINode(fs, INodeID, &curINode);
+    return 0;
+}
+
+//1. resolve path and read inode
+//2. check uid/gid
 //3. set mode and write inode
 INT l2_chmod(FileSystem* fs, char* path, UINT mode)
 {
     //1. resolve path
-    UINT INodeID = l2_namei(fs, path);
+    INT INodeID = l2_namei(fs, path);
     if (INodeID < 0) {
 	_err_last = _fs_NonExistFile;
 	THROW(__FILE__, __LINE__, __func__);

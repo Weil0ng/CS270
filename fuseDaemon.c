@@ -101,7 +101,8 @@ static int l3_chmod(const char *path, mode_t mode)
 
 static int l3_chown(const char *path, uid_t uid, gid_t gid)
 {
-	return 0;
+	printf("l3_chown\n");
+	return l2_chown(&fs, path, uid, gid);
 }
 
 static int l3_truncate(const char *path, off_t offset)
