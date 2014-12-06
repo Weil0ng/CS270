@@ -981,31 +981,19 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
     return 0;
 }
 
-INT l2_open(FileSystem* fs, char* path, UINT flags) {
+INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     #ifdef DEBUG
-    printf("Opening file \"%s\" with flags: %d\n", path, flags);
+    printf("Opening file \"%s\" for operation: %d\n", path, fileOp);
     #endif
-
-    //parse flags
-    enum FILE_OP fileOp;
-    switch(flags) {
-        case FLAG_READ:
-            fileOp = OP_READ;
-            break;
-        case FLAG_WRITE:
-            fileOp = OP_WRITE;
-            break;
-        case FLAG_READWRITE:
-            fileOp = OP_READWRITE;
-            break;
-        default:
-            fprintf(stderr, "Error: incorrect flags specified: %d\n", flags);
-            return -1;
+    INT inodeId = l2_namei(fs, path);
+    #ifdef DEBUG
+    printf("INode ID for opened file: %d\n", inodeId);
+    #endif
+    
+    if(inodeId < 0) {
+        fprintf(stderr, "Error: tried to open invalid/nonexistent path: %s", path);
+        return inodeId;
     }
-
-    #ifdef DEBUG
-    printf("File mode from flags: %d\n", fileOp);
-    #endif
 
     //retrieve open file entry if already opened
     OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
@@ -1020,16 +1008,6 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
 
         assert(opcount == fileEntry->inodeEntry->_in_ref);
         return 0;
-    }
-
-    //otherwise, update inode table in preparation for new entry
-    INT inodeId = l2_namei(fs, path);
-    #ifdef DEBUG
-    printf("INode ID for opened file: %d\n", inodeId);
-    #endif
-    if(inodeId < 0) {
-        fprintf(stderr, "Error: tried to open invalid/nonexistent path %s", path);
-        return -1;
     }
 
     //update or insert inode entry into table
@@ -1052,6 +1030,7 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
         INT readSucc = readINode(fs, inodeId, inode);
         assert(readSucc == 0);
         inodeEntry = putINodeEntry(&fs->inodeTable, inodeId, inode);
+        inodeEntry->_in_ref++;
         assert(inodeEntry != NULL);
     }
 
@@ -1072,30 +1051,9 @@ INT l2_open(FileSystem* fs, char* path, UINT flags) {
     return 0;
 }
 
-INT l2_close(FileSystem* fs, char* path, UINT flags) {
+INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     #ifdef DEBUG
-    printf("Closing file \"%s\" with flags: %d\n", path, flags);
-    #endif
-
-    //parse flags
-    enum FILE_OP fileOp;
-    switch(flags) {
-        case FLAG_READ:
-            fileOp = OP_READ;
-            break;
-        case FLAG_WRITE:
-            fileOp = OP_WRITE;
-            break;
-        case FLAG_READWRITE:
-            fileOp = OP_READWRITE;
-            break;
-        default:
-            fprintf(stderr, "Error: incorrect flags specified: %d\n", flags);
-            return -1;
-    }
-
-    #ifdef DEBUG
-    printf("File mode from flags: %d\n", fileOp);
+    printf("Closing file \"%s\" with operation: %d\n", path, fileOp);
     #endif
 
     //retrieve open file entry

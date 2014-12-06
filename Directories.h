@@ -9,12 +9,6 @@
 #include "sys/stat.h"
 #include "sys/types.h"
 
-enum FILE_FLAGS {
-        FLAG_READ = 0,
-        FLAG_WRITE = 1,
-        FLAG_READWRITE = 2
-};
-
 // mounts a filesystem from a device
 INT l2_mount(FileSystem* fs);
 
@@ -50,10 +44,10 @@ INT l2_chmod(FileSystem* fs, char* path, mode_t mode);
 INT l2_truncate(FileSystem* fs, char* path, INT new_length);
 
 // opens a file
-INT l2_open(FileSystem* fs, char* path, UINT flags);
+INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp);
 
 // closes a file
-INT l2_close(FileSystem* fs, char* path, UINT flags);
+INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp);
 
 // reads a file
 INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);

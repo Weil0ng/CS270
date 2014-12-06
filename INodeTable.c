@@ -31,7 +31,7 @@ INodeEntry* putINodeEntry(INodeTable *iTable, UINT id, INode *inode)
   newEntry = malloc(sizeof(INodeEntry));
   newEntry->_in_id = id;
   newEntry->_in_node = inode;
-  newEntry->_in_ref = 1;
+  newEntry->_in_ref = 0;
 
   //insert to table
   newEntry->next = iTable->hashQ[bin];

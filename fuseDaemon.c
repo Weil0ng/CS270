@@ -122,19 +122,69 @@ static int l3_truncate(const char *path, off_t offset)
 
 static int l3_open(const char *path, struct fuse_file_info *fi)
 {
-	/*
-	if (strcmp(path, hello_path) != 0)
-		return -ENOENT;
-
-	if ((fi->flags & 3) != O_RDONLY)
-		return -EACCES;
-	*/
-	printf("trying to open %s\n", path);
-	return (int)l2_open(&fs, path, fi->flags);
+    //parse file operation from flags
+    enum FILE_OP fileOp;
+    if(flags & O_RDONLY)
+        fileOp = OP_READ;
+    else if(flags & O_WRONLY)
+        fileOp = OP_WRITE;
+    else if(flags & O_RDWR)
+        fileOp = OP_READWRITE;
+    else {
+        fprintf(stderr, "Error: no file operation specified in flags!\n");
+        return -EINVAL;
+    }
+    #ifdef DEBUG
+    printf("File operation from flags: %d\n", fileOp);
+    #endif
+    
+    //parse create flag
+    if(flags & O_CREAT) {
+        #ifdef DEBUG
+        printf("O_CREAT flag detected, creating file: %s\n", path);
+        #endif
+        struct fuse_context* fctx = fuse_get_context();
+        INT succ = l2_mknod(&fs, path, fctx->uid, fctx->gid);
+        
+        //parse exists flag
+        if((flags & O_EXCL) && (succ == -EEXISTS)) {
+            fprintf(stderr, "Error: O_EXCL specified for open but file already exists!\n");
+            return -EEXISTS;
+        }
+        else if(succ < 0) {
+            return succ;
+        }
+    }
+    
+    //parse truncate flag
+    if(flags & (O_TRUNC | O_WRONLY | O_RDWR)) {
+        #ifdef DEBUG
+        printf("O_TRUNC flag detected, truncating file: %s\n", path);
+        #endif
+        //TODO truncate file
+    }
+    
+	return (int)l2_open(&fs, path, fileOp);
 }
 
 static int l3_release(const char *path, struct fuse_file_info *fi)
 {
+    //parse file operation from flags
+    enum FILE_OP fileOp;
+    if(flags & O_RDONLY)
+        fileOp = OP_READ;
+    else if(flags & O_WRONLY)
+        fileOp = OP_WRITE;
+    else if(flags & O_RDWR)
+        fileOp = OP_READWRITE;
+    else {
+        fprintf(stderr, "Error: no file operation specified in flags!\n");
+        return -EINVAL;
+    }
+    #ifdef DEBUG
+    printf("File operation from flags: %d\n", fileOp);
+    #endif
+    
 	return (int)l2_close(&fs, path, fi->flags);
 }
 
