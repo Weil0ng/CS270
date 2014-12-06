@@ -986,7 +986,7 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     printf("Opening file \"%s\" for operation: %d\n", path, fileOp);
     #endif
     INT inodeId = l2_namei(fs, path);
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     printf("INode ID for opened file: %d\n", inodeId);
     #endif
     
@@ -1013,7 +1013,7 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     //update or insert inode entry into table
     INodeEntry* inodeEntry = NULL;
     if(hasINodeEntry(&fs->inodeTable, inodeId)) {
-        #ifdef DEBUG
+        #ifdef DEBUG_VERBOSE
         printf("INode found in cache, retrieving entry...\n");
         #endif
         
@@ -1022,7 +1022,7 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
         inodeEntry->_in_ref++;
     }
     else {
-        #ifdef DEBUG
+        #ifdef DEBUG_VERBOSE
         printf("No previous inode found in cache, inserting new entry...\n");
         #endif
 
@@ -1035,7 +1035,7 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     }
 
     //initialize new open file entry and link to inode entry
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     printf("Adding new open file entry to table...\n");
     #endif
     fileEntry = addOpenFileEntry(&fs->openFileTable, path, inodeEntry);
@@ -1070,9 +1070,6 @@ INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     //update inode table and remove entry if refcount reaches 0
     INodeEntry* iEntry = fileEntry->inodeEntry;
     iEntry->_in_ref--;
-    #ifdef DEBUG
-    printf("Updated inode table with new refcount: %d\n", iEntry->_in_ref);
-    #endif
     if(iEntry->_in_ref == 0) {
         removeINodeEntry(&fs->inodeTable, iEntry->_in_id);
     }
@@ -1080,10 +1077,10 @@ INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     //remove file operation and possibly remove entry
     UINT opcount = removeOpenFileOperation(fileEntry, fileOp);
     #ifdef DEBUG
-    printf("Updated open file table with new opcount: %d\n", opcount);
+    printf("Updated open file table with new opcount %d and inode refcount %d\n", opcount, iEntry->_in_ref);
     #endif
     if(opcount == 0) {
-        #ifdef DEBUG
+        #ifdef DEBUG_VERBOSE
         printf("All operations on file %s closed, removing open file entry...\n", path);
         #endif
         BOOL succ = removeOpenFileEntry(&fs->openFileTable, path);
