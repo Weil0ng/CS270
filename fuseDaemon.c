@@ -124,11 +124,12 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
 {
     //parse file operation from flags
     enum FILE_OP fileOp;
-    if(fi->flags & O_RDONLY)
+    int opflag = fi->flags & 3;
+    if(opflag == O_RDONLY)
         fileOp = OP_READ;
-    else if(fi->flags & O_WRONLY)
+    else if(opflag == O_WRONLY)
         fileOp = OP_WRITE;
-    else if(fi->flags & O_RDWR)
+    else if(opflag == O_RDWR)
         fileOp = OP_READWRITE;
     else {
         fprintf(stderr, "Error: no file operation specified in flags!\n");
@@ -171,11 +172,12 @@ static int l3_release(const char *path, struct fuse_file_info *fi)
 {
     //parse file operation from flags
     enum FILE_OP fileOp;
-    if(fi->flags & O_RDONLY)
+    int opflag = fi->flags & 3;
+    if(opflag == O_RDONLY)
         fileOp = OP_READ;
-    else if(fi->flags & O_WRONLY)
+    else if(opflag == O_WRONLY)
         fileOp = OP_WRITE;
-    else if(fi->flags & O_RDWR)
+    else if(opflag == O_RDWR)
         fileOp = OP_READWRITE;
     else {
         fprintf(stderr, "Error: no file operation specified in flags!\n");
