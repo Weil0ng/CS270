@@ -477,6 +477,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     //continue while more bytes to read AND end of inode not reached
     while(len > 0 && fileBlkId < nFileBlks) {
         //compute next data block id using bmap
+	printf("fileBlkId: %d\n", fileBlkId);
         dataBlkId = bmap(fs, inode, fileBlkId);
             
         //end of read falls within block
