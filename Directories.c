@@ -1148,7 +1148,7 @@ INT l2_namei(FileSystem *fs, char *path)
     tok = strtok(NULL, "/");
   }
   #ifdef DEBUG_VERBOSE
-  printf("l2_namei on path \"%s\" succeeded with id: %d\n", curID);
+  printf("l2_namei on path \"%s\" succeeded with id: %d\n", path, curID);
   #endif
   return curID;
 }
