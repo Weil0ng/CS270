@@ -254,7 +254,7 @@ static struct fuse_operations l3_oper = {
 	.write		= l3_write,
 	.utimens	= l3_utimens,
 	.statfs		= l3_statfs,
-	.init		= l3_mount,
+//	.init		= l3_mount,
 	.destroy	= l3_unmount
 };
 
