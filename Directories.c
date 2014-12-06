@@ -14,7 +14,7 @@
 // mounts a filesystem from a device
 INT l2_mount(FileSystem* fs) {
     #ifdef DEBUG
-    printf("Mounting filesystem...\n");
+    printf("l2_mount called for fs: %p\n", fs);
     #endif
 
     //disk superblock buffer
@@ -26,7 +26,8 @@ INT l2_mount(FileSystem* fs) {
     #endif
     INT diskFile = open(DISK_PATH, O_RDWR, 0666);
     if (diskFile == -1)
-    printf("Disk open error %s\n", strerror(errno));
+        fprintf(stderr, "Error: disk open error %s\n", strerror(errno));
+        
     lseek(diskFile, SUPERBLOCK_OFFSET, SEEK_SET);
     UINT bytesRead = read(diskFile, dsb, BLK_SIZE);
     if(bytesRead < BLK_SIZE) {
@@ -67,7 +68,7 @@ INT l2_mount(FileSystem* fs) {
 // unmounts a filesystem by syncing the superblock to disk
 INT l2_unmount(FileSystem* fs) {
     #ifdef DEBUG
-    printf("Unmounting filesystem...\n");
+    printf("l2_unmount called for fs: %p\n", fs);
     #endif
 
     //write free block cache back to disk
@@ -94,7 +95,7 @@ INT l2_unmount(FileSystem* fs) {
 // make a new filesystem with a root directory
 INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
-    printf("initfs(%d, %d, %p)\n", nDBlks, nINodes, (void*) fs); 
+    printf("l2_initfs called for nDBlks: %d, nINodes: %d, fs: %p\n", nDBlks, nINodes, (void*) fs); 
     #endif
     
     //call layer 1 makefs
@@ -158,7 +159,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     
     // write completed root inode to disk
     #ifdef DEBUG
-    printf("Writing root inode to disk...\n");
+    printf("Writing root inode to disk with inode id: %d\n", id);
     #endif
     writeINode(fs, id, &rootINode);
           
@@ -191,7 +192,9 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
 
 // make a new directory
 INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
-    printf("mkdir(%s)\n", path);
+    #ifdef DEBUG
+    printf("l2_mkdir called for path: %s\n", path);
+    #endif
     
     INT id; // the inode id associated with the new directory
     INT par_id; // the inode id of the parent directory
@@ -231,12 +234,9 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     }
     
     // find the inode id of the parent directory
-    #ifdef DEBUG
-    printf("Computing parent directory inode id...\n");
-    #endif
     par_id = l2_namei(fs, par_path);
-    #ifdef DEBUG
-    printf("Parent directory inode id: %d\n", par_id);
+    #ifdef DEBUG_VERBOSE
+    printf("l2_mkdir found parent directory inode id: %d\n", par_id);
     #endif
 
     // check if the parent directory exists
@@ -271,11 +271,11 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
  
     // allocate a free inode for the new directory 
     id = allocINode(fs, &inode); 
-    #ifdef DEBUG
-    printf("allocated inode id %d for directory %s\n", id, dir_name);
+    #ifdef DEBUG_VERBOSE
+    printf("l2_mkdir allocated inode id %d for directory %s\n", id, dir_name);
     #endif
     if(id == -1) {
-        fprintf(stderr, "fail to allocate an inode for the new directory!\n");
+        fprintf(stderr, "Error: failed to allocate an inode for the new directory!\n");
         return -EDQUOT;
     }
 
@@ -296,12 +296,12 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         }
     }
     
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     if(offset < par_inode._in_filesize) {
-        printf("Inserting new entry into parent directory at index %d\n", offset / sizeof(DirEntry));
+        printf("l2_mkdir inserting new entry into parent directory at index %d\n", offset / sizeof(DirEntry));
     }
     else {
-        printf("Appending new entry to parent directory at offset %d\n", offset);
+        printf("l2_mkdir appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
     INT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
@@ -329,24 +329,17 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     newBuf[1].INodeID = par_id;
     
     bytesWritten = writeINodeData(fs, &inode, (BYTE*) newBuf, 0, 2 * sizeof(DirEntry));
-    #ifdef DEBUG
-    assert(bytesWritten == 2 * sizeof(DirEntry));
-    #else
     if(bytesWritten < 2 * sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to allocate data blocks for new file!\n");
         return -EDQUOT;
     }
-    #endif
 
     // change the inode type to directory
     inode._in_type = DIRECTORY;
     
     inode._in_uid = uid;
-
     inode._in_gid = gid;
-
     struct passwd *ppwd = getpwuid(uid);
-
     strcpy(inode._in_owner, ppwd->pw_name);
 
     // init the mode
@@ -366,7 +359,9 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
 
 // create a new file specified by an absolute path
 INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
-    printf("mknod %s\n", path);
+    #ifdef DEBUG
+    printf("l2_mknod called for path: %s\n", path);
+    #endif
     INT id; // the inode id associated with the new directory
     INT par_id; // the inode id of the parent directory
     char par_path[MAX_PATH_LEN];
@@ -436,17 +431,17 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         return -ENAMETOOLONG;
     }
 
-    // allocate a free inode for the new directory 
+    // allocate a free inode for the new file 
     id = allocINode(fs, &inode); 
     #ifdef DEBUG
-    printf("allocated inode id %d for directory %s\n", id, dir_name);
+    printf("l2_mknod allocated inode id %d for file %s\n", id, dir_name);
     #endif
     if(id == -1) {
         fprintf(stderr, "fail to allocate an inode for the new directory!\n");
         return -EDQUOT;
     }
 
-    // insert new directory entry into parent directory list
+    // insert new file entry into parent directory list
     DirEntry newEntry;
     strcpy(newEntry.key, dir_name);
     newEntry.INodeID = id;
@@ -463,12 +458,12 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         }
     }
     
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     if(offset < par_inode._in_filesize) {
-        printf("Inserting new entry into parent directory at index %d\n", offset / sizeof(DirEntry));
+        printf("l2_mknod inserting new entry into parent directory at index %d\n", offset / sizeof(DirEntry));
     }
     else {
-        printf("Appending new entry to parent directory at offset %d\n", offset);
+        printf("l2_mknod appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
     INT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
@@ -484,11 +479,8 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     }
 
     inode._in_uid = uid;
-
     inode._in_gid = gid;
-
     struct passwd *ppwd = getpwuid(uid);
-
     strcpy(inode._in_owner, ppwd->pw_name);
 
     // change the inode type to directory
@@ -537,8 +529,8 @@ INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry) {
 	    return -1;		
 	}
 
-	#ifdef DEBUG
-	printf("%d entries in cur dir %s, readding %u\n", numDirEntry, path, offset);
+	#ifdef DEBUG_VERBOSE
+	printf("%d entries in cur dir %s, reading %u\n", numDirEntry, path, offset);
 	#endif
         // read the directory table
         readINodeData(fs, &inode, curEntry, offset * sizeof(DirEntry), sizeof(DirEntry));
@@ -558,7 +550,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
     //   5.1 if file is reg file, release the inode and the data blocks
     //   5.2 if file is dir, recursively release all the concerned inodes and DBlks
     #ifdef DEBUG
-    printf("Unlinking file path: %s\n", path);
+    printf("l2_unlink called for file path: %s\n", path);
     #endif
     if (strcmp(path, "/") == 0) {
         fprintf(stderr, "Error: cannot unlink root directory!\n");
@@ -641,8 +633,8 @@ INT l2_unlink(FileSystem* fs, char* path) {
 	    //weilong: remove dir
 	    if (inode._in_type == DIRECTORY) {
           	// search parent directory table
-		#ifdef DEBUG
-		    printf("rm -r\n");
+		#ifdef DEBUG_VERBOSE
+		printf("l2_unlink detected directory, using recursive \"rm -r\"\n");
 		#endif
 		//skip . and ..
 		for(offset = 2*sizeof(DirEntry); offset < inode._in_filesize; offset += sizeof(DirEntry)) {
@@ -654,8 +646,8 @@ INT l2_unlink(FileSystem* fs, char* path) {
 			strcat(recur_path, path);
 			strcat(recur_path, "/");
 			strcat(recur_path, entry.key);
-			#ifdef DEBUG
-			    printf("recursively rm -r %s\n", entry.key);
+			#ifdef DEBUG_VERBOSE
+			printf("l2_unlink continuing recursive \"rm -r %s\"\n", entry.key);
 			#endif
 			if (l2_unlink(fs, recur_path) != 0) {
 			    _err_last = _fs_recursiveUnlinkFail;
@@ -665,10 +657,10 @@ INT l2_unlink(FileSystem* fs, char* path) {
 		    }
         	}
 	    }
+            #ifdef DEBUG_VERBOSE
+            printf("l2_unlink freeing the inode %d associated with unlinked file %s\n", id, path);
+            #endif
             freeINode(fs, id);
-	    #ifdef DEBUG
-            printf("free the inode %d associated with this file/dir\n", id);
-	    #endif
         }
 	//remove this inode last because we might use it in namei to recurse
         for(offset = 0; offset < par_inode._in_filesize; offset += sizeof(DirEntry)) {
@@ -678,8 +670,8 @@ INT l2_unlink(FileSystem* fs, char* path) {
             
             // directory entry found, mark it as removed
             if (strcmp(entry.key, node_name) == 0){
-                #ifdef DEBUG
-                printf("File to be unlinked found at offset: %d\n", offset);
+                #ifdef DEBUG_VERBOSE
+                printf("l2_unlink removing file from parent directory at offset: %d\n", offset);
                 #endif
                 //strcpy(DEntry->key, "");
                 entry.INodeID = -1;
@@ -694,9 +686,10 @@ INT l2_unlink(FileSystem* fs, char* path) {
 }
 
 INT l2_rename(FileSystem* fs, char* path, char* new_path) {
-
-    printf("Enter l2_rename, move from %s to %s\n", path, new_path);
-
+    #ifdef DEBUG
+    printf("l2_rename called from %s to %s\n", path, new_path);
+    #endif
+    
     INT par_id, new_par_id;
     char par_path[MAX_PATH_LEN];
     char new_par_path[MAX_PATH_LEN];
@@ -738,8 +731,8 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
 
         // directory entry found, mark it as removed
         if (strcmp(entry.key, node_name) == 0){
-            #ifdef DEBUG
-            printf("File/Dir to be moved found at offset: %d\n", i);
+            #ifdef DEBUG_VERBOSE
+            printf("l2_rename removing file from parent directory at offset: %d\n", i);
             #endif
             node_id = entry.INodeID;
             strcpy(entry.key, "");
@@ -755,8 +748,10 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
     strncpy(new_par_path, new_path, strlen(new_path) - strlen(new_ptr));
     new_par_path[strlen(new_path) - strlen(new_ptr)] = '\0';
 
-    printf("new path = %s, new parent path = %s\n", new_path, new_par_path);
-
+    #ifdef DEBUG_VERBOSE
+    printf("l2_rename new path = %s, new parent path = %s\n", new_path, new_par_path);
+    #endif
+    
     // new_ptr = "/new_node_name"
     char *new_node_name = strtok(new_ptr, "/");
    
@@ -777,7 +772,9 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
     DirEntry newEntry;
     strcpy(newEntry.key, new_node_name);
     newEntry.INodeID = node_id;
-    printf("node name = %s, node_id = %d\n", newEntry.key, newEntry.INodeID);
+    #ifdef DEBUG_VERBOSE
+    printf("l2_rename node name = %s, node_id = %d\n", newEntry.key, newEntry.INodeID);
+    #endif
 
     UINT j;
     for(j = 0; j < new_par_inode._in_filesize; j += sizeof(DirEntry)) {
@@ -793,7 +790,7 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
     
     INT bytesWritten = writeINodeData(fs, &new_par_inode, (BYTE*) &newEntry, j, sizeof(DirEntry));
     
-    printf("byteswritten = %d, and afterwards inode table size = %d\n", bytesWritten, new_par_inode._in_filesize);
+    //printf("byteswritten = %d, and afterwards inode table size = %d\n", bytesWritten, new_par_inode._in_filesize);
     if(bytesWritten != sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
         return -1;
@@ -853,7 +850,7 @@ INT l2_chmod(FileSystem* fs, char* path, UINT mode)
         fprintf(stderr, "Error: fail to read inode for file %s\n", path);
         return -1;
     }
-    printf("cur mode: %x\n", curINode._in_permissions);
+    //printf("cur mode: %x\n", curINode._in_permissions);
     //2. check uid/gid
     //3. set mode
     curINode._in_permissions = mode;
@@ -868,9 +865,9 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
     // if new_length > filesize, extend the file, balloc
     // else if they are equal, do nothing
     // else, truncate the file, free the data blocks and blocks in the inodes
-#ifdef TRUNCATE_DEBUG
-        printf("Enter l2_truncate, new file to size %d\n", new_length);
-#endif
+    #ifdef DEBUG
+    printf("l2_truncate called on file %s for new size %d\n", path, new_length);
+    #endif
     
     UINT INodeID = l2_namei(fs, path);
     if (INodeID< 0) {
@@ -932,17 +929,17 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
         ;
     }
     else {
-#ifdef TRUNCATE_DEBUG
-        printf("in l2_truncate, start truncate the file to size %d\n", new_length);
-#endif
+        #ifdef DEBUG_VERBOSE
+        printf("l2_truncate start truncate the file to size %d\n", new_length);
+        #endif
         // truncate it
         // len of bytes to be truncated
         INT len = curINode._in_filesize - new_length;
         // next file blk to be truncated
         UINT fileBlkId = (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE - 1;
-#ifdef TRUNCATE_DEBUG
-        printf("the first fileblk to be truncated: %d\n", fileBlkId);
-#endif
+        #ifdef DEBUG_VERBOSE
+        printf("l2_truncate found first fileblk to be truncated: %d\n", fileBlkId);
+        #endif
         if ((new_length - 1 + BLK_SIZE) / BLK_SIZE == (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE) {
         //    curINode._in_filesize = new_length;
             len = 0;
@@ -950,9 +947,9 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
         else {
             len -= curINode._in_filesize - fileBlkId * BLK_SIZE;
             bfree(fs, &curINode, fileBlkId);
-#ifdef TRUNCATE_DEBUG
-            printf("fileblk %d is truncated! \n", fileBlkId);
-#endif
+            #ifdef DEBUG_VERBOSE
+            printf("l2_truncate truncated fileblk: %d\n", fileBlkId);
+            #endif
             fileBlkId --;
         }
         
@@ -963,9 +960,9 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
             }
             else {
                 bfree(fs, &curINode, fileBlkId);
-#ifdef TRUNCATE_DEBUG
-                printf("fileblk %d is truncated! \n", fileBlkId);
-#endif
+                #ifdef DEBUG_VERBOSE
+                printf("l2_truncate truncated fileblk: %d\n", fileBlkId);
+                #endif
                 len -= BLK_SIZE;
                 fileBlkId --;
             }
@@ -1020,9 +1017,6 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
     //6. write back INode
     writeINode(fs, curINodeID, &curINode);
   }
-  #ifdef DEBUG
-  printf("l2_read successfully read %d bytes\n", returnSize);
-  #endif
   return returnSize; 
 }
 
@@ -1058,9 +1052,6 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
     //update INode
     writeINode(fs, curINodeID, &curINode);
   }
-  #ifdef DEBUG
-  printf("l2_write successfully wrote %d bytes\n", bytesWritten);
-  #endif
   return bytesWritten;
 }
 
@@ -1096,8 +1087,8 @@ INT l2_utimens(FileSystem *fs, char *path, struct timespec tv[2])
 // 3. scan through to find next tok's id
 INT l2_namei(FileSystem *fs, char *path)
 {
-  #ifdef DEBUG
-  printf("Resolving path \"%s\" using namei...\n", path);
+  #ifdef DEBUG_VERBOSE
+  printf("l2_namei resolving path: %s\n", path);
   #endif
   char local_path[MAX_PATH_LEN]; // cannot use "path" directly, namei will truncate it
   strcpy(local_path, path);
@@ -1150,14 +1141,14 @@ INT l2_namei(FileSystem *fs, char *path)
     if (!entryFound) {
       _err_last = _fs_NonExistFile;
       THROW(__FILE__, __LINE__, __func__);
-      printf("target: %s\n", tok);
+      fprintf(stderr, "Error: l2_namei found nonexistent target: %s\n", tok);
       return -ENOENT;
     }
     //1. advance in traversal
     tok = strtok(NULL, "/");
   }
-  #ifdef DEBUG
-  printf("Namei succeeded with id: %d\n", curID);
+  #ifdef DEBUG_VERBOSE
+  printf("l2_namei on path \"%s\" succeeded with id: %d\n", curID);
   #endif
   return curID;
 }

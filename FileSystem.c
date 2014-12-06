@@ -38,7 +38,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
     //compute file system size 
     LONG nBytes = BLK_SIZE + nINodes * INODE_SIZE + ((LONG)nDBlks * BLK_SIZE);
-    #ifdef DEBUG 
+    #ifdef DEBUG
     printf("BLK_SIZE: %d, INODE_SIZE: %d, nINodes: %d, nDBlks: %d\n", BLK_SIZE, INODE_SIZE, nINodes, nDBlks);
     printf("Computing file system size...nBytes = %" PRIu64 "\n", nBytes); 
     #endif
@@ -415,9 +415,9 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     #endif
     
     if(offset >= inode->_in_filesize) {
-	#ifdef DEBUG
-	printf("Reading from 0 length file! Or reading from beyond filesize!\n");
-	#endif
+        #ifdef DEBUG
+        printf("Reading 0-length file or beyond filesize, returning 0 immediately\n");
+        #endif
         return 0;
     }
     
@@ -428,8 +428,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     //compute the number of file blocks allocated based on the file size
     UINT nFileBlks = (inode->_in_filesize + BLK_SIZE - 1) / BLK_SIZE;
-    #ifdef DEBUG
-    //printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
+    #ifdef DEBUG_VERBOSE
     printf("Current file size of inode: %d\n", inode->_in_filesize);
     printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
     #endif
@@ -437,7 +436,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     //convert byte offset to logical id + block offset
     UINT fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     printf("Starting at block %d with block offset %d with truncated len %d\n", fileBlkId, offset, len);
     #endif
     
@@ -449,21 +448,23 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     //special case to handle offset in the middle of first block
     if(offset > 0) {
+        //entire read falls within first block
         if(offset + len <= BLK_SIZE) {
-            //entire read falls within first block
-	    if (dataBlkId < 0)
-	        memset(buf, 0, len);
-	    else
+            if (dataBlkId < 0)
+                memset(buf, 0, len);
+            else
                 readDBlkOffset(fs, dataBlkId, buf, offset, len);
+                
             bytesRead = len;
             len = 0;
         }
+        //read is larger than first block
         else {
-            //read is larger than first block
-	    if (dataBlkId < 0)
-		memset(buf, 0, BLK_SIZE - offset);
-	    else
+            if (dataBlkId < 0)
+                memset(buf, 0, BLK_SIZE - offset);
+            else
                 readDBlkOffset(fs, dataBlkId, buf, offset, BLK_SIZE - offset);
+                
             bytesRead = BLK_SIZE - offset;
             len -= bytesRead;
             fileBlkId++;
@@ -475,29 +476,22 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         //compute next data block id using bmap
         dataBlkId = bmap(fs, inode, fileBlkId);
             
-        //read next block into buf
+        //end of read falls within block
         if(len <= BLK_SIZE) {
-            //end of read falls within block
-            #ifdef DEBUG
-            printf("Reached last dblk, calling readDBlkOffset on id %d with offset %d for len %d\n", dataBlkId, 0, len);
-            #endif
-	    if (dataBlkId < 0)
-		memset(buf + bytesRead, 0, len);
-	    else
+            if (dataBlkId < 0)
+                memset(buf + bytesRead, 0, len);
+            else
                 readDBlkOffset(fs, dataBlkId, buf + bytesRead, 0, len);
             
             //update len (end of read)
             bytesRead += len;
             len = 0;
         }
+        //read is larger than current block
         else {
-            //read is larger than current block
-            #ifdef DEBUG
-            printf("Not last dblk, calling readDBlk on id %d\n", dataBlkId);
-            #endif
-	    if (dataBlkId < 0)
-		memset(buf + bytesRead, 0, BLK_SIZE);
-	    else
+            if (dataBlkId < 0)
+                memset(buf + bytesRead, 0, BLK_SIZE);
+            else
                 readDBlk(fs, dataBlkId, buf + bytesRead);
            
             //update len and file block for remaining read
@@ -509,6 +503,8 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     #ifdef DEBUG
     printf("readINodeData successfully read %d bytes\n", bytesRead);
+    #endif
+    #ifdef DEBUG_VERBOSE
     printf("Returning buf: %s\n", buf);
     #endif
     return bytesRead;
@@ -575,7 +571,7 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     //convert byte offset to logical id + block offset
     UINT fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
-    #ifdef DEBUG
+    #ifdef DEBUG_VERBOSE
     printf("writeINodeData starting at file block %d with offset %d\n", fileBlkId, offset);
     #endif
     
@@ -585,11 +581,11 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     //compute start block id
     //TODO merge this into one line by making balloc return the ID
     INT dataBlkId = balloc(fs, inode, fileBlkId);
-    #ifdef DEBUG
-    printf("Starting data block: %d\n", dataBlkId);
+    #ifdef DEBUG_VERBOSE
+    printf("writeINodeData starting at data block: %d\n", dataBlkId);
     #endif
     if(dataBlkId < 0) {
-        printf("Warning: could not allocate more data blocks for write!\n");
+        fprintf(stderr, "Warning: could not allocate more data blocks for write!\n");
         return bytesWritten;
     }
     
@@ -612,17 +608,14 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
     
     //continue while more bytes to write AND max filesize not reached
     while(len > 0 && fileBlkId < MAX_FILE_BLKS) {
-	#ifdef DEBUG
-        printf("allocate data block for fileblkid %d\n", fileBlkId);
-	#endif
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
-        #ifdef DEBUG
-        printf("Next data block: %d\n", dataBlkId);
+        #ifdef DEBUG_VERBOSE
+        printf("writeINodeData writing next data block: %d\n", dataBlkId);
         #endif
 
         if(dataBlkId < 0) {
-            printf("Warning: could not allocate more data blocks for write!\n");
+            fprintf(stderr, "Warning: could not allocate more data blocks for write!\n");
             return bytesWritten;
         }
         
@@ -646,6 +639,9 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
         }
     }
     
+    #ifdef DEBUG
+    printf("writeINodeData successfully wrote %d bytes\n", bytesWritten);
+    #endif
     return bytesWritten;
 }
 
@@ -726,7 +722,7 @@ INT freeDBlk(FileSystem* fs, UINT id) {
     // if current cache is full
     else if (fs->superblock.pNextFreeDBlk == FREE_DBLK_CACHE_SIZE - 1) {
         #ifdef DEBUG
-        printf("DBlk cache full, dumping cache to disk at id: %d\n", fs->superblock.pFreeDBlksHead);
+        printf("Free dblk cache full, dumping cache to disk at id: %d\n", fs->superblock.pFreeDBlksHead);
         #endif
         //write cache back
         writeDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
@@ -751,9 +747,9 @@ INT freeDBlk(FileSystem* fs, UINT id) {
 // 1. convert logical id of DBlk to logical id of disk block
 // 2. read data
 INT readDBlk(FileSystem* fs, UINT id, BYTE* buf) {
-    #ifdef DEBUG
-    printf("readDBlk id: %u\n", id);
-    #endif
+    if(id >= fs->superblock.nDBlks) {
+        fprintf(stderr, "Error: readDBlk received id %d which exceeds nDBlks %d\n", id, fs->superblock.nDBlks);
+    }
     assert(id < fs->superblock.nDBlks);
     UINT bid = id + fs->diskDBlkOffset;
     return readBlk(fs->disk, bid, buf);
@@ -937,17 +933,19 @@ INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId)
 // Steps:
 INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 {
-    #ifdef DEBUG
-    printf("balloc called with %u\n", fileBlkId);
+    #ifdef DEBUG_VERBOSE
+    printf("balloc request for fileBlkId: %u\n", fileBlkId);
     #endif
     UINT count = 0;
     // shortcut: check if already allocated
     INT DBlkID = bmap(fs, inode, fileBlkId);
-    if (DBlkID !=  -1 )
+    if (DBlkID !=  -1 ) {
+        #ifdef DEBUG_VERBOSE
+        printf("balloc already allocated fileBlkId %d with DBlkId %d\n", fileBlkId, DBlkID);
+        #endif
         return DBlkID;
-    #ifdef DEBUG
-    printf("bmap done with %d\n", DBlkID);
-    #endif
+    }
+        
     //UINT cur_internal_index = 0;
     //for (cur_internal_index=0; bmap(fs, inode, cur_internal_index) != -1 && cur_internal_index < fileBlkId; cur_internal_index ++);
     UINT cur_internal_index = fileBlkId;    
@@ -1016,8 +1014,8 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	    UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS - INODE_NUM_S_INDIRECT_BLKS * entryNum - D_index * entryNumS) / entryNum;
 	    //weilong: mathimatically, since mod, it does not matter if we substract N*entryNum
 	    UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
-	    #ifdef DEBUG
-            printf("D_Index: %u, S_Index: %u, S_offset: %u, cur_internal_index: %u\n", D_index, S_index, S_offset, cur_internal_index);
+	    #ifdef DEBUG_VERBOSE
+        //printf("D_Index: %u, S_Index: %u, S_offset: %u, cur_internal_index: %u\n", D_index, S_index, S_offset, cur_internal_index);
 	    #endif
 	    if (inode->_in_dIndirectBlocks[D_index] == -1) {
 		newDBlkID = allocDBlk(fs);
@@ -1143,21 +1141,25 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 	}
     }
 
-#ifdef TRUNCATE_DEBUG
-    printf("balloc allocated datablk %d\n", newDBlkID);
-#endif 
+    #ifdef DEBUG_VERBOSE
+    printf("balloc allocated for fileBlkId %d new DBlkID %d\n", fileBlkId, newDBlkID);
+    #endif 
     return newDBlkID;
 
 }
 
 INT bfree(FileSystem *fs, INode* inode, UINT fileBlkId) {
-    printf("bfree called with %u\n", fileBlkId);
+    #ifdef DEBUG_VERBOSE
+    printf("bfree requested for fileBlkId: %u\n", fileBlkId);
+    #endif
     INT DBlkID = bmap(fs, inode, fileBlkId);
     if (DBlkID ==  -1 ) {
         fprintf(stderr, "Cannot free an unallocated fileBlkId %d\n", fileBlkId);
         return -1;
     }
-    printf("bmap done with %d\n", DBlkID);
+    #ifdef DEBUG_VERBOSE
+    printf("bfree resolved fileBlkId %d to DBlkId %d\n", fileBlkId, DBlkID);
+    #endif
 
     UINT cur_internal_index = fileBlkId;    
     
@@ -1182,19 +1184,19 @@ INT bfree(FileSystem *fs, INode* inode, UINT fileBlkId) {
         UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
 	    
         UINT T_BlkID = inode->_in_tIndirectBlocks[T_index];
-	readDBlk(fs, T_BlkID, (BYTE*) blkBuf_t);
+        readDBlk(fs, T_BlkID, (BYTE*) blkBuf_t);
         if (blkBuf_t[D_index] == -1) {
             fprintf(stderr, "ERROR: unallocated triple indirect block\n");
             return -1;
         }
         UINT D_BlkID = blkBuf_t[D_index];
-	readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+        readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
         if (blkBuf_d[S_index] == -1) {
             fprintf(stderr, "ERROR: unallocated double indirect block\n");
             return -1;
         }
         UINT S_BlkID = blkBuf_d[S_index];
-	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+        readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
 
         // free the data block
         freeDBlk(fs, blkBuf_s[S_offset]);
@@ -1225,13 +1227,13 @@ INT bfree(FileSystem *fs, INode* inode, UINT fileBlkId) {
         UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
         
         UINT D_BlkID = inode->_in_dIndirectBlocks[D_index];
-	readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
+        readDBlk(fs, D_BlkID, (BYTE *)blkBuf_d);
         if (blkBuf_d[S_index] == -1) {
             fprintf(stderr, "ERROR: unallocated double indirect block\n");
             return -1;
         }
         UINT S_BlkID = blkBuf_d[S_index];
-	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+        readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
 
         // free the data block
         freeDBlk(fs, blkBuf_s[S_offset]);
@@ -1254,34 +1256,34 @@ INT bfree(FileSystem *fs, INode* inode, UINT fileBlkId) {
         UINT S_index = (cur_internal_index - INODE_NUM_DIRECT_BLKS) / entryNum;
         UINT S_offset = (cur_internal_index - INODE_NUM_DIRECT_BLKS) % entryNum;
 
-#ifdef TRUNCATE_DEBUG
-        printf("In the range of Single indirect block, S_index = %u, S_offset = %u\n", S_index, S_offset);
-#endif
+        #ifdef DEBUG_VERBOSE
+        printf("bfree in the range of single indirect block, S_index = %u, S_offset = %u\n", S_index, S_offset);
+        #endif
         UINT S_BlkID = inode->_in_sIndirectBlocks[S_index];
-	readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
+        readDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
 
         // free the data block
+        #ifdef DEBUG_VERBOSE
+        printf("bfree freeing data block %u\n", blkBuf_s[S_offset]);
+        #endif
         freeDBlk(fs, blkBuf_s[S_offset]);
-#ifdef TRUNCATE_DEBUG
-        printf("free data block %u\n", blkBuf_s[S_offset]);
-#endif
         // mark the corresponding entry in the S_indirecct blk as -1
         blkBuf_s[S_offset] = -1;
         writeDBlk(fs, S_BlkID, (BYTE *)blkBuf_s);
 
         if(S_offset == 0) {
-#ifdef TRUNCATE_DEBUG
-            printf("free data block %u\n", S_BlkID);
-#endif
+            #ifdef DEBUG_VERBOSE
+            printf("bfree freeing pointer data block %u\n", S_BlkID);
+            #endif
             freeDBlk(fs, S_BlkID);
             inode->_in_sIndirectBlocks[S_index] = -1;
         }
     }
     else {
+        #ifdef DEBUG_VERBOSE
+        printf("bfree freeing direct data block %d\n",inode->_in_directBlocks[cur_internal_index]);
+        #endif
         freeDBlk(fs, inode->_in_directBlocks[cur_internal_index]);
-#ifdef TRUNCATE_DEBUG
-        printf("free datablock %d\n",inode->_in_directBlocks[cur_internal_index]);
-#endif
         inode->_in_directBlocks[cur_internal_index] = -1;
     }
 

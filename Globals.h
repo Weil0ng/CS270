@@ -8,8 +8,8 @@
 #define DEBUG
 #endif
 
-#ifndef TRUNCATE_DEBUG
-#define TRUNCATE_DEBUG
+#ifndef DEBUG_VERBOSE
+#define DEBUG_VERBOSE
 #endif
 
 //disk partition path

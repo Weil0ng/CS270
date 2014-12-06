@@ -26,7 +26,7 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 	int res = 0;
 	
 	#ifdef DEBUG
-	printf("getattr %s\n", path);
+	//printf("getattr %s\n", path);
 	#endif
 
 	memset(stbuf, 0, sizeof(struct stat));
@@ -37,7 +37,7 @@ static int l3_getattr(const char *path, struct stat *stbuf)
 static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			 off_t offset, struct fuse_file_info *fi)
 {
-	printf("offset: %u\n", offset);
+	//printf("offset: %u\n", offset);
 	(void) fi;
  	DirEntry curEntry;
 	//UINT entryL = (24 + FILE_NAME_LENGTH + 7) & (~7);
@@ -45,13 +45,13 @@ static int l3_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	INT res = l2_readdir(&fs, path, offset, &curEntry);
 	while (res == 0) {
 		if (curEntry.INodeID != -1) {
-			printf("filling %s\n", curEntry.key);
+			//printf("filling %s\n", curEntry.key);
 			offset ++;
 			if (filler(buf, curEntry.key, NULL, offset) == 1) {
-				printf("fuse_filler buf full!\n");
+				//printf("fuse_filler buf full!\n");
 				break;
 			}
-			printf("%s\n", (char *)buf);
+			//printf("%s\n", (char *)buf);
 			return 0;
 		}
 		offset ++;
@@ -88,8 +88,8 @@ static int l3_rmdir(const char *path)
 
 static int l3_rename(const char *path, const char *new_path)
 {
-	printf("old name: %s\n", path);
-	printf("new name: %s\n", new_path);
+	//printf("old name: %s\n", path);
+	//printf("new name: %s\n", new_path);
 	return l2_rename(&fs, path, new_path);
 }
 
@@ -107,7 +107,7 @@ static int l3_chown(const char *path, uid_t uid, gid_t gid)
 
 static int l3_truncate(const char *path, off_t offset)
 {
-        printf("truncate %s to be length %u\n", path, offset);
+    //printf("truncate %s to be length %u\n", path, offset);
 	return l2_truncate(&fs, path, offset);;
 }
 
@@ -147,7 +147,7 @@ static int l3_read(const char *path, char *buf, size_t size, off_t offset,
 
 static int l3_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-	#ifdef DEBUG
+	#ifdef DEBUG_VERBOSE
     	printf("l3_write received buffer to write: %s\n", buf);
 	#endif
 	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
@@ -167,23 +167,11 @@ static int l3_statfs(const char *path, struct statvfs *stat)
 void * l3_mount(struct fuse_conn_info *conn)
 {
 	UINT succ = l2_mount(&fs);
-	if(succ == 0) {
-                printf("File System Mounted!");
-        }
-        else {
-                printf("Error in mounting file system!");
-        }
 }
 
 void * l3_unmount(void *conn)
 {
 	UINT succ = l2_unmount(&fs);
-	if(succ == 0) {
-                printf("File System Unounted!");
-        }
-        else {
-                printf("Error in unmounting file system!");
-        }
 }
 
 static struct fuse_operations l3_oper = {
