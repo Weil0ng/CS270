@@ -88,15 +88,10 @@ static int l3_rmdir(const char *path)
 
 static int l3_rename(const char *path, const char *new_path)
 {
-<<<<<<< HEAD
-	//printf("old name: %s\n", path);
-	//printf("new name: %s\n", new_path);
-=======
 	#ifdef DEBUG
 	printf("old name: %s\n", path);
 	printf("new name: %s\n", new_path);
 	#endif
->>>>>>> fix fuse interface to l2_open and l2_close
 	return l2_rename(&fs, path, new_path);
 }
 
