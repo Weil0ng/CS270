@@ -185,7 +185,7 @@ static int l3_release(const char *path, struct fuse_file_info *fi)
     printf("File operation from flags: %d\n", fileOp);
     #endif
     
-	return (int)l2_close(&fs, path, fi->flags);
+	return (int)l2_close(&fs, path, fileOp);
 }
 
 static int l3_read(const char *path, char *buf, size_t size, off_t offset,
