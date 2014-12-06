@@ -124,11 +124,11 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
 {
     //parse file operation from flags
     enum FILE_OP fileOp;
-    if(flags & O_RDONLY)
+    if(fi->flags & O_RDONLY)
         fileOp = OP_READ;
-    else if(flags & O_WRONLY)
+    else if(fi->flags & O_WRONLY)
         fileOp = OP_WRITE;
-    else if(flags & O_RDWR)
+    else if(fi->flags & O_RDWR)
         fileOp = OP_READWRITE;
     else {
         fprintf(stderr, "Error: no file operation specified in flags!\n");
@@ -139,7 +139,7 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
     #endif
     
     //parse create flag
-    if(flags & O_CREAT) {
+    if(fi->flags & O_CREAT) {
         #ifdef DEBUG
         printf("O_CREAT flag detected, creating file: %s\n", path);
         #endif
@@ -147,9 +147,9 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
         INT succ = l2_mknod(&fs, path, fctx->uid, fctx->gid);
         
         //parse exists flag
-        if((flags & O_EXCL) && (succ == -EEXISTS)) {
+        if((fi->flags & O_EXCL) && (succ == -EEXIST)) {
             fprintf(stderr, "Error: O_EXCL specified for open but file already exists!\n");
-            return -EEXISTS;
+            return -EEXIST;
         }
         else if(succ < 0) {
             return succ;
@@ -157,7 +157,7 @@ static int l3_open(const char *path, struct fuse_file_info *fi)
     }
     
     //parse truncate flag
-    if(flags & (O_TRUNC | O_WRONLY | O_RDWR)) {
+    if(fi->flags & (O_TRUNC | O_WRONLY | O_RDWR)) {
         #ifdef DEBUG
         printf("O_TRUNC flag detected, truncating file: %s\n", path);
         #endif
@@ -171,11 +171,11 @@ static int l3_release(const char *path, struct fuse_file_info *fi)
 {
     //parse file operation from flags
     enum FILE_OP fileOp;
-    if(flags & O_RDONLY)
+    if(fi->flags & O_RDONLY)
         fileOp = OP_READ;
-    else if(flags & O_WRONLY)
+    else if(fi->flags & O_WRONLY)
         fileOp = OP_WRITE;
-    else if(flags & O_RDWR)
+    else if(fi->flags & O_RDWR)
         fileOp = OP_READWRITE;
     else {
         fprintf(stderr, "Error: no file operation specified in flags!\n");
