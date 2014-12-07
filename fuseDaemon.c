@@ -212,8 +212,8 @@ static int l3_write(const char *path, const char *buf, size_t size, off_t offset
 {
 	#ifdef DEBUG_VERBOSE
     	printf("l3_write received buffer to write: %s\n", buf);
-	#endif
 	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
+	#endif
 	return (int)l2_write(&fs, path, offset, buf, size);
 }
 
