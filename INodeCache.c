@@ -28,6 +28,7 @@ INodeEntry* cacheINode(INodeCache *cache, UINT id, INode *inode)
   newEntry->_in_node = malloc(sizeof(INode));
   memcpy(newEntry->_in_node, inode, sizeof(INode));
   newEntry->_in_ref = 0;
+  newEntry->next = NULL;
 
   //insert to queue
   if(cache->nINodes == 0) {
