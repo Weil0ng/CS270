@@ -5,11 +5,11 @@
 #include <stdint.h>
 
 #ifndef DEBUG
-//#define DEBUG
+#define DEBUG
 #endif
 
 #ifndef DEBUG_VERBOSE
-//#define DEBUG_VERBOSE
+#define DEBUG_VERBOSE
 #endif
 
 //disk partition path
