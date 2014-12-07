@@ -212,8 +212,8 @@ static int l3_write(const char *path, const char *buf, size_t size, off_t offset
 {
 	#ifdef DEBUG_VERBOSE
     	printf("l3_write received buffer to write: %s\n", buf);
-	#endif
 	printf("Calling l2_write for path \"%s\" and offset: %u for size: %u\n", path, offset, size);
+	#endif
 	return (int)l2_write(&fs, path, offset, buf, size);
 }
 
@@ -254,7 +254,7 @@ static struct fuse_operations l3_oper = {
 	.write		= l3_write,
 	.utimens	= l3_utimens,
 	.statfs		= l3_statfs,
-	.init		= l3_mount,
+//	.init		= l3_mount,
 	.destroy	= l3_unmount
 };
 
