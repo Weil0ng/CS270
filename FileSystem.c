@@ -469,15 +469,13 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
     
     //compute the number of file blocks allocated based on the file size
     UINT nFileBlks = (inode->_in_filesize + BLK_SIZE - 1) / BLK_SIZE;
-    #ifdef DEBUG_VERBOSE
-    printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
-    #endif
     
     //convert byte offset to logical id + block offset
     UINT fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
     #ifdef DEBUG_VERBOSE
-    printf("readINodeData starting at block %d with block offset %d with truncated len %d\n", fileBlkId, offset, len);
+    printf("readINodeData starting at block %d out of %d with block offset %d with truncated len %d\n", 
+        fileBlkId, nFileBlks, offset, len);
     #endif
     
     //return bytes read upon completion
@@ -516,7 +514,7 @@ INT readINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT len
         //compute next data block id using bmap
         dataBlkId = bmap(fs, inode, fileBlkId);
         #ifdef DEBUG_VERBOSE
-        printf("readINodeData reading next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
+        //printf("readINodeData reading next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
         #endif
             
         //end of read falls within block
@@ -655,7 +653,7 @@ INT writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, UINT offset, UINT le
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
         #ifdef DEBUG_VERBOSE
-        printf("writeINodeData writing next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
+        //printf("writeINodeData writing next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
         #endif
 
         if(dataBlkId < 0) {
