@@ -703,7 +703,6 @@ INT allocDBlk(FileSystem* fs) {
             fs->superblock.pNextFreeDBlk = FREE_DBLK_CACHE_SIZE - 1;
         }
     }
-
     fs->superblock.nFreeDBlks --;
     return returnID;
 }
@@ -993,7 +992,8 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
         	}
 		inode->_in_sIndirectBlocks[S_index] = newDBlkID;
 		INT initBlk[FREE_DBLK_CACHE_SIZE];
-    		memset(initBlk, -1, sizeof(initBlk));
+		for (int i=0; i<FREE_DBLK_CACHE_SIZE; i++)
+		    initBlk[i] = -1;
     		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    // now, alloc the DBlk
@@ -1032,8 +1032,9 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
                 }
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
 		INT initBlk[FREE_DBLK_CACHE_SIZE];
-    		memset(initBlk, -1, sizeof(initBlk));
-    		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
+		for (int i=0; i<FREE_DBLK_CACHE_SIZE; i++)
+                    initBlk[i] = -1;    		
+		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    INT D_BlkID = inode->_in_dIndirectBlocks[D_index];
 	    readDBlk(fs, D_BlkID, blkBuf);
@@ -1047,7 +1048,8 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
 		INT initBlk[FREE_DBLK_CACHE_SIZE];
-                memset(initBlk, -1, sizeof(initBlk));
+		for (int i=0; i<FREE_DBLK_CACHE_SIZE; i++)
+                    initBlk[i] = -1;
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
@@ -1104,7 +1106,8 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 		*(blkBuf + D_index) = newDBlkID;
 		writeDBlk(fs, T_BlkID, blkBuf);
 		INT initBlk[FREE_DBLK_CACHE_SIZE];
-                memset(initBlk, -1, sizeof(initBlk));
+		for (int i=0; i<FREE_DBLK_CACHE_SIZE; i++)
+                    initBlk[i] = -1;
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    INT D_BlkID = *((UINT *)blkBuf + D_index);
@@ -1119,7 +1122,8 @@ INT balloc(FileSystem *fs, INode* inode, UINT fileBlkId)
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, blkBuf);
 		INT initBlk[FREE_DBLK_CACHE_SIZE];
-                memset(initBlk, -1, sizeof(initBlk));
+		for (int i=0; i<FREE_DBLK_CACHE_SIZE; i++)
+                    initBlk[i] = -1;
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
