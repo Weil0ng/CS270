@@ -41,7 +41,7 @@ int main(int args, char* argv[])
     char command[1024];
     char path[1024];
     char buf[1024];
-    char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
+//    char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
     UINT offset;
     UINT len;
 
