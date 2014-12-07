@@ -22,3 +22,7 @@ struct INodeEntry {
 //pointer to the next entry in this bin
   INodeEntry *next;
 };
+
+#ifdef DEBUG
+void printINodeEntry(INodeEntry *);
+#endif

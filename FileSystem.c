@@ -172,8 +172,10 @@ INT makefs(LONG nDBlks, UINT nINodes, FileSystem* fs) {
     //load free block cache into superblock
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
-    //initialize inode table cache
+    //initialize in-core caches (open file table, inode table, inode cache)
+    initOpenFileTable(&fs->inodeTable);
     initINodeTable(&fs->inodeTable);
+    initINodeCache(&fs->inodeCache);
     
     return 0;
 }
@@ -380,49 +382,85 @@ INT freeINode(FileSystem* fs, UINT id) {
 // output: the pointer to the inode
 // function: read a disk inode
 INT readINode(FileSystem* fs, UINT id, INode* inode) {
+    if(id >= fs->superblock.nINodes) {
+        fprintf(stderr, "Error: readINode received invalid inode id %d when nINodes is %d!\n", id, fs->superblock.nINodes);
+    }
     assert(id < fs->superblock.nINodes);
+    
+    //first, check the inode table to see if the inode is open
+    INodeEntry* iEntry = getINodeEntry(&fs->inodeTable, id);
+    if(iEntry != NULL) {
+        #ifdef DEBUG_VERBOSE
+        printf("readINode found inode %d in inode table, returning directly...\n", id);
+        printINode(iEntry->_in_node);
+        #endif
+        memcpy(inode, iEntry->_in_node, sizeof(INode));
+        return 0;
+    }
+    
+    //next, check the inode cache to see if the inode is cached
+    iEntry = getINodeCacheEntry(&fs->inodeCache, id);
+    if(iEntry != NULL) {
+        #ifdef DEBUG_VERBOSE
+        printf("readINode found inode %d in inode cache, returning directly...\n", id);
+        #endif
+        memcpy(inode, iEntry->_in_node, sizeof(INode));
+        return 0;
+    }
+    
+    //otherwise, read the inode from disk
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
 
     BYTE INodeBlkBuf[BLK_SIZE];
     if(readBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
-        fprintf(stderr, "error: read blk %d from disk\n", blk_num);
+        fprintf(stderr, "Error: readINode failed to read blk %d from disk\n", blk_num);
         return -1;
     }
 
     // find the inode to read
+    #ifdef DEBUG_VERBOSE
+    printf("readINode found inode %d on disk, copying buffer...\n", id);
+    #endif
     INode* inode_d = (INode*) (INodeBlkBuf + blk_offset * INODE_SIZE);
+    memcpy(inode, inode_d, sizeof(INode));
     
-    // asssign struct field from the buffer to the inode
-    inode->_in_type = inode_d->_in_type;
-    strcpy(inode->_in_owner, inode_d->_in_owner);
-    inode->_in_uid = inode_d->_in_uid;
-    inode->_in_gid = inode_d->_in_gid;
-    inode->_in_permissions = inode_d->_in_permissions;
-    inode->_in_modtime =  inode_d->_in_modtime;
-    inode->_in_accesstime = inode_d->_in_accesstime;
-    inode->_in_filesize = inode_d->_in_filesize;
-    inode->_in_linkcount = inode_d->_in_linkcount;
+    //insert the completed inode into the cache
+    #ifdef DEBUG_VERBOSE
+    printf("readINode adding inode %d to inode cache...\n", id);
+    #endif
+    INodeEntry* newEntry = cacheINode(&fs->inodeCache, id, inode_d);
+    assert(newEntry != NULL);
+
+    return 0;
+}
+
+// reads an inode directly from disk, bypassing the cache
+INT readINodeNoCache(FileSystem* fs, UINT id, INode* inode) {
+    if(id >= fs->superblock.nINodes) {
+        fprintf(stderr, "Error: readINodeNoCache received invalid inode id %d when nINodes is %d!\n", id, fs->superblock.nINodes);
+    }
+    assert(id < fs->superblock.nINodes);
     
-    for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
-        inode->_in_directBlocks[i] = inode_d->_in_directBlocks[i];
+    //read the inode from disk
+    UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
+    UINT blk_offset = id % INODES_PER_BLK;
+
+    BYTE INodeBlkBuf[BLK_SIZE];
+    if(readBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
+        fprintf(stderr, "Error: readINodeNoCache failed to read blk %d from disk\n", blk_num);
+        return -1;
     }
-    for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
-        inode->_in_sIndirectBlocks[i] = inode_d->_in_sIndirectBlocks[i];
-    }
-    for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
-        inode->_in_dIndirectBlocks[i] = inode_d->_in_dIndirectBlocks[i];
-    }
-    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
-        inode->_in_tIndirectBlocks[i] = inode_d->_in_tIndirectBlocks[i];
-    }
+
+    INode* inode_d = (INode*) (INodeBlkBuf + blk_offset * INODE_SIZE);
+    memcpy(inode, inode_d, sizeof(INode));
 
     return 0;
 }
 
 LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG len) {
     #ifdef DEBUG
-    printf("readINodeData: inode size: %d, len: %d, offset: %d\n", inode->_in_filesize, len, offset);
+    printf("readINodeData on inode of size %d for len %d at offset %d\n", inode->_in_filesize, len, offset);
     #endif
     
     if(offset >= inode->_in_filesize) {
@@ -440,7 +478,6 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
     //compute the number of file blocks allocated based on the file size
     LONG nFileBlks = (inode->_in_filesize + BLK_SIZE - 1) / BLK_SIZE;
     #ifdef DEBUG_VERBOSE
-    printf("Current file size of inode: %d\n", inode->_in_filesize);
     printf("Total number of file blocks allocated in inode: %d\n", nFileBlks);
     #endif
     
@@ -448,7 +485,7 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
     LONG fileBlkId = offset / BLK_SIZE;
     offset = offset % BLK_SIZE;
     #ifdef DEBUG_VERBOSE
-    printf("Starting at block %d with block offset %d with truncated len %d\n", fileBlkId, offset, len);
+    printf("readINodeData starting at block %d with block offset %d with truncated len %d\n", fileBlkId, offset, len);
     #endif
     
     //return bytes read upon completion
@@ -485,13 +522,10 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
     //continue while more bytes to read AND end of inode not reached
     while(len > 0 && fileBlkId < nFileBlks) {
         //compute next data block id using bmap
-        #ifdef DEBUG
-	printf("fileBlkId: %ld\n", fileBlkId);
-	#endif
         dataBlkId = bmap(fs, inode, fileBlkId);
-	#ifdef DEBUG
-	printf("bmap returns: %ld\n", dataBlkId);
-	#endif
+        #ifdef DEBUG_VERBOSE
+        printf("readINodeData reading next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
+        #endif
             
         //end of read falls within block
         if(len <= BLK_SIZE) {
@@ -521,9 +555,6 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
     #ifdef DEBUG
     printf("readINodeData successfully read %d bytes\n", bytesRead);
     #endif
-    #ifdef DEBUG_VERBOSE
-    printf("Returning buf: %s\n", buf);
-    #endif
     return bytesRead;
 }
 
@@ -531,7 +562,32 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
 // output: none
 // function: write the disk inode #id in the inode table
 INT writeINode(FileSystem* fs, UINT id, INode* inode) {
+    if(id >= fs->superblock.nINodes) {
+        fprintf(stderr, "Error: writeINode received invalid inode id %d when nINodes is %d!\n", id, fs->superblock.nINodes);
+    }
     assert(id < fs->superblock.nINodes);
+    
+    //first, check the inode table to see if the inode is open
+    INodeEntry* iEntry = getINodeEntry(&fs->inodeTable, id);
+    if(iEntry != NULL) {
+        #ifdef DEBUG_VERBOSE
+        printf("writeINode found inode %d in inode table, writing table copy...\n", id);
+        #endif
+        memcpy(iEntry->_in_node, inode, sizeof(INode));
+    }
+    //otherwise, check the inode cache to see if the inode is cached
+    else {
+        iEntry = getINodeCacheEntry(&fs->inodeCache, id);
+        if(iEntry != NULL) {
+            #ifdef DEBUG_VERBOSE
+            printf("writeINode found inode %d in inode cache, writing cache copy...\n", id);
+            #endif
+            memcpy(iEntry->_in_node, inode, sizeof(INode));
+        }
+    }
+    
+    //write the inode to disk
+    //note: if we have a proper fsync implementation, we don't need this
     UINT blk_num = fs->diskINodeBlkOffset + id / INODES_PER_BLK;
     UINT blk_offset = id % INODES_PER_BLK;
     
@@ -541,33 +597,12 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
         return -1;
     }
     
-    //INode* inode_s = (INode*) INodeBlkBuf; 
-    // find the inode to write
+    //write the inode to buffer
+    #ifdef DEBUG_VERBOSE
+    printf("writeINode writing inode %d to disk...\n", id);
+    #endif
     INode *inode_d = (INode*) (INodeBlkBuf + blk_offset * INODE_SIZE);
-
-    // replace the inode
-    inode_d->_in_type = inode->_in_type;
-    strcpy(inode_d->_in_owner, inode->_in_owner);
-    inode_d->_in_permissions = inode->_in_permissions;
-    inode_d->_in_modtime =  inode->_in_modtime;
-    inode_d->_in_accesstime = inode->_in_accesstime;
-    inode_d->_in_filesize = inode->_in_filesize;
-    inode_d->_in_uid = inode->_in_uid;
-    inode_d->_in_gid = inode->_in_gid;
-    inode_d->_in_linkcount = inode->_in_linkcount;
-
-    for (UINT i = 0; i < INODE_NUM_DIRECT_BLKS; i ++) {
-        inode_d->_in_directBlocks[i] = inode->_in_directBlocks[i];
-    }
-    for (UINT i = 0; i < INODE_NUM_S_INDIRECT_BLKS; i ++) {
-        inode_d->_in_sIndirectBlocks[i] = inode->_in_sIndirectBlocks[i];
-    }
-    for (UINT i = 0; i < INODE_NUM_D_INDIRECT_BLKS; i ++) {
-        inode_d->_in_dIndirectBlocks[i] = inode->_in_dIndirectBlocks[i];
-    }
-    for (UINT i = 0; i < INODE_NUM_T_INDIRECT_BLKS; i ++) {
-        inode_d->_in_tIndirectBlocks[i] = inode->_in_tIndirectBlocks[i];
-    }
+    memcpy(inode_d, inode, sizeof(INode));
 
     // write the entire inode block back to disk
     if(writeBlk(fs->disk, blk_num, INodeBlkBuf) == -1) {
@@ -628,8 +663,8 @@ LONG writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG l
     while(len > 0 && fileBlkId < MAX_FILE_BLKS) {
         //compute next data block id using balloc
         dataBlkId = balloc(fs, inode, fileBlkId);
-        #ifdef DEBUG
-        printf("writeINodeData: next dataBlkId: %ld\n", dataBlkId);
+        #ifdef DEBUG_VERBOSE
+        printf("writeINodeData writing next fileBlkId %d with dataBlkId %d\n", fileBlkId, dataBlkId);
         #endif
 
         if(dataBlkId < 0) {
@@ -1331,7 +1366,7 @@ INT bfree(FileSystem *fs, INode* inode, LONG fileBlkId) {
 void printINodes(FileSystem* fs) {
     for(UINT i = 0; i < fs->superblock.nINodes; i++) {
         INode inode;
-        readINode(fs, i, &inode);
+        readINodeNoCache(fs, i, &inode);
         printf("%d\t| ", i);
         printINode(&inode);
     }

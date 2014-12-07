@@ -6,6 +6,12 @@
 #include <assert.h>
 #include <stdlib.h>
 
+void initOpenFileTable(OpenFileTable* table)
+{
+    table->nOpenFiles = 0;
+    table->head = NULL;
+}
+
 OpenFileEntry* addOpenFileEntry(OpenFileTable* table, char* path, INodeEntry* inode)
 {
     //initialize new entry

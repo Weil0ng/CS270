@@ -1,6 +1,5 @@
 // Open file table keeps track of which files are opened for read/write
 
-#include "INodeEntry.h"
 #include "OpenFileEntry.h"
 
 typedef struct OpenFileTable {
@@ -9,6 +8,9 @@ typedef struct OpenFileTable {
     OpenFileEntry* head;
 
 } OpenFileTable;
+
+//MUST be called at filesystem init time
+void initOpenFileTable(OpenFileTable*);
 
 OpenFileEntry* addOpenFileEntry(OpenFileTable*, char*, INodeEntry*);
 
