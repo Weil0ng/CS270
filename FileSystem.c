@@ -963,7 +963,9 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
     UINT entryNumS = entryNum * entryNum;
     UINT entryNumD = entryNumS * entryNum;
     LONG blkBuf[entryNum];
-
+    LONG initBlk[entryNum];
+    for (int i=0; i<entryNum; i++)
+	initBlk[i] = -1;
     // now, cur_internal_index holds the first unallocated entry
     while (cur_internal_index <= fileBlkId) {
         if (cur_internal_index < INODE_NUM_DIRECT_BLKS) {
@@ -994,8 +996,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                     return newDBlkID;
         	}
 		inode->_in_sIndirectBlocks[S_index] = newDBlkID;
-		LONG initBlk[entryNum];
-    		memset(initBlk, -1, sizeof(initBlk));
     		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    // now, alloc the DBlk
@@ -1033,8 +1033,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                     return newDBlkID;
                 }
 		inode->_in_dIndirectBlocks[D_index] = newDBlkID;
-		LONG initBlk[entryNum];
-    		memset(initBlk, -1, sizeof(initBlk));
     		writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    LONG D_BlkID = inode->_in_dIndirectBlocks[D_index];
@@ -1048,8 +1046,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                 }
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, (BYTE *)blkBuf);
-		LONG initBlk[entryNum];
-                memset(initBlk, -1, sizeof(initBlk));
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
@@ -1090,8 +1086,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                     return newDBlkID;
                 }
 		inode->_in_tIndirectBlocks[T_index] = newDBlkID;
-		LONG initBlk[entryNum];
-                memset(initBlk, -1, sizeof(initBlk));
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    LONG T_BlkID = inode->_in_tIndirectBlocks[T_index];
@@ -1105,8 +1099,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                 }
 		*(blkBuf + D_index) = newDBlkID;
 		writeDBlk(fs, T_BlkID, (BYTE *)blkBuf);
-		LONG initBlk[entryNum];
-                memset(initBlk, -1, sizeof(initBlk));
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
 	    LONG D_BlkID = *((UINT *)blkBuf + D_index);
@@ -1120,8 +1112,6 @@ LONG balloc(FileSystem *fs, INode* inode, LONG fileBlkId)
                 }
 		*(blkBuf + S_index) = newDBlkID;
 		writeDBlk(fs, D_BlkID, (BYTE *)blkBuf);
-		LONG initBlk[entryNum];
-                memset(initBlk, -1, sizeof(initBlk));
                 writeDBlk(fs, newDBlkID, (BYTE *)initBlk);
 	    }
             //now, alloc the DBlk
