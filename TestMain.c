@@ -40,7 +40,7 @@ int main(int args, char* argv[])
     char path[1024];
     UINT flags;
     char buf[1024];
-    char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
+    //char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
     UINT offset;
     UINT len;
     while(!quit) {
