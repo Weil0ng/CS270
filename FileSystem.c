@@ -384,7 +384,6 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
     if(iEntry != NULL) {
         #ifdef DEBUG_VERBOSE
         printf("readINode found inode %d in inode table, returning directly...\n", id);
-        printINode(iEntry->_in_node);
         #endif
         memcpy(inode, iEntry->_in_node, sizeof(INode));
         return 0;
