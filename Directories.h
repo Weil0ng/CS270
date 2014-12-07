@@ -16,7 +16,7 @@ INT l2_mount(FileSystem* fs);
 INT l2_unmount(FileSystem* fs);
 
 // makes a new filesystem with a root directory
-INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs);
+INT l2_initfs(LONG nDBlks, UINT nINodes, FileSystem* fs);
 
 // getattr
 INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf);
@@ -28,7 +28,7 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid);
 
 // reads directory contents
-INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry);
+INT l2_readdir(FileSystem* fs, char* path, LONG offset, DirEntry* curEntry);
 //UINT readdir(Dir*, DFile*);
 
 // deletes a file or directory
@@ -50,10 +50,10 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp);
 INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp);
 
 // reads a file
-INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
+INT l2_read(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes);
 
 // writes to a file
-INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes);
+INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes);
 
 // updates the mod/access time of a file
 INT l2_utimens(FileSystem* fs, char* path, struct timespec tv[2]);

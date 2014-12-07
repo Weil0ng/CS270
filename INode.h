@@ -37,17 +37,17 @@ typedef struct INode {
 
 	LONG _in_accesstime;
 
-	UINT _in_filesize;
+	LONG _in_filesize;
     
-    UINT _in_linkcount;
+        UINT _in_linkcount;
 
-	UINT _in_directBlocks[INODE_NUM_DIRECT_BLKS];
+	LONG _in_directBlocks[INODE_NUM_DIRECT_BLKS];
 
-	UINT _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
+	LONG _in_sIndirectBlocks[INODE_NUM_S_INDIRECT_BLKS];
 
-	UINT _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
+	LONG _in_dIndirectBlocks[INODE_NUM_D_INDIRECT_BLKS];
 
-        UINT _in_tIndirectBlocks[INODE_NUM_T_INDIRECT_BLKS];
+        LONG _in_tIndirectBlocks[INODE_NUM_T_INDIRECT_BLKS];
 
 } INode;
 

@@ -32,18 +32,18 @@ void initDisk(DiskArray *, LONG);
 void closeDisk(DiskArray *);
 
 //convert block id to disk array offset
-LONG bid2Offset(UINT);
+LONG bid2Offset(LONG);
 
 //read a block from logical id i
 //args: device, 
 //      block id
-INT readBlk(DiskArray *, UINT, BYTE *);
+INT readBlk(DiskArray *, LONG, BYTE *);
 
 //write to a block of logical id i
 //args: device, 
 //      block id, 
 //      content buf
-INT writeBlk(DiskArray *, UINT, BYTE *);
+INT writeBlk(DiskArray *, LONG, BYTE *);
 
 #ifdef DEBUG
 //dump the disk to a per block file

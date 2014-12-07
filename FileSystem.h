@@ -37,7 +37,7 @@ typedef struct FileSystem {
 } FileSystem;
 
 // creates the file system
-INT makefs(UINT, UINT, FileSystem*);
+INT makefs(LONG, UINT, FileSystem*);
 
 // destroys a file system
 INT closefs(FileSystem*);
@@ -55,41 +55,41 @@ INT readINode(FileSystem*, UINT, INode*);
 
 // reads from the file section of the inode
 // returns the number of bytes read, -1 on failure
-INT readINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
+LONG readINodeData(FileSystem*, INode*, BYTE*, LONG, LONG);
 
 // writes to an inode
 INT writeINode(FileSystem*, UINT, INode*);
 
 // writes to the file section of the inode
 // returns the number of bytes written, -1 on failure
-INT writeINodeData(FileSystem*, INode*, BYTE*, UINT, UINT);
+LONG writeINodeData(FileSystem*, INode*, BYTE*, LONG, LONG);
 
 // allocate a free data block
-INT allocDBlk(FileSystem*);
+LONG allocDBlk(FileSystem*);
 
 // free an allocated data block
-INT freeDBlk(FileSystem*, UINT);
+INT freeDBlk(FileSystem*, LONG);
 
 // reads a data block
-INT readDBlk(FileSystem*, UINT, BYTE*);
+INT readDBlk(FileSystem*, LONG, BYTE*);
 
 // writes a data block
-INT writeDBlk(FileSystem*, UINT, BYTE*); 
+INT writeDBlk(FileSystem*, LONG, BYTE*); 
 
 // reads certain number of bytes from a block with offset
-INT readDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT);
+INT readDBlkOffset(FileSystem*, LONG, BYTE*, UINT, UINT);
 
 // writes certain number of bytes of a block with offset
-INT writeDBlkOffset(FileSystem*, UINT, BYTE*, UINT, UINT); 
+INT writeDBlkOffset(FileSystem*, LONG, BYTE*, UINT, UINT); 
 
 // converts file byte offset in inode to logical block ID
-INT bmap(FileSystem* fs, INode* inode, UINT fileBlkId);
+LONG bmap(FileSystem* fs, INode* inode, LONG fileBlkId);
 
 // map flattened index to internal index of the inode
-INT balloc(FileSystem*, INode *, UINT);
+LONG balloc(FileSystem*, INode *, LONG);
 
 // free file blk in an inode
-INT bfree(FileSystem*, INode *, UINT);
+INT bfree(FileSystem*, INode *, LONG);
 
 #ifdef DEBUG
 // prints all the inodes for debugging

@@ -18,6 +18,7 @@ int main(int args, char* argv[])
     if (succ != 0) {
         printf("Error: initfs failed with error code: %d\n", succ);
     }
+    printf("res: %u\n", succ);
     l2_unmount(&fs);
     return 0;
 }

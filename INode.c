@@ -33,6 +33,6 @@ UINT initializeINode(INode *inode, UINT id) {
 }
 
 void printINode(INode* inode) {
-    printf("[INode: type = %d, owner = %s, permissions = %d, modtime = %llu, accesstime = %llu, filesize = %d, linkcount = %d]\n",
+    printf("[INode: type = %d, owner = %s, permissions = %d, modtime = %lu, accesstime = %lu, filesize = %ld, linkcount = %d]\n",
         inode->_in_type, inode->_in_owner, inode->_in_permissions, inode->_in_modtime, inode->_in_accesstime, inode->_in_filesize, inode->_in_linkcount);
 }

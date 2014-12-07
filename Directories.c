@@ -96,7 +96,7 @@ INT l2_unmount(FileSystem* fs) {
 }
 
 // make a new filesystem with a root directory
-INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
+INT l2_initfs(LONG nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG 
     printf("l2_initfs called for nDBlks: %d, nINodes: %d, fs: %p\n", nDBlks, nINodes, (void*) fs); 
     #endif
@@ -138,7 +138,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     #ifdef DEBUG
     printf("Writing root inode directory table...\n");
     #endif
-    INT bytesWritten = writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, 2 * sizeof(DirEntry));
+    INT bytesWritten = writeINodeData(fs, &rootINode, (BYTE*) dirBuf, 0, (LONG)2 * sizeof(DirEntry));
     #ifdef DEBUG
     assert(bytesWritten == 2 * sizeof(DirEntry));
     #else
@@ -152,7 +152,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     rootINode._in_type = DIRECTORY;
 
     // update the root inode file size
-    rootINode._in_filesize = 2 * sizeof(DirEntry);
+    rootINode._in_filesize = (LONG)2 * sizeof(DirEntry);
 
     // set init link count for . and ..
     rootINode._in_linkcount = 2;
@@ -171,7 +171,7 @@ INT l2_initfs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
 
 // getattr
 INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
-    INT INodeID = l2_namei(fs, path);
+    LONG INodeID = l2_namei(fs, path);
     if (INodeID < 0)
 	return INodeID;
 
@@ -199,8 +199,8 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     printf("l2_mkdir called for path: %s\n", path);
     #endif
     
-    INT id; // the inode id associated with the new directory
-    INT par_id; // the inode id of the parent directory
+    LONG id; // the inode id associated with the new directory
+    LONG par_id; // the inode id of the parent directory
     char par_path[MAX_PATH_LEN];
 
     //check if the directory already exist
@@ -208,7 +208,7 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         fprintf(stderr, "Error: cannot create root directory outside of initfs!\n");
         return -1;
     }
-    INT rRes = l2_namei(fs, path);
+    LONG rRes = l2_namei(fs, path);
     if (rRes == -ENOTDIR) {
         _err_last = _fs_NonDirInPath;
         THROW(__FILE__, __LINE__, __func__);
@@ -307,7 +307,7 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         printf("l2_mkdir appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
-    INT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
+    LONG bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
     if(bytesWritten != sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
         return -1;
@@ -469,7 +469,7 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         printf("l2_mknod appending new entry to parent directory at offset %d\n", offset);
     }
     #endif
-    INT bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
+    LONG bytesWritten = writeINodeData(fs, &par_inode, (BYTE*) &newEntry, offset, sizeof(DirEntry));
     if(bytesWritten != sizeof(DirEntry)) {
         fprintf(stderr, "Error: failed to write new entry into parent directory!\n");
         return -1;
@@ -501,11 +501,11 @@ INT l2_mknod(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
     return id;
 }
 
-INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry) {
+INT l2_readdir(FileSystem* fs, char* path, LONG offset, DirEntry* curEntry) {
     INT id; // the inode of the dir
     UINT numDirEntry = 0;
 
-    id = l2_namei(fs, path);
+    id = (INT)l2_namei(fs, path);
     
     if(id < 0) { // directory does not exist
         fprintf(stderr, "Directory %s not found!\n", path);
@@ -536,7 +536,7 @@ INT l2_readdir(FileSystem* fs, char* path, UINT offset, DirEntry* curEntry) {
 	printf("%d entries in cur dir %s, reading %u\n", numDirEntry, path, offset);
 	#endif
         // read the directory table
-        readINodeData(fs, &inode, curEntry, offset * sizeof(DirEntry), sizeof(DirEntry));
+        readINodeData(fs, &inode, (BYTE *)curEntry, (LONG)(offset * sizeof(DirEntry)), (LONG)sizeof(DirEntry));
     }
     return 0; 
 }
@@ -791,7 +791,7 @@ INT l2_rename(FileSystem* fs, char* path, char* new_path) {
         }
     }
     
-    INT bytesWritten = writeINodeData(fs, &new_par_inode, (BYTE*) &newEntry, j, sizeof(DirEntry));
+    LONG bytesWritten = writeINodeData(fs, &new_par_inode, (BYTE*) &newEntry, j, sizeof(DirEntry));
     
     //printf("byteswritten = %d, and afterwards inode table size = %d\n", bytesWritten, new_par_inode._in_filesize);
     if(bytesWritten != sizeof(DirEntry)) {
@@ -939,7 +939,7 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
         // len of bytes to be truncated
         INT len = curINode._in_filesize - new_length;
         // next file blk to be truncated
-        UINT fileBlkId = (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE - 1;
+        LONG fileBlkId = (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE - 1;
         #ifdef DEBUG_VERBOSE
         printf("l2_truncate found first fileblk to be truncated: %d\n", fileBlkId);
         #endif
@@ -1098,7 +1098,7 @@ INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
 // 4. modify modtime
 // 5. call readINodeData on current INode, offset to the buf for numBytes
 // 6. write back inode
-INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+INT l2_read(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) {
   //look in open file table for entry
   OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
   if(fileEntry == NULL || (fileEntry->fileOp[OP_READ] == 0 && fileEntry->fileOp[OP_READWRITE] == 0)) {
@@ -1113,7 +1113,7 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
   //4. curINode._in_modtime
   curINode->_in_modtime = time(NULL);
   //5. readINodeData
-  INT returnSize = readINodeData(fs, curINode, buf, offset, numBytes);
+  LONG returnSize = readINodeData(fs, curINode, buf, offset, numBytes);
   //6. write back INode
   writeINode(fs, curINodeID, curINode);
 
@@ -1129,7 +1129,7 @@ INT l2_read(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
 //3. load inode
 //4. call writeINodeData
 //5. modify inode if necessary
-INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) {
+INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) {
   //look in open file table for entry
   OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
   if(fileEntry == NULL || (fileEntry->fileOp[OP_WRITE] == 0 && fileEntry->fileOp[OP_READWRITE] == 0)) {
@@ -1142,7 +1142,7 @@ INT l2_write(FileSystem* fs, char* path, UINT offset, BYTE* buf, UINT numBytes) 
   INode* curINode = fileEntry->inodeEntry->_in_node;
 
   //4. writeINodeData
-  INT bytesWritten = writeINodeData(fs, curINode, buf, offset, numBytes);
+  LONG bytesWritten = writeINodeData(fs, curINode, buf, offset, numBytes);
   //5. modify inode
   if(offset + bytesWritten > curINode->_in_filesize) {
     #ifdef DEBUG

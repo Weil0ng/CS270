@@ -10,16 +10,16 @@ typedef struct SuperBlock
   /* on disk fields */
 
   //# of total data blocks in this file system
-  UINT nDBlks;
+  LONG nDBlks;
 
   //# of free data blocks in this file system
-  UINT nFreeDBlks;
+  LONG nFreeDBlks;
   
   //logical id of currently cached free list block
-  UINT pFreeDBlksHead;
+  LONG pFreeDBlksHead;
 
   //index of the next free data block in the free data block list
-  UINT pNextFreeDBlk;
+  LONG pNextFreeDBlk;
  
   //# of total inodes in this file system
   UINT nINodes;
@@ -39,7 +39,7 @@ typedef struct SuperBlock
   /* in-memory fields */
 
   //SuperBlock cache of free data block list
-  INT freeDBlkCache[FREE_DBLK_CACHE_SIZE];
+  LONG freeDBlkCache[FREE_DBLK_CACHE_SIZE];
 
   //Modified bit
   BOOL modified;
@@ -51,10 +51,10 @@ typedef struct SuperBlock
 // helper structure, used only to write superblocks to disk
 typedef struct DSuperBlock
 {
-  UINT nDBlks;
-  UINT nFreeDBlks;
-  UINT pFreeDBlksHead;
-  UINT pNextFreeDBlk;
+  LONG nDBlks;
+  LONG nFreeDBlks;
+  LONG pFreeDBlksHead;
+  LONG pNextFreeDBlk;
 
   UINT nINodes;
   UINT nFreeINodes;
