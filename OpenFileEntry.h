@@ -4,6 +4,7 @@
  */
 
 #pragma once
+#include "INodeEntry.h"
 
 enum FILE_OP {
         OP_READ = 0,

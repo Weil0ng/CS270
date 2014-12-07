@@ -132,6 +132,8 @@ int main(int args, char* argv[])
             printOpenFileTable(&fs.openFileTable);
             printf("\nINode table:\n");
             printINodeTable(&fs.inodeTable);
+            printf("\nINode cache:\n");
+            printINodeCache(&fs.inodeCache);
             #else
             printf("Stats only available in DEBUG mode!\n");
             #endif

@@ -42,6 +42,7 @@
 
 #define OPEN_FILE_TABLE_LENGTH (1024)   //length of open file table
 #define INODE_TABLE_LENGTH (1024)   //number of bins in the hash queue of in core INodeTable
+#define INODE_CACHE_LENGTH (1024)   //number of inodes to keep in cache queue (cached inodes with 0 refcount)
 #define FILE_NAME_LENGTH (256)      //number of bytes in the file name in bytes
 
 #define MAX_PATH_LEN (512) //maximum length of the path

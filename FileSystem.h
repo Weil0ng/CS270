@@ -6,6 +6,7 @@
 
 #include "DiskEmulator.h"
 #include "OpenFileTable.h"
+#include "INodeCache.h"
 #include "INodeTable.h"
 #include "SuperBlock.h"
 #include "Utility.h"
@@ -27,8 +28,11 @@ typedef struct FileSystem {
     //the open file table of the filesystem
     OpenFileTable openFileTable;
     
-    //the inode cache of the filesystem
+    //the inode table of the filesystem
     INodeTable inodeTable;
+    
+    //the inode cache of the filesystem
+    INodeCache inodeCache;
 
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array
@@ -52,6 +56,9 @@ INT freeINode(FileSystem*, UINT);
 // input: file system inode number
 // output: locked inode
 INT readINode(FileSystem*, UINT, INode*);
+
+// reads an inode without looking for/adding to the inode cache
+INT readINodeNoCache(FileSystem*, UINT, INode*);
 
 // reads from the file section of the inode
 // returns the number of bytes read, -1 on failure

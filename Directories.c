@@ -60,7 +60,9 @@ INT l2_mount(FileSystem* fs) {
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
     //initialize inode table cache
+    initOpenFileTable(&fs->openFileTable);
     initINodeTable(&fs->inodeTable);
+    initINodeCache(&fs->inodeCache);
     
     #ifdef DEBUG
     printf("Filesystem mount complete!\n");
@@ -1011,28 +1013,42 @@ INT l2_open(FileSystem* fs, char* path, enum FILE_OP fileOp) {
     }
 
     //update or insert inode entry into table
-    INodeEntry* inodeEntry = NULL;
-    if(hasINodeEntry(&fs->inodeTable, inodeId)) {
+    INodeEntry* inodeEntry = getINodeEntry(&fs->inodeTable, inodeId);
+    if(inodeEntry != NULL) {
         #ifdef DEBUG_VERBOSE
-        printf("INode found in cache, retrieving entry...\n");
+        printf("INode found in inode table, updating existing entry...\n");
         #endif
-        
-        inodeEntry = getINodeEntry(&fs->inodeTable, inodeId);
-        assert(inodeEntry != NULL);
-        inodeEntry->_in_ref++;
     }
     else {
-        #ifdef DEBUG_VERBOSE
-        printf("No previous inode found in cache, inserting new entry...\n");
-        #endif
-
-        INode* inode = malloc(sizeof(INode));
-        INT readSucc = readINode(fs, inodeId, inode);
-        assert(readSucc == 0);
-        inodeEntry = putINodeEntry(&fs->inodeTable, inodeId, inode);
-        inodeEntry->_in_ref++;
-        assert(inodeEntry != NULL);
+        //look in inode cache to see if inode was previously cached
+        inodeEntry = removeINodeCacheEntry(&fs->inodeCache, inodeId);
+        if(inodeEntry != NULL) {
+            #ifdef DEBUG_VERBOSE
+            printf("INode found in inode cache, moving to inode table...\n");
+            #endif
+            
+            //add to table
+            putINodeEntry(&fs->inodeTable, inodeEntry);
+        }
+        //otherwise, load inode from disk and put in table
+        else {
+            #ifdef DEBUG_VERBOSE
+            printf("INode not found in inode cache, creating new entry in inode table...\n");
+            #endif
+            
+            //read from disk, bypassing cache
+            INode inode;
+            INT readSucc = readINodeNoCache(fs, inodeId, &inode);
+            assert(readSucc == 0);
+            
+            //add to table
+            inodeEntry = putINode(&fs->inodeTable, inodeId, &inode);
+            assert(inodeEntry != NULL);
+        }
     }
+    
+    //update the refcount for the now open inode
+    inodeEntry->_in_ref++;
 
     //initialize new open file entry and link to inode entry
     #ifdef DEBUG_VERBOSE
@@ -1067,18 +1083,28 @@ INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
         return -1;
     }
     
-    //update inode table and remove entry if refcount reaches 0
+    //retrieve inode entry
     INodeEntry* iEntry = fileEntry->inodeEntry;
+    assert(iEntry->_in_ref > 0);
+    
+    //update open file table opcount and inode table refcount
     iEntry->_in_ref--;
-    if(iEntry->_in_ref == 0) {
-        removeINodeEntry(&fs->inodeTable, iEntry->_in_id);
-    }
-
-    //remove file operation and possibly remove entry
     UINT opcount = removeOpenFileOperation(fileEntry, fileOp);
     #ifdef DEBUG
     printf("Updated open file table with new opcount %d and inode refcount %d\n", opcount, iEntry->_in_ref);
     #endif
+    assert(opcount == iEntry->_in_ref);
+    
+    //move inode entry from table to cache if refcount reaches 0
+    if(iEntry->_in_ref == 0) {        
+        #ifdef DEBUG_VERBOSE
+        printf("Refcount on inode %d reached 0, moving from inode table to cache...\n", iEntry->_in_id);
+        #endif
+        removeINodeEntry(&fs->inodeTable, iEntry->_in_id);
+        cacheINodeEntry(&fs->inodeCache, iEntry);
+    }
+
+    //remove file entry from open file table if opcount reaches 0
     if(opcount == 0) {
         #ifdef DEBUG_VERBOSE
         printf("All operations on file %s closed, removing open file entry...\n", path);
@@ -1086,10 +1112,6 @@ INT l2_close(FileSystem* fs, char* path, enum FILE_OP fileOp) {
         BOOL succ = removeOpenFileEntry(&fs->openFileTable, path);
         assert(succ);
     }
-    else {
-        assert(opcount == iEntry->_in_ref);
-    }
-    
     return 0;
 }
 
