@@ -7,7 +7,7 @@
 typedef struct DBlkCacheEntry {
      
 // datablk id (starting from 0)
-  INT _dblk_id;         
+  LONG _dblk_id;         
 
 // the data block
   BYTE _data_blk[BLK_SIZE];

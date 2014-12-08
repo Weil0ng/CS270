@@ -640,7 +640,7 @@ LONG writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG l
     #endif
     if(dataBlkId < 0) {
 	#ifdef DEBUG
-        printf(stderr, "Warning: could not allocate more data blocks for write!\n");
+        fprintf(stderr, "Warning: could not allocate more data blocks for write!\n");
 	#endif
         return bytesWritten;
     }
@@ -775,6 +775,13 @@ LONG allocDBlk(FileSystem* fs) {
 // 3. # Free DBlks ++
 INT freeDBlk(FileSystem* fs, LONG id) {
     assert(id < fs->superblock.nDBlks);
+
+    if(hasDBlkCacheEntry(&fs->dCache, id)) {
+#ifdef DEBUG_DCACHE
+        printf("The datablk to be freed is cached in DBlkCache, remove it!!\n");
+#endif
+        removeDBlkCacheEntry(&fs->dCache, id);
+    }
 
     // if no other blocks are free
     if (fs->superblock.nFreeDBlks == 0) {

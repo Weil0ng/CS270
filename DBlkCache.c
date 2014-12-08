@@ -15,7 +15,7 @@ void initDBlkCache(DBlkCache *dCache) {
 }
 
 // adds a datablock to cache, replace the existing one 
-INT putDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
+INT putDBlkCacheEntry(DBlkCache *dCache, LONG id, BYTE *buf) {
     UINT set = id % DBLK_CACHE_SET_NUM;
     //new entry, update size counter
     if(dCache->dCache[set]._dblk_id == -1) {
@@ -28,7 +28,7 @@ INT putDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
 }
 
 // read the datablk from the dcache into a buf
-INT getDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
+INT getDBlkCacheEntry(DBlkCache *dCache, LONG id, BYTE *buf) {
     #ifdef DEBUG_DCACHE
     assert(hasDBlkCacheEntry(dCache, id));
     #endif
@@ -38,8 +38,20 @@ INT getDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
     return 0;
 }
 
+// remove a cache entry when the datablock is freed
+INT removeDBlkCacheEntry(DBlkCache *dCache, LONG id) {
+    assert(hasDBlkCacheEntry(dCache, id) == true);
+    UINT set = id % DBLK_CACHE_SET_NUM;
+    
+    dCache->dCache[set]._dblk_id = -1;
+    memset(dCache->dCache[set]._data_blk, 0, BLK_SIZE);
+    
+    dCache->_dCache_size--;
+    return 0;
+}
+
 //check if its a dcache hit
-BOOL hasDBlkCacheEntry(DBlkCache *dCache, UINT id) {
+BOOL hasDBlkCacheEntry(DBlkCache *dCache, LONG id) {
     UINT set = id % DBLK_CACHE_SET_NUM;
     return id == dCache->dCache[set]._dblk_id;
 }

@@ -2,6 +2,7 @@
 
 #pragma once
 #include "DBlkCacheEntry.h"
+#include "string.h"
 
 typedef struct DBlkCache{
   UINT _dCache_size;
@@ -13,18 +14,16 @@ typedef struct DBlkCache{
 void initDBlkCache(DBlkCache*);
 
 // addes a datablock to cache, replace the existing one 
-INT putDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf);
+INT putDBlkCacheEntry(DBlkCache *dCache, LONG id, BYTE *buf);
 
 // read the datablk from the dcache into a buf
-INT getDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf);
+INT getDBlkCacheEntry(DBlkCache *dCache, LONG id, BYTE *buf);
 
 //check if its a dcache hit
-BOOL hasDBlkCacheEntry(DBlkCache *, UINT);
+BOOL hasDBlkCacheEntry(DBlkCache *, LONG);
 
-//removes an inode entry, returning true if successful
-// this maybe not necessary, we can just replace an dcache entry when
-// write(put)
-INT removeDBlkCacheEntry(DBlkCache *, UINT);
+//removes an DBlkCache entry, returning true if successful
+INT removeDBlkCacheEntry(DBlkCache *, LONG);
 
 #ifdef DEBUG_DCACHE
 void printDBlkCache(DBlkCache *);
