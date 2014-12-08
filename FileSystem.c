@@ -819,7 +819,7 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
     if(hasDBlkCacheEntry(&fs->dCache, id) == true) {
         printf("cache hit on data blk: %d, read it out!\n", id);
         //exit(0);
-        return getDBlkCacheEntry(&(fs->dCache), id, buf);
+//        return getDBlkCacheEntry(&(fs->dCache), id, buf);
     }
    
 
