@@ -160,6 +160,12 @@ INT makefs(LONG nDBlks, UINT nINodes, FileSystem* fs) {
         nextListBlk += FREE_DBLK_CACHE_SIZE;
     }
     
+    //initialize datablk cache
+    #ifdef DEBUG_DCACHE
+    printf("initializeing datablk cache\n");
+    #endif
+    initDBlkCache(&fs->dCache);
+    
     //write superblock to disk
     #ifdef DEBUG 
     printf("Writing superblock to disk...\n"); 
@@ -808,7 +814,26 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
         fprintf(stderr, "Error: readDBlk received id %ld which exceeds nDBlks %ld\n", id, fs->superblock.nDBlks);
     }
     assert(id < fs->superblock.nDBlks);
+    
+    // check if the datablock is in the dCache, if so, read it from the dCache
+    if(hasDBlkCacheEntry(&fs->dCache, id) == true) {
+        printf("cache hit on data blk: %d, read it out!\n", id);
+        //exit(0);
+        return getDBlkCacheEntry(&(fs->dCache), id, buf);
+    }
+   
+
+    printf("cache miss on data blk: %d, read it from disk!\n", id);
+    
     LONG bid = id + fs->diskDBlkOffset;
+   /* 
+    if (readBlk(fs->disk, bid, buf) == -1) {
+        return -1;
+    }
+    else {
+        putDBlkCacheEntry(&fs->dCache, id, buf);
+        return 0;
+    }*/
     return readBlk(fs->disk, bid, buf);
 }
 
@@ -817,7 +842,31 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
 // buf: the buffer to write (must be exactly block-sized)
 INT writeDBlk(FileSystem* fs, LONG id, BYTE* buf) {
     assert(id < fs->superblock.nDBlks);
+    
+    // check if the datablock is in the dCache, if so, read it from the dCache
+#ifdef DEBUG_DCACHE
+    if(hasDBlkCacheEntry(&fs->dCache, id) == true) {
+        printf("datablk %d already cached, overwrite it!\n", id);
+    }
+    else {
+        printf("datablk %d not cached, cache it!\n", id);
+    }
+#endif
+ /* 
+    printf("datablk %d buf to be written into cache:\n", id); 
+    for (UINT i = 0; i < BLK_SIZE; i += 4) {
+        printf("%d", buf[i]);
+    }
+    printf("\n");
+    */
+    //printf("&fs->dCache = %d\n", &fs->dCache);
+    
+    putDBlkCacheEntry(&fs->dCache, id, buf);
+    
+    //printf("after calling put, &fs->dCache = %d\n", &fs->dCache);
+    //printDBlkCache(&fs->dCache, id);
     LONG bid = id + fs->diskDBlkOffset;
+    printf("write through: write cached data blk: %d to disk!\n", id);
     return writeBlk(fs->disk, bid, buf);
 }
 

@@ -3,7 +3,7 @@ CC=gcc
 LD=gcc
 
 CFLAGS=-O2 -std=gnu99 -g
-OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o INodeCache.o INodeEntry.o INodeTable.o OpenFileTable.o SuperBlock.o Utility.o
+OBJS=Directories.o DiskEmulator.o FileSystem.o INode.o INodeCache.o INodeEntry.o INodeTable.o OpenFileTable.o SuperBlock.o Utility.o DBlkCache.o
 FUSEFLAGS=`pkg-config fuse --cflags --libs`
 SRCS=fuseDaemon.c
 
@@ -15,9 +15,12 @@ fuse: $(OBJS) fuseDaemon
 
 main: $(OBJS) TestMain
 
-test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test
+test: $(OBJS) Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test DBlkCacheTest
 
 InitFS: $(OBJS) InitFS.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+DBlkCacheTest: $(OBJS) DBlkCacheTest.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 fuseDaemon: $(OBJS) $(SRCS)
@@ -42,5 +45,5 @@ Layer2Test: $(OBJS) Layer2Test.o
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test TestMain fuseDaemon InitFS diskFile diskDump
+	rm -fr *.o Layer0Test Layer1CombinedTest Layer2MountTest Layer2Test TestMain DBlkCacheTest fuseDaemon InitFS diskFile diskDump 
 

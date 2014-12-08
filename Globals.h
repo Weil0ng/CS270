@@ -10,6 +10,10 @@
 #define DEBUG
 #endif
 
+#ifndef DEBUG_DCACHE
+#define DEBUG_DCACHE
+#endif
+
 #ifndef DEBUG_VERBOSE
 #define DEBUG_VERBOSE
 #endif
@@ -53,3 +57,5 @@
 #define MAX_FILE_NUM_IN_DIR (MAX_FILE_SIZE / (FILE_NAME_LENGTH + sizeof(INT))) //maximum number of files in a directory
 //#define MAX_FILE_NUM_IN_DIR 10 //maximum number of files in a directory
 #define MAX_DIR_TABLE_SIZE (MAX_FILE_NUM_IN_DIR * (FILE_NAME_LENGTH + sizeof(INT)))
+
+#define DBLK_CACHE_SET_NUM 128

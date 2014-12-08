@@ -47,6 +47,12 @@ INT l2_mount(FileSystem* fs) {
     fs->diskINodeBlkOffset = SUPERBLOCK_OFFSET + 1;
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + fs->superblock.nINodes / INODES_PER_BLK;
     
+    //initialize the datablk cache
+    initDBlkCache(&fs->dCache);
+    #ifdef DEBUG_DCACHE
+    printDBlkCache(&fs->dCache);
+    #endif
+
     #ifdef DEBUG
     printf("Opening disk device...\n");
     #endif
@@ -294,6 +300,10 @@ INT l2_mkdir(FileSystem* fs, char* path, uid_t uid, gid_t gid) {
         // search parent directory table
         DirEntry parEntry;
         readINodeData(fs, &par_inode, (BYTE*) &parEntry, offset, sizeof(DirEntry));
+        #ifdef DEBUG_DCACHE
+        printf("the dir name of this entry is %s\n", parEntry.key);
+        printf("the inode id of this entry is %d\n", parEntry.INodeID);
+        #endif
         
         // empty directory entry found, overwrite it
         if (parEntry.INodeID == -1){

@@ -71,6 +71,7 @@ int main(int args, char* argv[])
         fprintf(stderr, "error: read inode %d from disk\n", fs.superblock.rootINodeID);
         return -1;
     }
+    printf("rootINode directory entry num = %d\n", rootInode._in_filesize/(sizeof(DirEntry)));
     assert(rootInode._in_filesize == (nINodes + 1)*sizeof(DirEntry));
 
     // test creating a new directory when there is no more inodes

@@ -8,6 +8,7 @@
 #include "OpenFileTable.h"
 #include "INodeCache.h"
 #include "INodeTable.h"
+#include "DBlkCache.h"
 #include "SuperBlock.h"
 #include "Utility.h"
 
@@ -33,6 +34,9 @@ typedef struct FileSystem {
     
     //the inode cache of the filesystem
     INodeCache inodeCache;
+    
+    //the datablk cache of the filesystem
+    DBlkCache dCache;
 
     //the disk device of the filesystem
     //in Phase 1, this is an in-memory array
