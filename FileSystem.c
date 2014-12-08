@@ -831,10 +831,11 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
         return -1;
     }
     else {
+        // also update in-core cache
         putDBlkCacheEntry(&fs->dCache, id, buf);
         return 0;
-    }*/
-    return readBlk(fs->disk, bid, buf);
+    }
+    //return readBlk(fs->disk, bid, buf);
 }
 
 // writes a data block to the disk
