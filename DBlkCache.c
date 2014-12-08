@@ -2,46 +2,28 @@
 
 #pragma once
 #include "DBlkCache.h"
+#include <assert.h>
 
 //initializes all the bin entries to null
 //MUST be called at filesystem init time since arrays do not default to NULL
-void initDBlkCache(DBlkCache  *dCache) {
-    dCache->_dCache_size = DBLK_CACHE_SET_NUM * BLK_SIZE;
-    for (UINT i = 0; i < DBLK_CACHE_SET_NUM; i ++) {
+void initDBlkCache(DBlkCache *dCache) {
+    dCache->_dCache_size = 0;
+    for (UINT i = 0; i < DBLK_CACHE_SET_NUM; i++) {
         dCache->dCache[i]._dblk_id = -1;
-        memset(dCache->dCache[i]._data_blk, NULL, BLK_SIZE);
+        memset(dCache->dCache[i]._data_blk, 0, BLK_SIZE);
     }
 }
 
-
 // adds a datablock to cache, replace the existing one 
 INT putDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
-    //printf("put an entry to DatablkCache, %d:\n", dCache);
-
     UINT set = id % DBLK_CACHE_SET_NUM;
-    printf("write to set %d:\n", set);
-    /*
-    for (UINT j = 0; j < BLK_SIZE; j +=4) {
-        printf("%d", buf[j]);
+    //new entry, update size counter
+    if(dCache->dCache[set]._dblk_id == -1) {
+        dCache->_dCache_size++;
     }
-    */
-    dCache->dCache[set]._dblk_id = id;   
-    /*printf("Inside putDBlkCacheENtry, buf: \n");
-    for (UINT i = 0; i < BLK_SIZE; i += 4) {
-        printf("%d", buf[i]);
-    }
-    printf("\n");*/
     
+    dCache->dCache[set]._dblk_id = id;
     memcpy(dCache->dCache[set]._data_blk, buf, BLK_SIZE);
-   /* 
-    //printf("after memcpy, in dCache %d,  data_blk: \n", dCache);
-    printf("after memcpy,  data_blk: \n");
-    for (UINT j = 0; j < BLK_SIZE; j +=4) {
-        printf("%d", dCache->dCache[set]._data_blk[j]);
-    }
-    */
-   
-    
     return 0;
 }
 
@@ -52,42 +34,34 @@ INT getDBlkCacheEntry(DBlkCache *dCache, UINT id, BYTE *buf) {
     #endif
     
     UINT set = id % DBLK_CACHE_SET_NUM;
-
-    assert(id == dCache->dCache[set]._dblk_id);
-    buf = dCache->dCache[set]._data_blk + set;
+    memcpy(buf, dCache->dCache[set]._data_blk, BLK_SIZE);
     return 0;
 }
 
 //check if its a dcache hit
 BOOL hasDBlkCacheEntry(DBlkCache *dCache, UINT id) {
     UINT set = id % DBLK_CACHE_SET_NUM;
-    printf("check if hit datablk id = %d, and the entry has id %d\n", id, dCache->dCache[set]._dblk_id);
-    if(id == dCache->dCache[set]._dblk_id) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return id == dCache->dCache[set]._dblk_id;
 }
 
-
 #ifdef DEBUG_DCACHE
-void printDBlkCache(DBlkCache *dCache, UINT set) {
-    printf("Print the DatablkCache:\n");
-    for (UINT i = 0; i < DBLK_CACHE_SET_NUM; i ++) {
-        printf("set %d, id = %d; ", i, dCache->dCache[i]._dblk_id);
-    }
-    printf("\n");
-
-    printf("datablk in the %d entry is:\n", set);
-    for (UINT j = 0; j < BLK_SIZE; j +=4) {
-        printf("%d", dCache->dCache[set%DBLK_CACHE_SET_NUM]._data_blk[j]);
-    }
-    printf("\n");
+#include <stdio.h>
+void printDBlkCache(DBlkCache *dCache) {    
+  printf("[DBlkCache: _dCache_size = %d]\n", dCache->_dCache_size);
+  for(INT set = 0; set < DBLK_CACHE_SET_NUM; set++) {
+    printf("Set %d: ", set);
+    DBlkCacheEntry* curEntry = &dCache->dCache[set];
+    printDBlkCacheEntry(curEntry);
+  }
 }
 
 void printDBlkCacheEntry(DBlkCacheEntry *dCacheEntry) {
-    printf("print the DBlkCache entry, its id = %d\n", dCacheEntry->_dblk_id);
-
+    printf("[DBlkCacheEntry: id = %d]\n", dCacheEntry->_dblk_id);
+    /*
+    for(UINT k = 0; k < BLK_SIZE / sizeof(char); k++) {
+        printf("%c ", (char) dCacheEntry->_data_blk[k]);
+    }
+    printf("\n");
+    */
 }
 #endif

@@ -117,6 +117,12 @@ INT makefs(LONG nDBlks, UINT nINodes, FileSystem* fs) {
 
         nextINodeBlkId++;
     }
+    
+    //initialize datablk cache
+    #ifdef DEBUG 
+    printf("Initializing DBlkCache...\n"); 
+    #endif
+    initDBlkCache(&fs->dCache);
 
     //create free block list on disk
     #ifdef DEBUG 
@@ -159,12 +165,6 @@ INT makefs(LONG nDBlks, UINT nINodes, FileSystem* fs) {
         writeDBlk(fs, nextListBlk, (BYTE*) freeDBlkList);
         nextListBlk += FREE_DBLK_CACHE_SIZE;
     }
-    
-    //initialize datablk cache
-    #ifdef DEBUG_DCACHE
-    printf("initializeing datablk cache\n");
-    #endif
-    initDBlkCache(&fs->dCache);
     
     //write superblock to disk
     #ifdef DEBUG 
@@ -816,22 +816,25 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
     assert(id < fs->superblock.nDBlks);
     
     // check if the datablock is in the dCache, if so, read it from the dCache
-    if(hasDBlkCacheEntry(&fs->dCache, id) == true) {
-        printf("cache hit on data blk: %d, read it out!\n", id);
-        //exit(0);
-//        return getDBlkCacheEntry(&(fs->dCache), id, buf);
+    if(hasDBlkCacheEntry(&fs->dCache, id)) {
+        #ifdef DEBUG_VERBOSE
+        printf("readDBlk found id %d in cache, returning directly...\n", id);
+        #endif
+        return getDBlkCacheEntry(&(fs->dCache), id, buf);
     }
    
-
-    printf("cache miss on data blk: %d, read it from disk!\n", id);
-    
+    #ifdef DEBUG_VERBOSE
+    printf("readDBlk did not find id %d in cache, reading from disk...\n", id);
+    #endif
     LONG bid = id + fs->diskDBlkOffset;
-   /* 
     if (readBlk(fs->disk, bid, buf) == -1) {
         return -1;
     }
     else {
-        // also update in-core cache
+        // also update in-core cache   
+        #ifdef DEBUG_VERBOSE
+        printf("readDBlk updating in-core DBlk cache with newly read copy...\n", id);
+        #endif
         putDBlkCacheEntry(&fs->dCache, id, buf);
         return 0;
     }
@@ -844,30 +847,23 @@ INT readDBlk(FileSystem* fs, LONG id, BYTE* buf) {
 INT writeDBlk(FileSystem* fs, LONG id, BYTE* buf) {
     assert(id < fs->superblock.nDBlks);
     
-    // check if the datablock is in the dCache, if so, read it from the dCache
-#ifdef DEBUG_DCACHE
-    if(hasDBlkCacheEntry(&fs->dCache, id) == true) {
-        printf("datablk %d already cached, overwrite it!\n", id);
+    //Update the DBlkCache, ovewriting existing one if necessary
+    #ifdef DEBUG_VERBOSE
+    if(hasDBlkCacheEntry(&fs->dCache, id)) {
+        printf("writeDBlk overwriting cache entry with id: %d\n", id);
     }
     else {
-        printf("datablk %d not cached, cache it!\n", id);
+        printf("writeDBlk inserting new cache entry for id: %d\n", id);
     }
-#endif
- /* 
-    printf("datablk %d buf to be written into cache:\n", id); 
-    for (UINT i = 0; i < BLK_SIZE; i += 4) {
-        printf("%d", buf[i]);
-    }
-    printf("\n");
-    */
-    //printf("&fs->dCache = %d\n", &fs->dCache);
-    
+    #endif
     putDBlkCacheEntry(&fs->dCache, id, buf);
     
     //printf("after calling put, &fs->dCache = %d\n", &fs->dCache);
     //printDBlkCache(&fs->dCache, id);
     LONG bid = id + fs->diskDBlkOffset;
-    printf("write through: write cached data blk: %d to disk!\n", id);
+    #ifdef DEBUG_VERBOSE
+    printf("writeDBlk write through, writing id %d to disk\n", id);
+    #endif
     return writeBlk(fs->disk, bid, buf);
 }
 

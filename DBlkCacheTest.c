@@ -4,9 +4,9 @@
 int main() {
     struct DBlkCache *dCache = (struct DBlkCache *)malloc(sizeof(struct DBlkCache));
     initDBlkCache(dCache);
-#ifdef DEBUG_DCACHE
-    printDBlkCache(dCache, 0);
-#endif
+    #ifdef DEBUG_DCACHE
+    printDBlkCache(dCache);
+    #endif
     
     BYTE buf[BLK_SIZE];
     memset(buf, 1, BLK_SIZE);
@@ -16,9 +16,9 @@ int main() {
         }
     }
 
-#ifdef DEBUG_DCACHE
-    printDBlkCache(dCache, 0);
-#endif
+    #ifdef DEBUG_DCACHE
+    printDBlkCache(dCache);
+    #endif
 
     for(UINT i = 0; i < DBLK_CACHE_SET_NUM; i ++) {
         if(hasDBlkCacheEntry(dCache, i) == true) {

@@ -48,10 +48,10 @@ INT l2_mount(FileSystem* fs) {
     fs->diskDBlkOffset = fs->diskINodeBlkOffset + fs->superblock.nINodes / INODES_PER_BLK;
     
     //initialize the datablk cache
-    initDBlkCache(&fs->dCache);
-    #ifdef DEBUG_DCACHE
-    printDBlkCache(&fs->dCache);
+    #ifdef DEBUG 
+    printf("Initializing DBlkCache...\n"); 
     #endif
+    initDBlkCache(&fs->dCache);
 
     #ifdef DEBUG
     printf("Opening disk device...\n");

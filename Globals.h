@@ -58,4 +58,4 @@
 //#define MAX_FILE_NUM_IN_DIR 10 //maximum number of files in a directory
 #define MAX_DIR_TABLE_SIZE (MAX_FILE_NUM_IN_DIR * (FILE_NAME_LENGTH + sizeof(INT)))
 
-#define DBLK_CACHE_SET_NUM 128
+#define DBLK_CACHE_SET_NUM 1024

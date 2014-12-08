@@ -2,9 +2,6 @@
 
 #pragma once
 #include "DBlkCacheEntry.h"
-#include "Globals.h"
-#include <string.h>
-#include <assert.h>
 
 typedef struct DBlkCache{
   UINT _dCache_size;
@@ -30,7 +27,7 @@ BOOL hasDBlkCacheEntry(DBlkCache *, UINT);
 INT removeDBlkCacheEntry(DBlkCache *, UINT);
 
 #ifdef DEBUG_DCACHE
-void printDBlkCacheEntry(DBlkCacheEntry *);
+void printDBlkCache(DBlkCache *);
 
-void printDBlkCacheTable(DBlkCache *, UINT);
+void printDBlkCacheEntry(DBlkCacheEntry *);
 #endif

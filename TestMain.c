@@ -137,6 +137,8 @@ int main(int args, char* argv[])
             printFreeINodeCache(&fs.superblock);
             printf("\nFree dblk cache:\n");
             printFreeDBlkCache(&fs.superblock);
+            printf("\nDBlkCache:\n");
+            printDBlkCache(&fs.dCache);
             printf("\nOpen file table:\n");
             printOpenFileTable(&fs.openFileTable);
             printf("\nINode table:\n");
