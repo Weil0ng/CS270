@@ -197,7 +197,7 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
     stbuf->st_blocks = inode._in_filesize / BLK_SIZE;
     stbuf->st_atime = inode._in_accesstime;
     stbuf->st_mtime = inode._in_modtime;
-    //stbuf->st_ctime;
+    stbuf->st_ctime = inode._in_changetime;
     return 0;
 }
 
@@ -1170,7 +1170,7 @@ INT l2_read(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) {
   INode* curINode = &fileEntry->inodeEntry->_in_node;
 
   //4. curINode._in_modtime
-  curINode->_in_modtime = time(NULL);
+  curINode->_in_accesstime = time(NULL);
   //5. readINodeData
   LONG returnSize = readINodeData(fs, curINode, buf, offset, numBytes);
   //6. write back INode
