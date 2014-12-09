@@ -643,7 +643,7 @@ LONG writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG l
 	#ifdef DEBUG
         fprintf(stderr, "Warning: could not allocate more data blocks for write!\n");
 	#endif
-        return bytesWritten;
+        return -1;
     }
     
     //special case to handle offset in the middle of first block
@@ -675,7 +675,7 @@ LONG writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG l
 	    #ifdef DEBUG 
             printf("Warning: could not allocate more data blocks for write!\n");
 	    #endif
-            return bytesWritten;
+            return -1;
         }
         
         //write next block from buf
@@ -697,9 +697,6 @@ LONG writeINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG l
             fileBlkId++;
         }
     }
-	
-    if (fileBlkId >= MAX_FILE_BLKS)
-	printf("Warning: fileBlkId >= MAX_FILE_BLKS!\n");    
 
     #ifdef DEBUG
     printf("writeINodeData successfully wrote %d bytes\n", bytesWritten);

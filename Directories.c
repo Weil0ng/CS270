@@ -1193,7 +1193,7 @@ INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) 
   OpenFileEntry* fileEntry = getOpenFileEntry(&fs->openFileTable, path);
   if(fileEntry == NULL || (fileEntry->fileOp[OP_WRITE] == 0 && fileEntry->fileOp[OP_READWRITE] == 0)) {
     fprintf(stderr, "Error: file %s was never opened with write permission!\n", path);
-    return -1;
+    return -EBADF;
   }
 
   //retrieve inode from inode table
@@ -1202,6 +1202,20 @@ INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) 
 
   //4. writeINodeData
   LONG bytesWritten = writeINodeData(fs, curINode, buf, offset, numBytes);
+  if(bytesWritten >= 0) {
+    #ifdef DEBUG
+    printf("l2_write successfully wrote %d bytes\n", bytesWritten);
+    #endif
+  }
+  else if(bytesWritten == -1) {
+    fprintf(stderr, "l2_write failed due to filesystem out of space!\n");
+    return -EDQUOT;
+  }
+  else {
+    fprintf(stderr, "l2_write failed with unknown error code: %d\n", bytesWritten);
+    return -1;
+  }
+  
   //5. modify inode
   if(offset + bytesWritten > curINode->_in_filesize) {
     #ifdef DEBUG
@@ -1213,10 +1227,7 @@ INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) 
   curINode->_in_modtime = time(NULL);
   //update INode
   writeINode(fs, curINodeID, curINode);
-
-  #ifdef DEBUG
-  printf("l2_write successfully wrote %d bytes\n", bytesWritten);
-  #endif
+  
   return bytesWritten;
 }
 
