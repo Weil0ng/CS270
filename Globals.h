@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+//#define LOCATE
+
 #ifndef DEBUG
 //#define DEBUG
 #endif

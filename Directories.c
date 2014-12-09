@@ -585,7 +585,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
     #endif
    
     // find the inode id of the parent directory 
-    par_id = l2_namei(fs, par_path);
+    par_id = (INT)l2_namei(fs, par_path);
     if(par_id < 0) { // parent directory does not exist
         fprintf(stderr, "Directory %s not found!\n", par_path);
         return par_id;
@@ -595,7 +595,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
         INode par_inode;
         INode inode;
         
-        id = l2_namei(fs, path);
+        id = (INT)l2_namei(fs, path);
         if(id < 0) { // file does not exist
             fprintf(stderr, "Error: file \"%s\" not found!\n", path);
             return id;
@@ -625,7 +625,7 @@ INT l2_unlink(FileSystem* fs, char* path) {
         // to -1
         inode._in_linkcount --;
 
-	UINT offset = 0;
+	LONG offset = 0;
         // write the file inode to disk
         if (inode._in_linkcount != 0) {
             writeINode(fs, id, &inode);
@@ -937,7 +937,7 @@ INT l2_truncate(FileSystem* fs, char* path, INT new_length) {
         #endif
         // truncate it
         // len of bytes to be truncated
-        INT len = curINode._in_filesize - new_length;
+        LONG len = curINode._in_filesize - new_length;
         // next file blk to be truncated
         LONG fileBlkId = (curINode._in_filesize -1 + BLK_SIZE) / BLK_SIZE - 1;
         #ifdef DEBUG_VERBOSE
@@ -1146,7 +1146,7 @@ INT l2_write(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) 
   //5. modify inode
   if(offset + bytesWritten > curINode->_in_filesize) {
     #ifdef DEBUG
-    printf("Updating filesize from %d to %d\n", curINode->_in_filesize, offset + bytesWritten);
+    printf("Updating filesize from %ld to %ld\n", curINode->_in_filesize, offset + bytesWritten);
     #endif
     curINode->_in_filesize = offset + bytesWritten;
   }
