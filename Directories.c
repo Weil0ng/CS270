@@ -1160,7 +1160,7 @@ INT l2_read(FileSystem* fs, char* path, LONG offset, BYTE* buf, LONG numBytes) {
   INode* curINode = &fileEntry->inodeEntry->_in_node;
 
   //4. curINode._in_modtime
-  curINode->_in_modtime = time(NULL);
+  curINode->_in_accesstime = time(NULL);
   //5. readINodeData
   LONG returnSize = readINodeData(fs, curINode, buf, offset, numBytes);
   //6. write back INode
