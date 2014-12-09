@@ -25,8 +25,7 @@ INodeEntry* cacheINode(INodeCache *cache, UINT id, INode *inode)
   INodeEntry *newEntry;
   newEntry = malloc(sizeof(INodeEntry));
   newEntry->_in_id = id;
-  newEntry->_in_node = malloc(sizeof(INode));
-  memcpy(newEntry->_in_node, inode, sizeof(INode));
+  memcpy(&newEntry->_in_node, inode, sizeof(INode));
   newEntry->_in_ref = 0;
   newEntry->next = NULL;
 

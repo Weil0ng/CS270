@@ -38,6 +38,7 @@ int main(int args, char* argv[])
     BOOL quit = false;
     char command[1024];
     char path[1024];
+    char new_path[1024];
     UINT flags;
     char buf[1024];
     //char namelist[MAX_FILE_NUM_IN_DIR][FILE_NAME_LENGTH];
@@ -63,9 +64,9 @@ int main(int args, char* argv[])
             l2_mknod(&fs, path, 0, 0);
         }
         else if (strcmp(command, "truncate") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
-            printf("Enter file offset: ");
+            //printf("Enter file offset: ");
             scanf("%d", &offset);
             
             l2_truncate(&fs, path, offset);
@@ -76,6 +77,14 @@ int main(int args, char* argv[])
             
             //l2_readdir(&fs, path, namelist);
         }
+        else if(strcmp(command, "rename") == 0) {
+            //printf("Enter file path: ");
+            scanf("%s", path);
+            //printf("Enter new file path: ");
+            scanf("%s", new_path);
+            
+            l2_rename(&fs, path, new_path);
+        }
         else if(strcmp(command, "unlink") == 0) {
             //printf("Enter file path: ");
             scanf("%s", path);
@@ -83,38 +92,38 @@ int main(int args, char* argv[])
             l2_unlink(&fs, path);
         }
         else if(strcmp(command, "open") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
-            printf("Enter open flags: ");
+            //printf("Enter open flags: ");
             scanf("%d", &flags);
             
             l2_open(&fs, path, flags);
         }
         else if(strcmp(command, "close") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
-            printf("Enter close flags: ");
+            //printf("Enter close flags: ");
             scanf("%d", &flags);
             
             l2_close(&fs, path, flags);
         }
         else if(strcmp(command, "read") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
-            printf("Enter file offset: ");
+            //printf("Enter file offset: ");
             scanf("%d", &offset);
-            printf("Enter read length: ");
+            //printf("Enter read length: ");
             scanf("%d", &len);
             
             l2_read(&fs, path, offset, buf, len);
             printf("Read data: %s", buf);
         }
         else if(strcmp(command, "write") == 0) {
-            printf("Enter file path: ");
+            //printf("Enter file path: ");
             scanf("%s", path);
-            printf("Enter file offset: ");
+            //printf("Enter file offset: ");
             scanf("%d", &offset);
-            printf("Enter data to write (text): ");
+            //printf("Enter data to write (text): ");
             scanf("%s", buf);
             
             len = strlen(buf);
@@ -169,11 +178,12 @@ void printMenu() {
     printf("IMPORTANT: please provide an absolute path!\n");
     printf(" mkdir /path/to/directory\n");
     printf(" mknod /path/to/file\n");
+    printf(" rename /path/one /path/two\n");
     printf(" unlink /path/to/file_or_dir\n");
-    printf(" open /path/to/file_or_dir\n");
-    printf(" close /path/to/file_or_dir\n");
-    printf(" read /path/to/file_or_dir\n");
-    printf(" write /path/to/file_or_dir\n");
+    printf(" open /path/to/file_or_dir FLAGS\n");
+    printf(" close /path/to/file_or_dir FLAGS\n");
+    printf(" read /path/to/file_or_dir OFFSET LEN\n");
+    printf(" write /path/to/file_or_dir OFFSET data\n");
     printf("--------------------\n");
     printf(" corestats\n");
     printf(" diskstats\n");

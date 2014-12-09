@@ -17,7 +17,7 @@ struct INodeEntry {
   UINT _in_ref;
   
 //pointer to in-core inode
-  INode* _in_node;
+  INode _in_node;
 
 //pointer to the next entry in this bin
   INodeEntry *next;

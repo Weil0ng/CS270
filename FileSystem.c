@@ -173,7 +173,7 @@ INT makefs(UINT nDBlks, UINT nINodes, FileSystem* fs) {
     readDBlk(fs, fs->superblock.pFreeDBlksHead, (BYTE*) (fs->superblock.freeDBlkCache));
 
     //initialize in-core caches (open file table, inode table, inode cache)
-    initOpenFileTable(&fs->inodeTable);
+    initOpenFileTable(&fs->openFileTable);
     initINodeTable(&fs->inodeTable);
     initINodeCache(&fs->inodeCache);
     
@@ -385,7 +385,7 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
         #ifdef DEBUG_VERBOSE
         printf("readINode found inode %d in inode table, returning directly...\n", id);
         #endif
-        memcpy(inode, iEntry->_in_node, sizeof(INode));
+        memcpy(inode, &iEntry->_in_node, sizeof(INode));
         return 0;
     }
     
@@ -395,7 +395,7 @@ INT readINode(FileSystem* fs, UINT id, INode* inode) {
         #ifdef DEBUG_VERBOSE
         printf("readINode found inode %d in inode cache, returning directly...\n", id);
         #endif
-        memcpy(inode, iEntry->_in_node, sizeof(INode));
+        memcpy(inode, &iEntry->_in_node, sizeof(INode));
         return 0;
     }
     
@@ -562,7 +562,7 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
         #ifdef DEBUG_VERBOSE
         printf("writeINode found inode %d in inode table, writing table copy...\n", id);
         #endif
-        memcpy(iEntry->_in_node, inode, sizeof(INode));
+        memcpy(&iEntry->_in_node, inode, sizeof(INode));
     }
     //otherwise, check the inode cache to see if the inode is cached
     else {
@@ -571,7 +571,7 @@ INT writeINode(FileSystem* fs, UINT id, INode* inode) {
             #ifdef DEBUG_VERBOSE
             printf("writeINode found inode %d in inode cache, writing cache copy...\n", id);
             #endif
-            memcpy(iEntry->_in_node, inode, sizeof(INode));
+            memcpy(&iEntry->_in_node, inode, sizeof(INode));
         }
     }
     
