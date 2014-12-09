@@ -4,9 +4,9 @@ usage() {
   echo "testmain -c [cmd]"
 }
 
-numDir=100
-numFile=100
-bigFileSize=10
+numDir=10000
+numFile=10000
+bigFileSize=15
 unset opt
 
 getopts ":c:" opt
@@ -28,6 +28,10 @@ case $OPTARG in
   big)
     echo "test bigFile"
     sh ./bigFile.sh $bigFileSize
+    ;;
+  bonnie)
+    echo "test bonnie"
+    bonnie++ -s 4096 -r 2048 -n 4 -m TEST -b -u root
     ;;
 esac
 
