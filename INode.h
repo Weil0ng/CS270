@@ -37,6 +37,8 @@ typedef struct INode {
 
 	LONG _in_accesstime;
 
+	LONG _in_changetime;
+
 	LONG _in_filesize;
     
         UINT _in_linkcount;

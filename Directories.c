@@ -191,7 +191,7 @@ INT l2_getattr(FileSystem* fs, char *path, struct stat *stbuf) {
     stbuf->st_blocks = inode._in_filesize / BLK_SIZE;
     stbuf->st_atime = inode._in_accesstime;
     stbuf->st_mtime = inode._in_modtime;
-    //stbuf->st_ctime;
+    stbuf->st_ctime = inode._in_changetime;
     return 0;
 }
 
