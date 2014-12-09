@@ -6,7 +6,7 @@ usage() {
 
 numDir=100
 numFile=100
-bigFileSize=1
+bigFileSize=10
 unset opt
 
 getopts ":c:" opt

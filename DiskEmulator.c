@@ -78,9 +78,9 @@ void closeDisk(DiskArray *disk)
   close(disk->_dsk_dskArray);
 }
 
-LONG bid2Offset(UINT bid)
+LONG bid2Offset(LONG bid)
 {
-  return ((LONG)bid * BLK_SIZE);
+  return (bid * BLK_SIZE);
 }
 
 /*INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
@@ -96,7 +96,7 @@ LONG bid2Offset(UINT bid)
   return 0;
 }*/
 
-INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
+INT readBlk(DiskArray *disk, LONG bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_readOutOfBoundry;
@@ -122,7 +122,7 @@ INT readBlk(DiskArray *disk, UINT bid, BYTE *buf)
   return 0;
 }*/
 
-INT writeBlk(DiskArray *disk, UINT bid, BYTE *buf)
+INT writeBlk(DiskArray *disk, LONG bid, BYTE *buf)
 {
   if (bid > disk->_dsk_numBlk - 1) {
     _err_last = _dsk_writeOutOfBoundry;
