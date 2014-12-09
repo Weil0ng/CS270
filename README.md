@@ -13,9 +13,13 @@ make test
 
 make main
 
-    Builds the target for testing Layer 2.
+    Builds the target for testing Layer 2.  Includes TestMain
     
-==== How to run ====
+make fuse
+
+    Builds the target for running on FUSE.
+    
+==== How to run tests ====
 
 ./Layer0Test DISK_SIZE
 
@@ -46,3 +50,11 @@ make main
     In addition to these syste calls, "quit" allows you to exit the program;
     "stats" is a debugging function that will show you the state of the FS
     after makefs or any command.
+    
+==== How to run on FUSE ====
+
+1. Build the fuse target.
+2. Make a directory that will be the root directory.
+3. Run InitFS (the disk device path must be defined in Globals.h).
+4. Run fuseDaemon -s ROOT_DIR_PATH
+5. Enjoy!
