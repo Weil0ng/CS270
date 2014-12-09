@@ -559,6 +559,7 @@ LONG readINodeData(FileSystem* fs, INode* inode, BYTE* buf, LONG offset, LONG le
 // output: none
 // function: write the disk inode #id in the inode table
 INT writeINode(FileSystem* fs, UINT id, INode* inode) {
+    inode->_in_changetime = time(NULL);
     if(id >= fs->superblock.nINodes) {
         fprintf(stderr, "Error: writeINode received invalid inode id %d when nINodes is %d!\n", id, fs->superblock.nINodes);
     }
